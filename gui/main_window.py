@@ -3,13 +3,14 @@ Main Application Window Module for IP Address Tracker & Geolocation Tool.
 
 Provides:
 - Top Header bar ("IP PULSE - Network Intelligence Console", "SYSTEM ONLINE" status badge)
-- Slim dark sidebar navigation (Dashboard, History, Field Test)
-- Main container switching between ResultsView, HistoryView, and FieldTestView
+- Slim dark sidebar navigation (Dashboard, History, Field Test, Analytics)
+- Main container switching between ResultsView, HistoryView, FieldTestView, and AnalyticsView
 - Clean window geometry management and dark styling
 """
 import tkinter as tk
 from typing import Optional
 
+from gui.analytics_view import AnalyticsView
 from gui.field_test_view import FieldTestView
 from gui.history_view import HistoryView
 from gui.results_view import ResultsView
@@ -30,8 +31,8 @@ class MainWindow(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
         self.title("IP PULSE — Network Intelligence Console")
-        self.geometry("1120x760")
-        self.minsize(940, 640)
+        self.geometry("1140x780")
+        self.minsize(960, 660)
         self.configure(bg=BG_DARK)
 
         # Configure root layout grid
@@ -158,6 +159,23 @@ class MainWindow(tk.Tk):
         )
         self.field_btn.pack(fill="x", padx=10, pady=4)
 
+        self.analytics_btn = tk.Button(
+            sidebar_frame,
+            text="ANALYTICS",
+            font=("Segoe UI", 9, "bold"),
+            bg=SIDEBAR_BG,
+            fg=TEXT_LIGHT,
+            activebackground="#334155",
+            activeforeground="#FFFFFF",
+            bd=0,
+            cursor="hand2",
+            anchor="w",
+            padx=15,
+            pady=8,
+            command=self.show_analytics,
+        )
+        self.analytics_btn.pack(fill="x", padx=10, pady=4)
+
     def _create_content_area(self) -> None:
         """Create container frame housing views."""
         self.content_container = tk.Frame(self, bg=BG_DARK)
@@ -171,11 +189,13 @@ class MainWindow(tk.Tk):
         )
         self.history_view = HistoryView(self.content_container)
         self.field_test_view = FieldTestView(self.content_container)
+        self.analytics_view = AnalyticsView(self.content_container)
 
     def show_dashboard(self) -> None:
         """Switch view to Dashboard."""
         self.history_view.grid_forget()
         self.field_test_view.grid_forget()
+        self.analytics_view.grid_forget()
         self.results_view.grid(row=0, column=0, sticky="nsew")
         self._update_nav_buttons(active="dashboard")
 
@@ -183,6 +203,7 @@ class MainWindow(tk.Tk):
         """Switch view to History."""
         self.results_view.grid_forget()
         self.field_test_view.grid_forget()
+        self.analytics_view.grid_forget()
         self.history_view.refresh_history()
         self.history_view.grid(row=0, column=0, sticky="nsew")
         self._update_nav_buttons(active="history")
@@ -191,8 +212,18 @@ class MainWindow(tk.Tk):
         """Switch view to Field Test."""
         self.results_view.grid_forget()
         self.history_view.grid_forget()
+        self.analytics_view.grid_forget()
         self.field_test_view.grid(row=0, column=0, sticky="nsew")
         self._update_nav_buttons(active="field_test")
+
+    def show_analytics(self) -> None:
+        """Switch view to Analytics."""
+        self.results_view.grid_forget()
+        self.history_view.grid_forget()
+        self.field_test_view.grid_forget()
+        self.analytics_view.refresh_analysis()
+        self.analytics_view.grid(row=0, column=0, sticky="nsew")
+        self._update_nav_buttons(active="analytics")
 
     def _update_nav_buttons(self, active: str) -> None:
         """Highlight active sidebar navigation button."""
@@ -207,6 +238,10 @@ class MainWindow(tk.Tk):
         self.field_btn.config(
             bg=ACCENT_BLUE if active == "field_test" else SIDEBAR_BG,
             fg="#FFFFFF" if active == "field_test" else TEXT_LIGHT,
+        )
+        self.analytics_btn.config(
+            bg=ACCENT_BLUE if active == "analytics" else SIDEBAR_BG,
+            fg="#FFFFFF" if active == "analytics" else TEXT_LIGHT,
         )
 
     def _on_lookup_complete(self) -> None:

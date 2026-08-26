@@ -1,3 +1,7 @@
 # IP Address Tracker & Geolocation Tool - Dependencies
 # Phase 8: Map Visualization
 tkintermapview>=1.30.0
+
+# Phase 10: Data Analysis & Visualization
+pandas>=2.0.0
+matplotlib>=3.7.0

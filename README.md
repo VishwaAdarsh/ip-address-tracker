@@ -7,11 +7,12 @@ A Python-based application designed for resolving website domains to public IP a
 This project is a College Semester Field Project focused on IP/DNS analysis and approximate geolocation. It evaluates DNS resolution behaviors, public IP address locations, network providers, and infrastructure distributions.
 
 ## Current Status
-- **Current Phase:** Phase 9 — 50-Website Field Test & Data Collection
-- **Status:** Complete (Predefined 50-website dataset `websites.csv`, sequential field-test service, research CSV exporter, GUI batch view, methodology documentation, and test suite implemented)
+- **Current Phase:** Phase 10 — Data Analysis & Visualization
+- **Status:** Complete (Data validation, descriptive statistics analyzer, 7 matplotlib research plots, CSV statistical summaries, GUI Analytics dashboard, and unit test suite implemented)
 - **Primary Geolocation Provider:** `ipapi.co` (HTTPS, supports IPv4/IPv6)
 - **Database Engine:** SQLite (`data/ip_tracker.db`)
-- **Research Dataset:** `data/field_test/field_test_results.csv` (Independent of lookup history)
+- **Research Dataset:** `data/field_test/field_test_results.csv` (Raw data preserved untouched)
+- **Derived Analysis Outputs:** `data/analysis/` (`cleaned_results.csv`, `summary_statistics.csv`, `charts/*.png`, `research_analysis_report.md`)
 - **GUI Engine:** Python Tkinter (`IP PULSE` Console)
 - **Master Reference:** [architecture.md](architecture.md)
 
@@ -24,6 +25,7 @@ When a domain resolves to multiple IP addresses:
 ## Technology Stack
 - **Language:** Python 3 (3.14+)
 - **Environment:** Virtual environment (`.venv`)
+- **Data Analysis:** `pandas`, `matplotlib`, `numpy` (`analysis/analyzer.py`, `analysis/visualizer.py`)
 - **GUI Framework:** Python Tkinter / ttk (`gui/main_window.py`)
 - **Map Visualization:** `tkintermapview` (`gui/map_view.py`)
 - **Database:** SQLite (`data/ip_tracker.db`)
@@ -70,7 +72,7 @@ Implementation proceeds strictly phase-by-phase according to [architecture.md](a
 - **Phase 7:** GUI Development (Complete)
 - **Phase 8:** Map Visualization (Complete)
 - **Phase 9:** Field-Test Module (50 Websites) (Complete)
-- **Phase 10:** Data Analysis
+- **Phase 10:** Data Analysis (Complete)
 - **Phase 11:** Charts & Dashboard Analytics
 - **Phase 12:** Data Export
 - **Phase 13:** Testing & Hardening

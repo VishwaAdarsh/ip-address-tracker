@@ -1,6 +1,7 @@
 """
 GUI package for application user interface components.
 """
+from gui.analytics_view import AnalyticsView
 from gui.field_test_view import FieldTestView
 from gui.history_view import HistoryView
 from gui.main_window import MainWindow, main
@@ -13,5 +14,6 @@ __all__ = [
     "HistoryView",
     "MapView",
     "FieldTestView",
+    "AnalyticsView",
     "main",
 ]
