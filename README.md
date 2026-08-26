@@ -7,10 +7,11 @@ A Python-based application designed for resolving website domains to public IP a
 This project is a College Semester Field Project focused on IP/DNS analysis and approximate geolocation. It evaluates DNS resolution behaviors, public IP address locations, network providers, and infrastructure distributions.
 
 ## Current Status
-- **Current Phase:** Phase 6 — Database & Lookup History
-- **Status:** Complete (Local SQLite database `data/ip_tracker.db`, parameterized SQL CRUD methods, and database tests implemented)
+- **Current Phase:** Phase 7 — GUI Development (Network Intelligence Console)
+- **Status:** Complete (Dark-themed desktop interface, asynchronous thread execution, history table & record inspector implemented)
 - **Primary Geolocation Provider:** `ipapi.co` (HTTPS, supports IPv4/IPv6)
-- **Database Engine:** SQLite (built-in `sqlite3`, parameterized queries, persistent lookup history)
+- **Database Engine:** SQLite (`data/ip_tracker.db`)
+- **GUI Engine:** Python Tkinter (`IP PULSE` Console)
 - **Master Reference:** [architecture.md](architecture.md)
 
 ### Deterministic IP Selection Rule
@@ -22,6 +23,7 @@ When a domain resolves to multiple IP addresses:
 ## Technology Stack
 - **Language:** Python 3 (3.14+)
 - **Environment:** Virtual environment (`.venv`)
+- **GUI Framework:** Python Tkinter / ttk (`gui/main_window.py`)
 - **Database:** SQLite (`data/ip_tracker.db`)
 
 ## Getting Started
@@ -49,8 +51,8 @@ Run the test suite:
 python -m unittest discover -s tests
 ```
 
-### 4. Running the Application
-Execute the entry point script to run end-to-end lookup and view SQLite history:
+### 4. Running the Desktop Application
+Launch the GUI application:
 ```bash
 python app.py
 ```
@@ -63,7 +65,7 @@ Implementation proceeds strictly phase-by-phase according to [architecture.md](a
 - **Phase 4:** Geolocation Service (Complete)
 - **Phase 5:** Integrated Lookup Engine (Complete)
 - **Phase 6:** Database & History (Complete)
-- **Phase 7:** GUI Development
+- **Phase 7:** GUI Development (Complete)
 - **Phase 8:** Map Visualization
 - **Phase 9:** Field-Test Module (50 Websites)
 - **Phase 10:** Data Analysis
