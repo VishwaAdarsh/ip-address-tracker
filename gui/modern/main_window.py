@@ -72,28 +72,28 @@ class MainWindow(MSFluentWindow):
             self.dashboard_view,
             FIF.SEARCH,
             "Dashboard",
-            NavigationItemPosition.TOP,
+            position=NavigationItemPosition.TOP,
         )
 
         self.addSubInterface(
             self.history_view,
             FIF.HISTORY,
             "History",
-            NavigationItemPosition.TOP,
+            position=NavigationItemPosition.TOP,
         )
 
         self.addSubInterface(
             self.field_project_view,
             FIF.DOCUMENT,
             "Field Project",
-            NavigationItemPosition.TOP,
+            position=NavigationItemPosition.TOP,
         )
 
         self.addSubInterface(
             self.analytics_view,
             FIF.PIE_SINGLE,
             "Analytics",
-            NavigationItemPosition.TOP,
+            position=NavigationItemPosition.TOP,
         )
 
         # Add header widget to title bar area with status indicator
