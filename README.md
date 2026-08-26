@@ -7,8 +7,9 @@ A Python-based application designed for resolving website domains to public IP a
 This project is a College Semester Field Project focused on IP/DNS analysis and approximate geolocation. It evaluates DNS resolution behaviors, public IP address locations, network providers, and infrastructure distributions.
 
 ## Current Status
-- **Current Phase:** Phase 3 — DNS Resolution
-- **Status:** Complete (DNS resolution engine, timing, and unit tests implemented)
+- **Current Phase:** Phase 4 — IP Geolocation Service
+- **Status:** Complete (HTTPS geolocation client, response normalizer, settings, and unit tests implemented)
+- **Primary Geolocation Provider:** `ipapi.co` (HTTPS, supports IPv4/IPv6, country, region, city, coordinates, timezone, ASN, org)
 - **Master Reference:** [architecture.md](architecture.md)
 
 ## Technology Stack
@@ -27,14 +28,21 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
-### 2. Running Tests
+### 2. Configuration (Optional)
+Copy configuration template:
+```bash
+cp .env.example .env
+```
+*(Free tier works up to 1,000 requests/day out of the box without an API key)*
+
+### 3. Running Tests
 Run the test suite:
 ```bash
 python -m unittest discover -s tests
 ```
 
-### 3. Running the Application
-Execute the entry point script to verify setup:
+### 4. Running the Application
+Execute the entry point script to run end-to-end lookup:
 ```bash
 python app.py
 ```
@@ -44,7 +52,7 @@ Implementation proceeds strictly phase-by-phase according to [architecture.md](a
 - **Phase 1:** Development Environment (Complete)
 - **Phase 2:** Input Validation (Complete)
 - **Phase 3:** DNS Resolution (Complete)
-- **Phase 4:** Geolocation Service
+- **Phase 4:** Geolocation Service (Complete)
 - **Phase 5:** Integrated Lookup Engine
 - **Phase 6:** Database & History
 - **Phase 7:** GUI Development
