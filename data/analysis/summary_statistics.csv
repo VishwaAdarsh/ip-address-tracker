@@ -1,0 +1,4 @@
+Metric,Count,Mean (ms),Std (ms),Min (ms),P25 (ms),Median (ms),P75 (ms),Max (ms),IQR (ms)
+dns_response_time_ms,50,101.05,258.69,12.0,21.09,22.27,27.06,1321.91,5.97
+api_response_time_ms,50,256.55,336.38,0.0,64.5,80.75,341.98,1593.56,277.48
+total_response_time_ms,50,358.0,481.96,73.84,90.12,108.64,443.69,2915.82,353.58
