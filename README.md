@@ -7,8 +7,8 @@ A Python-based application designed for resolving website domains to public IP a
 This project is a College Semester Field Project focused on IP/DNS analysis and approximate geolocation. It evaluates DNS resolution behaviors, public IP address locations, network providers, and infrastructure distributions.
 
 ## Current Status
-- **Current Phase:** Phase 1 — Development Environment Setup
-- **Status:** Complete (Project skeleton initialized)
+- **Current Phase:** Phase 2 — Input Validation
+- **Status:** Complete (Input validation module and unit tests implemented)
 - **Master Reference:** [architecture.md](architecture.md)
 
 ## Technology Stack
@@ -27,7 +27,13 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
-### 2. Running the Application
+### 2. Running Tests
+Run the test suite:
+```bash
+python -m unittest discover -s tests
+```
+
+### 3. Running the Application
 Execute the entry point script to verify setup:
 ```bash
 python app.py
@@ -35,8 +41,8 @@ python app.py
 
 ## Development Roadmap
 Implementation proceeds strictly phase-by-phase according to [architecture.md](architecture.md):
-- **Phase 1:** Development Environment (Current)
-- **Phase 2:** Input Validation
+- **Phase 1:** Development Environment (Complete)
+- **Phase 2:** Input Validation (Complete)
 - **Phase 3:** DNS Resolution
 - **Phase 4:** Geolocation Service
 - **Phase 5:** Integrated Lookup Engine
