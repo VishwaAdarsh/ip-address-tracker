@@ -1,3 +1,3 @@
 # IP Address Tracker & Geolocation Tool - Dependencies
-# Phase 1: Development Environment Setup
-# Third-party dependencies will be added incrementally in subsequent phases as needed.
+# Phase 8: Map Visualization
+tkintermapview>=1.30.0

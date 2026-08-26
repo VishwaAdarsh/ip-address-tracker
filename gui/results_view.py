@@ -6,6 +6,7 @@ Provides:
 - Non-blocking background thread execution for network lookups
 - Summary cards (IP, Location, Network)
 - Detailed Approximate Geolocation and Network Information sections
+- Integrated Geographic Map View (gui.map_view.MapView)
 - Component execution timing metrics
 - Polished empty, loading, and error UI states
 """
@@ -14,8 +15,8 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 from typing import Callable, Optional
 
+from gui.map_view import MapView
 from services.lookup_service import LookupResult, LookupStatus, perform_lookup
-
 
 # Color Palette Definitions (Dark Network Intelligence Theme)
 BG_DARK = "#0F172A"       # Deep slate 900
@@ -250,32 +251,36 @@ class ResultsView(tk.Frame):
         self._add_detail_row(geo_sec, "Coordinates", coords_str)
         self._add_detail_row(geo_sec, "Timezone", res.timezone)
 
-        disc_lbl = tk.Label(
-            geo_sec,
-            text="* Note: IP Geolocation represents network registry associations and is inherently approximate.",
-            font=("Segoe UI", 8, "italic"),
-            fg=TEXT_MUTED,
-            bg=CARD_BG,
+        # 4. Map Section Integration
+        map_sec = self._create_section_frame(scroll_window, 3, "GEOGRAPHIC LOCATION MAP")
+        map_view_widget = MapView(map_sec)
+        map_view_widget.pack(fill="both", expand=True, padx=5, pady=5)
+        map_view_widget.config(height=340)
+        map_view_widget.set_location(
+            lat=res.latitude,
+            lon=res.longitude,
+            target_label=res.selected_ip or res.input,
+            city=res.city,
+            country=res.country,
         )
-        disc_lbl.pack(anchor="w", padx=15, pady=(5, 10))
 
-        # 4. Network Details Section
-        net_sec = self._create_section_frame(scroll_window, 3, "NETWORK & INFRASTRUCTURE")
+        # 5. Network Details Section
+        net_sec = self._create_section_frame(scroll_window, 4, "NETWORK & INFRASTRUCTURE")
         self._add_detail_row(net_sec, "Organization", res.organization)
         self._add_detail_row(net_sec, "ISP Provider", res.isp)
         self._add_detail_row(net_sec, "Autonomous System", res.asn)
         self._add_detail_row(net_sec, "Resolved IPv4 List", ", ".join(res.ipv4_addresses) if res.ipv4_addresses else "None")
         self._add_detail_row(net_sec, "Resolved IPv6 List", ", ".join(res.ipv6_addresses) if res.ipv6_addresses else "None")
 
-        # 5. Performance Section
-        perf_sec = self._create_section_frame(scroll_window, 4, "PERFORMANCE METRICS")
+        # 6. Performance Section
+        perf_sec = self._create_section_frame(scroll_window, 5, "PERFORMANCE METRICS")
         self._add_detail_row(perf_sec, "DNS Resolution Time", f"{res.dns_response_time_ms} ms (Status: {res.dns_status})")
         self._add_detail_row(perf_sec, "Geolocation API Time", f"{res.api_response_time_ms} ms (Status: {res.geolocation_status})")
         self._add_detail_row(perf_sec, "Total Execution Time", f"{res.total_response_time_ms} ms")
 
         # Error details if failed
         if res.error_message:
-            err_sec = self._create_section_frame(scroll_window, 5, "ERROR DETAILS")
+            err_sec = self._create_section_frame(scroll_window, 6, "ERROR DETAILS")
             err_lbl = tk.Label(
                 err_sec,
                 text=res.error_message,
