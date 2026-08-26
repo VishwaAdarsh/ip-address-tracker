@@ -1,46 +1,58 @@
 """
-Field Test GUI View Module for IP Address Tracker & Geolocation Tool.
+Field Project GUI View Module for IP Address Tracker & Geolocation Tool.
 
-Provides:
-- Controls for starting and stopping the 50-website batch research test
-- Non-blocking background thread execution for batch lookups
-- Real-time progress bar and status updates
-- Live Treeview table displaying results as each website is processed
+Implements the Manual-First Field Project Interface:
+- Displays available observations loaded from SQLite Lookup History (N / 50).
+- Shows Manual Observations, Remaining count, and Target Status.
+- Provides REFRESH FROM HISTORY control.
+- Provides optional COMPLETE REMAINING N AUTOMATICALLY button (only active when N < 50).
+- Displays live progress bar and table during controlled automatic completion.
 """
+import csv
+from pathlib import Path
 import threading
 import tkinter as tk
 from tkinter import messagebox, ttk
-from typing import Optional
+from typing import Dict, List, Optional
 
-from services.field_test_service import load_test_websites, run_field_test
+from services.field_test_service import (
+    export_field_dataset_from_history,
+    get_default_output_path,
+    get_field_project_status,
+    run_automatic_completion,
+)
 from services.lookup_service import LookupResult
 
-# Palette constants
+# Color constants
 BG_DARK = "#0F172A"       # Deep slate 900
 CARD_BG = "#1E293B"       # Slate 800
 CARD_BORDER = "#334155"   # Slate 700
 ACCENT_BLUE = "#0EA5E9"   # Sky 500
 ACCENT_GREEN = "#10B981"  # Emerald 500
-ACCENT_RED = "#EF4444"    # Red 500
+ACCENT_YELLOW = "#F59E0B" # Amber 500
 TEXT_LIGHT = "#F8FAFC"    # Slate 50
 TEXT_MUTED = "#94A3B8"    # Slate 400
 
 
 class FieldTestView(tk.Frame):
-    """View module for controlling and displaying live 50-website field tests."""
+    """View module for manual-first 50-website field project workflow."""
 
     def __init__(self, parent: tk.Widget) -> None:
         super().__init__(parent, bg=BG_DARK)
         self.columnconfigure(0, weight=1)
         self.rowconfigure(2, weight=1)
 
-        self.stop_event: Optional[threading.Event] = None
         self.is_running = False
+        self.stop_event = threading.Event()
+        self.status_data: Dict = {}
 
         self._configure_styles()
-        self._create_header_controls()
-        self._create_progress_section()
-        self._create_results_table()
+        self._create_header()
+        self._create_stats_bar()
+        self._create_main_content()
+
+        # Load initial status from History
+        self.refresh_status()
 
     def _configure_styles(self) -> None:
         """Configure custom Treeview styles for Field Test table."""
@@ -55,21 +67,19 @@ class FieldTestView(tk.Frame):
             foreground=TEXT_LIGHT,
             fieldbackground=CARD_BG,
             rowheight=26,
-            bordercolor=CARD_BORDER,
-            borderwidth=1,
             font=("Segoe UI", 9),
+            borderwidth=0,
         )
         style.configure(
             "FieldTest.Treeview.Heading",
-            background="#0F172A",
-            foreground=ACCENT_BLUE,
+            background="#0284C7",
+            foreground="#FFFFFF",
             font=("Segoe UI", 9, "bold"),
-            bordercolor=CARD_BORDER,
-            borderwidth=1,
+            borderwidth=0,
         )
 
-    def _create_header_controls(self) -> None:
-        """Create header title and start/stop action buttons."""
+    def _create_header(self) -> None:
+        """Create header bar with title and informational banner."""
         header_frame = tk.Frame(
             self,
             bg=CARD_BG,
@@ -77,23 +87,62 @@ class FieldTestView(tk.Frame):
             highlightthickness=1,
         )
         header_frame.grid(row=0, column=0, sticky="ew", padx=20, pady=(20, 10))
-        header_frame.columnconfigure(1, weight=1)
+        header_frame.columnconfigure(0, weight=1)
 
         title = tk.Label(
             header_frame,
-            text="50-WEBSITE FIELD STUDY & DATA COLLECTION",
+            text="FIELD PROJECT — 50-WEBSITE DATA COLLECTION",
             font=("Segoe UI", 11, "bold"),
             fg=ACCENT_BLUE,
             bg=CARD_BG,
         )
-        title.grid(row=0, column=0, padx=15, pady=12)
+        title.grid(row=0, column=0, sticky="w", padx=15, pady=(10, 2))
 
-        btn_box = tk.Frame(header_frame, bg=CARD_BG)
-        btn_box.grid(row=0, column=2, padx=15, pady=8)
+        banner = tk.Label(
+            header_frame,
+            text="* MANUAL-FIRST METHODOLOGY: Normal lookups executed on Dashboard are automatically collected in History for this field project.",
+            font=("Segoe UI", 8, "bold"),
+            fg=TEXT_MUTED,
+            bg=CARD_BG,
+        )
+        banner.grid(row=1, column=0, sticky="w", padx=15, pady=(0, 10))
 
-        self.start_btn = tk.Button(
-            btn_box,
-            text="START FIELD TEST",
+    def _create_stats_bar(self) -> None:
+        """Create stat cards and control buttons bar."""
+        bar_frame = tk.Frame(self, bg=BG_DARK)
+        bar_frame.grid(row=1, column=0, sticky="ew", padx=20, pady=5)
+        for i in range(4):
+            bar_frame.columnconfigure(i, weight=1)
+
+        # 4 Stat Cards
+        self.card_available = self._create_stat_card(bar_frame, 0, "AVAILABLE OBSERVATIONS", "0 / 50", "History Records")
+        self.card_manual = self._create_stat_card(bar_frame, 1, "MANUAL OBSERVATIONS", "0", "Dashboard Lookups")
+        self.card_remaining = self._create_stat_card(bar_frame, 2, "REMAINING", "50", "Needed for Target")
+        self.card_status = self._create_stat_card(bar_frame, 3, "STATUS", "INCOMPLETE", "Target: 50 Sites")
+
+        # Action Buttons Frame
+        btn_frame = tk.Frame(self, bg=BG_DARK)
+        btn_frame.grid(row=2, column=0, sticky="ew", padx=20, pady=10)
+
+        self.btn_refresh = tk.Button(
+            btn_frame,
+            text="REFRESH FROM HISTORY",
+            font=("Segoe UI", 9, "bold"),
+            bg=CARD_BG,
+            fg=TEXT_LIGHT,
+            activebackground=CARD_BORDER,
+            activeforeground=TEXT_LIGHT,
+            bd=1,
+            cursor="hand2",
+            padx=15,
+            pady=6,
+            command=self.refresh_status,
+        )
+        self.btn_refresh.pack(side="left", padx=(0, 10))
+
+        self.btn_auto = tk.Button(
+            btn_frame,
+            text="COMPLETE REMAINING AUTOMATICALLY",
             font=("Segoe UI", 9, "bold"),
             bg=ACCENT_BLUE,
             fg="#FFFFFF",
@@ -102,211 +151,241 @@ class FieldTestView(tk.Frame):
             bd=0,
             cursor="hand2",
             padx=15,
-            pady=5,
-            command=self._start_field_test,
+            pady=6,
+            command=self._start_automatic_completion,
         )
-        self.start_btn.pack(side="left", padx=5)
+        self.btn_auto.pack(side="left", padx=10)
 
-        self.stop_btn = tk.Button(
-            btn_box,
-            text="STOP / PAUSE",
+        self.btn_view_data = tk.Button(
+            btn_frame,
+            text="VIEW FIELD DATA",
             font=("Segoe UI", 9, "bold"),
-            bg=ACCENT_RED,
-            fg="#FFFFFF",
-            activebackground="#DC2626",
-            activeforeground="#FFFFFF",
-            bd=0,
+            bg=CARD_BG,
+            fg=TEXT_LIGHT,
+            activebackground=CARD_BORDER,
+            activeforeground=TEXT_LIGHT,
+            bd=1,
             cursor="hand2",
-            state="disabled",
             padx=15,
-            pady=5,
-            command=self._stop_field_test,
+            pady=6,
+            command=self._view_field_dataset,
         )
-        self.stop_btn.pack(side="left", padx=5)
+        self.btn_view_data.pack(side="left", padx=10)
 
-    def _create_progress_section(self) -> None:
-        """Create progress bar and status text section."""
-        prog_frame = tk.Frame(
-            self,
+        self.lbl_progress_info = tk.Label(
+            btn_frame,
+            text="",
+            font=("Segoe UI", 9, "bold"),
+            fg=ACCENT_YELLOW,
+            bg=BG_DARK,
+        )
+        self.lbl_progress_info.pack(side="right", padx=10)
+
+    def _create_stat_card(
+        self, parent: tk.Widget, col: int, title: str, val: str, sub: str
+    ) -> Dict[str, tk.Label]:
+        """Create styled stat card frame."""
+        card = tk.Frame(
+            parent,
             bg=CARD_BG,
             highlightbackground=CARD_BORDER,
             highlightthickness=1,
         )
-        prog_frame.grid(row=1, column=0, sticky="ew", padx=20, pady=5)
-        prog_frame.columnconfigure(0, weight=1)
+        card.grid(row=0, column=col, sticky="nsew", padx=5, pady=5)
 
-        self.progress_lbl = tk.Label(
-            prog_frame,
-            text="Dataset Ready: 50 predefined websites loaded from data/field_test/websites.csv",
-            font=("Segoe UI", 9, "bold"),
-            fg=TEXT_LIGHT,
+        t_lbl = tk.Label(card, text=title, font=("Segoe UI", 8, "bold"), fg=ACCENT_BLUE, bg=CARD_BG)
+        t_lbl.pack(anchor="w", padx=12, pady=(10, 2))
+
+        v_lbl = tk.Label(card, text=val, font=("Segoe UI", 13, "bold"), fg=TEXT_LIGHT, bg=CARD_BG)
+        v_lbl.pack(anchor="w", padx=12, pady=2)
+
+        s_lbl = tk.Label(card, text=sub, font=("Segoe UI", 8), fg=TEXT_MUTED, bg=CARD_BG)
+        s_lbl.pack(anchor="w", padx=12, pady=(0, 10))
+
+        return {"val": v_lbl, "sub": s_lbl}
+
+    def _create_main_content(self) -> None:
+        """Create table and progress bar container."""
+        content_frame = tk.Frame(self, bg=BG_DARK)
+        content_frame.grid(row=3, column=0, sticky="nsew", padx=20, pady=(0, 20))
+        content_frame.columnconfigure(0, weight=1)
+        content_frame.rowconfigure(1, weight=1)
+
+        # Progress bar
+        self.progress_bar = ttk.Progressbar(content_frame, mode="determinate")
+        self.progress_bar.grid(row=0, column=0, sticky="ew", pady=(0, 10))
+
+        # Table container
+        table_card = tk.Frame(
+            content_frame,
             bg=CARD_BG,
-            anchor="w",
+            highlightbackground=CARD_BORDER,
+            highlightthickness=1,
         )
-        self.progress_lbl.pack(fill="x", padx=15, pady=(8, 4))
-
-        self.progress_bar = ttk.Progressbar(
-            prog_frame, orient="horizontal", mode="determinate", maximum=50
-        )
-        self.progress_bar.pack(fill="x", padx=15, pady=(0, 10))
-
-    def _create_results_table(self) -> None:
-        """Create Treeview table for live field test results."""
-        table_container = tk.Frame(self, bg=BG_DARK)
-        table_container.grid(row=2, column=0, sticky="nsew", padx=20, pady=(5, 20))
-        table_container.columnconfigure(0, weight=1)
-        table_container.rowconfigure(0, weight=1)
+        table_card.grid(row=1, column=0, sticky="nsew")
+        table_card.columnconfigure(0, weight=1)
+        table_card.rowconfigure(0, weight=1)
 
         columns = (
-            "id",
+            "idx",
             "domain",
-            "category",
+            "input_type",
             "ip",
-            "location",
-            "org",
-            "dns_ms",
-            "api_ms",
+            "country",
+            "dns_time",
+            "api_time",
             "status",
         )
-
         self.tree = ttk.Treeview(
-            table_container,
+            table_card,
             columns=columns,
             show="headings",
             style="FieldTest.Treeview",
-            selectmode="browse",
         )
 
-        self.tree.heading("id", text="ID")
+        self.tree.heading("idx", text="#")
         self.tree.heading("domain", text="DOMAIN")
-        self.tree.heading("category", text="CATEGORY")
+        self.tree.heading("input_type", text="TYPE")
         self.tree.heading("ip", text="SELECTED IP")
-        self.tree.heading("location", text="LOCATION")
-        self.tree.heading("org", text="ORGANIZATION")
-        self.tree.heading("dns_ms", text="DNS TIME")
-        self.tree.heading("api_ms", text="API TIME")
+        self.tree.heading("country", text="COUNTRY")
+        self.tree.heading("dns_time", text="DNS (ms)")
+        self.tree.heading("api_time", text="API (ms)")
         self.tree.heading("status", text="STATUS")
 
-        self.tree.column("id", width=40, anchor="center")
-        self.tree.column("domain", width=130, anchor="w")
-        self.tree.column("category", width=100, anchor="w")
-        self.tree.column("ip", width=120, anchor="w")
-        self.tree.column("location", width=130, anchor="w")
-        self.tree.column("org", width=140, anchor="w")
-        self.tree.column("dns_ms", width=75, anchor="center")
-        self.tree.column("api_ms", width=75, anchor="center")
-        self.tree.column("status", width=90, anchor="center")
+        self.tree.column("idx", width=40, anchor="center")
+        self.tree.column("domain", width=180, anchor="w")
+        self.tree.column("input_type", width=70, anchor="center")
+        self.tree.column("ip", width=130, anchor="w")
+        self.tree.column("country", width=120, anchor="w")
+        self.tree.column("dns_time", width=75, anchor="center")
+        self.tree.column("api_time", width=75, anchor="center")
+        self.tree.column("status", width=110, anchor="center")
 
         scrollbar = ttk.Scrollbar(
-            table_container, orient="vertical", command=self.tree.yview
+            table_card, orient="vertical", command=self.tree.yview
         )
         self.tree.configure(yscrollcommand=scrollbar.set)
 
         self.tree.grid(row=0, column=0, sticky="nsew")
         scrollbar.grid(row=0, column=1, sticky="ns")
 
-    def _start_field_test(self) -> None:
-        """Launch background worker thread for 50-website experiment."""
-        if self.is_running:
-            return
+    def refresh_status(self) -> None:
+        """Query SQLite History and update UI cards and observation data."""
+        self.status_data = get_field_project_status()
 
-        self.is_running = True
-        self.stop_event = threading.Event()
-        self.start_btn.config(state="disabled")
-        self.stop_btn.config(state="normal")
+        avail = self.status_data["available_count"]
+        rem = self.status_data["remaining"]
+        st = self.status_data["status"]
 
-        # Clear existing table rows
+        self.card_available["val"].config(text=f"{avail} / 50")
+        self.card_manual["val"].config(text=str(avail))
+        self.card_remaining["val"].config(text=str(rem))
+
+        if st == "TARGET_REACHED":
+            self.card_status["val"].config(text="TARGET REACHED ✓", fg=ACCENT_GREEN)
+            self.btn_auto.config(state="disabled", text="TARGET COMPLETED ✓", bg=CARD_BORDER)
+        else:
+            self.card_status["val"].config(text="INCOMPLETE", fg=ACCENT_YELLOW)
+            self.btn_auto.config(
+                state="normal",
+                text=f"COMPLETE REMAINING {rem} AUTOMATICALLY",
+                bg=ACCENT_BLUE,
+            )
+
+        self._populate_table_from_records(self.status_data["unique_records"])
+
+    def _populate_table_from_records(self, records: List) -> None:
+        """Populate Treeview table with records from History."""
         for item in self.tree.get_children():
             self.tree.delete(item)
 
-        self.progress_bar["value"] = 0
-        self.progress_lbl.config(
-            text="● RUNNING EXPERIMENT: 0 / 50 (0%)", fg=ACCENT_BLUE
+        for idx, rec in enumerate(records[:50], start=1):
+            domain = rec.domain or rec.input_value
+            self.tree.insert(
+                "",
+                "end",
+                values=(
+                    idx,
+                    domain,
+                    rec.input_type or "DOMAIN",
+                    rec.ip_address or "N/A",
+                    rec.country or "N/A",
+                    f"{rec.dns_response_time_ms:.1f}",
+                    f"{rec.api_response_time_ms:.1f}",
+                    rec.status,
+                ),
+            )
+
+    def _start_automatic_completion(self) -> None:
+        """Launch background thread for automatic completion of remaining lookups."""
+        rem = self.status_data.get("remaining", 0)
+        if rem <= 0:
+            messagebox.showinfo("Target Reached", "The 50-observation field project target is already completed.")
+            return
+
+        confirm = messagebox.askyesno(
+            "Confirm Automatic Completion",
+            f"You have {self.status_data['available_count']} valid observations in History.\n\n"
+            f"Would you like to automatically complete the remaining {rem} website lookups to reach the 50-observation target?",
         )
+        if not confirm:
+            return
 
-        threading.Thread(target=self._worker_run_test, daemon=True).start()
+        self.is_running = True
+        self.stop_event.clear()
+        self.btn_auto.config(state="disabled")
+        self.btn_refresh.config(state="disabled")
+        self.progress_bar["value"] = 0
+        self.progress_bar["maximum"] = rem
 
-    def _worker_run_test(self) -> None:
-        """Worker thread executing sequential field lookups."""
+        thread = threading.Thread(
+            target=self._run_completion_thread, args=(rem,), daemon=True
+        )
+        thread.start()
+
+    def _run_completion_thread(self, remaining_count: int) -> None:
+        """Background thread executing automatic completion lookups."""
+        def progress_cb(current: int, total: int, domain: str, res: LookupResult):
+            self.after(
+                0, self._update_progress_ui, current, total, domain, res
+            )
+
         try:
-            websites = load_test_websites()
-
-            def _progress_cb(current: int, total: int, domain: str, res: LookupResult):
-                self.after(
-                    0, self._update_progress_ui, current, total, domain, res
-                )
-
-            run_field_test(
-                websites=websites,
-                progress_callback=_progress_cb,
+            run_automatic_completion(
+                progress_callback=progress_cb,
                 stop_event=self.stop_event,
                 delay_seconds=0.5,
             )
-
         except Exception as e:
-            self.after(
-                0,
-                messagebox.showerror,
-                "Field Test Error",
-                f"Field test execution error: {e}",
-            )
+            self.after(0, lambda: messagebox.showerror("Completion Error", str(e)))
         finally:
-            self.after(0, self._field_test_finished)
+            self.after(0, self._on_completion_finished)
 
     def _update_progress_ui(
         self, current: int, total: int, domain: str, res: LookupResult
     ) -> None:
-        """Update progress bar, status text, and insert result row into Treeview."""
-        pct = int((current / total) * 100)
+        """Update UI progress bar and table during execution."""
         self.progress_bar["value"] = current
-        self.progress_lbl.config(
-            text=f"● RUNNING EXPERIMENT: {current} / {total} ({pct}%) — Testing: '{domain}'",
-            fg=ACCENT_BLUE,
+        self.lbl_progress_info.config(
+            text=f"Running Auto Completion: {current}/{total} ({domain})"
         )
+        self.refresh_status()
 
-        loc_str = (
-            f"{res.city}, {res.country_code}"
-            if res.city != "N/A"
-            else res.country
-        )
-        self.tree.insert(
-            "",
-            "end",
-            values=(
-                current,
-                domain,
-                res.input_type,
-                res.selected_ip or "N/A",
-                loc_str,
-                res.organization,
-                f"{res.dns_response_time_ms}ms",
-                f"{res.api_response_time_ms}ms",
-                res.overall_status.value,
-            ),
-        )
-
-    def _stop_field_test(self) -> None:
-        """Set stop event to halt batch execution."""
-        if self.stop_event:
-            self.stop_event.set()
-            self.progress_lbl.config(
-                text="Stopping field test... preserving completed observations.",
-                fg=ACCENT_RED,
-            )
-
-    def _field_test_finished(self) -> None:
-        """Clean up buttons and status when batch experiment finishes or stops."""
+    def _on_completion_finished(self) -> None:
+        """Clean up state after completion finishes."""
         self.is_running = False
-        self.start_btn.config(state="normal")
-        self.stop_btn.config(state="disabled")
+        self.btn_refresh.config(state="normal")
+        self.lbl_progress_info.config(text="Automatic completion finished.")
+        export_field_dataset_from_history()
+        self.refresh_status()
+        messagebox.showinfo("Field Project Complete", "Field project observations updated and saved successfully.")
 
-        if self.stop_event and self.stop_event.is_set():
-            self.progress_lbl.config(
-                text="Field test stopped. Completed observations saved to data/field_test/field_test_results.csv",
-                fg=ACCENT_RED,
-            )
-        else:
-            self.progress_lbl.config(
-                text="✔ FIELD TEST COMPLETE (50/50). Research dataset saved to data/field_test/field_test_results.csv",
-                fg=ACCENT_GREEN,
-            )
+    def _view_field_dataset(self) -> None:
+        """Export and open field dataset view."""
+        export_field_dataset_from_history()
+        self.refresh_status()
+        out_p = get_default_output_path()
+        messagebox.showinfo(
+            "Field Dataset Exported",
+            f"Field project dataset exported to:\n{out_p}\n\nTotal observations: {self.status_data['available_count']}",
+        )

@@ -106,11 +106,11 @@ This document provides a complete viva question bank for the **Python-based IP A
 
 ## SECTION H: 50-WEBSITE FIELD TESTING
 
-### Q19: Why test exactly 50 websites in Phase 9?
-- **Short answer:** To establish a controlled, reproducible empirical sample for evaluating software stability, response latencies, and global infrastructure distributions.
-- **Technical explanation:** A 50-website dataset provides a manageable, purposive sample across 11 diverse website categories (Search, Social, E-commerce, Edu, News, etc.) without overloading API rate limits or network resources.
+### Q19: What is the Manual-First Field Test Methodology?
+- **Short answer:** Normal user lookups executed on the Dashboard are automatically collected in the SQLite History database. The Field Project reads these records first, and only allows optional automatic completion if fewer than 50 valid observations exist.
+- **Technical explanation:** `services/field_test_service.py` evaluates `available_count` from `ip_tracker.db` by filtering and deduplicating unique domain lookups. If `N < 50`, `[ COMPLETE REMAINING (50 - N) AUTOMATICALLY ]` allows completing only the required remaining sites using standard `perform_lookup(domain, save_to_db=True)`.
 
-### Q20: Why execute field-test lookups sequentially rather than in parallel?
+### Q20: Why execute automatic completion sequentially rather than in parallel?
 - **Short answer:** To respect external API rate limits, prevent network congestion, and ensure accurate, reproducible timing measurements.
 - **Technical explanation:** Sequential execution with 0.5s inter-request delay pacing avoids HTTP 429 rate limits from public geolocation endpoints and prevents local CPU/socket queuing skew.
 
@@ -134,10 +134,10 @@ This document provides a complete viva question bank for the **Python-based IP A
 - **Short answer:** They are hosted on shared cloud infrastructure or the same Content Delivery Network (CDN).
 - **Technical explanation:** Modern cloud providers (e.g. Cloudflare, AWS, Fastly) host millions of customer domains on shared Anycast IP ranges. Geolocation databases resolve the IP to the CDN's registered network edge hub rather than the customer's business address.
 
-### Q24: Why separate the application lookup history (`ip_tracker.db`) from the research dataset (`field_test_results.csv`)?
-- **Short answer:** Because operational user history and controlled scientific field research datasets serve fundamentally different purposes and must remain uncorrupted.
-- **Technical explanation:** User history logs ad-hoc daily queries. Research datasets require immutable, standardized schemas with test IDs (1–50) for statistical auditability.
+### Q24: How does the Field Project dataset relate to SQLite Lookup History?
+- **Short answer:** The field project dataset (`data/field_test/field_test_results.csv`) is derived directly from unique domain observations in SQLite History (`data/ip_tracker.db`).
+- **Technical explanation:** Normal lookups are stored in SQLite History. The field project service filters valid domain lookups, deduplicates by domain name, selects up to 50 records, and exports them to CSV without modifying or deleting the raw database.
 
 ### Q25: How many automated unit tests exist in the project, and did they pass?
-- **Short answer:** Exactly 54 automated unit and integration tests across 9 test modules, with a **100% pass rate**.
-- **Technical explanation:** Executed via `python -m unittest discover -s tests`. Covers input validation, socket DNS resolution, API parsing, normalizer dataclasses, lookup orchestration, SQLite database CRUD, coordinate bounds validation, field test loader, and data analysis statistics.
+- **Short answer:** Exactly 60 automated unit and integration tests across 9 test modules, with a **100% pass rate**.
+- **Technical explanation:** Executed via `python -m unittest discover -s tests`. Covers input validation, socket DNS resolution, API parsing, normalizer dataclasses, lookup orchestration, SQLite database CRUD, manual-first field testing, 10 workflow scenarios, coordinate bounds validation, and data analysis statistics.

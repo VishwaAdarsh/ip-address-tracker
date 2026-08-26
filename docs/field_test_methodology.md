@@ -1,46 +1,52 @@
-# Field-Test Methodology & Research Design
+# Field-Test Methodology & Manual-First Research Design
 
 ## 1. Study Overview
 This field study evaluates DNS resolution behaviors, public IP address locations, network infrastructure providers, and component execution performance across a controlled dataset of **50 public websites**.
 
 **Project:** College Semester Field Project — IP Address Tracker & Geolocation Tool  
-**Sample Size:** Exactly 50 public domain names  
-**Data Storage:** `data/field_test/field_test_results.csv`  
+**Methodology:** **Manual-First Field Testing**  
+**Sample Size:** Exactly 50 public website observations  
+**Primary Source of Truth:** SQLite Lookup History (`data/ip_tracker.db`)  
+**Derived Research Dataset:** `data/field_test/field_test_results.csv`  
 
 ---
 
-## 2. Sampling Design
-- **Sampling Method:** Purposive / Convenience Sampling (non-random selection of established public websites across diverse categories).
-- **Categories Included:** Search, Technology, Social Media, E-commerce, Reference, Education, News, Government, Finance, Entertainment, Cloud Services.
-- **Sample Stability:** The 50 website domains are fixed prior to the formal experiment (`data/field_test/websites.csv`). Failed DNS or geolocation lookups are preserved as valid empirical observations rather than dynamically replaced.
-- **Generalizability Notice:** The sample is designed to demonstrate multi-category infrastructure patterns; it is not a statistically representative random sample of the global Internet.
+## 2. Manual-First Methodology
 
----
-
-## 3. Experimental Procedure & Pipeline
-Each website domain is processed sequentially according to the following automated workflow:
+The field project follows a **manual-first data collection methodology**:
 
 ```text
-Domain Input (websites.csv)
+Normal Application Usage (User enters domains/IPs on Dashboard)
         ↓
-Input Validation (core/validator.py)
+Lookups processed by core service engine (DNS + Geolocation)
         ↓
-DNS Resolution (core/dns_resolver.py)
+Successful lookup observations stored in SQLite History (data/ip_tracker.db)
         ↓
-Deterministic IP Selection Rule
+Field Project Module reads existing History records
         ↓
-IP Geolocation Service (core/geo_service.py)
+Valid observations are deduplicated deterministically by domain
         ↓
-Response Normalization (core/normalizer.py)
+Count evaluated: Available = N / 50 | Remaining = max(50 - N, 0)
         ↓
-Research Dataset Output (data/field_test/field_test_results.csv)
+Case 1 (N < 50): User may optionally click [ COMPLETE REMAINING N AUTOMATICALLY ]
+Case 2 (N == 50): Status = TARGET REACHED ✓ (No auto completion needed)
+Case 3 (N > 50): Status = TARGET REACHED ✓ (50 selected deterministically)
 ```
 
-### Deterministic IP Selection Rule
-Modern web domains frequently resolve to multiple IPv4 and IPv6 addresses (CDNs, Anycast, load balancing). To ensure reproducible geolocation querying:
-1. The **first valid IPv4 address** returned by DNS is selected for geolocation.
-2. If no IPv4 address exists, the **first valid IPv6 address** is selected.
-3. **Complete DNS Preservation:** All returned IPv4 and IPv6 addresses are preserved in the research dataset (delimited by semicolons `;`).
+### Key Methodology Principles
+1. **History as Source of Truth:** Normal user lookups executed during regular application usage form the primary empirical observation pool.
+2. **Zero Automatic Execution on Screen Load:** Opening the Field Project tab never launches automatic testing.
+3. **Controlled Automatic Completion:** If fewer than 50 valid observations exist in History, the user may optionally click `[ COMPLETE REMAINING N AUTOMATICALLY ]`. This executes *only* the exact remaining number of website lookups required to reach 50, using standard `perform_lookup(domain, save_to_db=True)` so lookups are saved through the normal History mechanism.
+4. **Overrun Prevention:** Automatic completion never runs all 50 websites if only N are required.
+5. **History Integrity:** Raw SQLite History is never deleted, truncated, or modified when generating the field project dataset.
+
+---
+
+## 3. Sampling & Deduplication Rules
+
+- **Sampling Method:** Purposive / Convenience Sampling across 11 diverse website categories (Search, Technology, Social Media, E-commerce, Reference, Education, News, Government, Finance, Entertainment, Cloud Services).
+- **Deduplication Rule:** Multiple lookups of the same domain in History are deduplicated deterministically by domain name (preserving the earliest/latest unique observation per domain).
+- **Sample Stability:** The 50 website domains are derived from user lookups and complemented by `data/field_test/websites.csv` when automatic completion is requested. Failed lookups are preserved as valid empirical observations rather than omitted.
 
 ---
 
@@ -78,4 +84,4 @@ Modern web domains frequently resolve to multiple IPv4 and IPv6 addresses (CDNs,
 1. **Approximate Geolocation:** IP geolocation maps IP addresses to network registry allocations; it does not indicate exact physical server addresses or user physical locations.
 2. **Time-Dependent DNS:** DNS resolution results vary over time and across geographic lookup origins due to Content Delivery Networks (CDNs), Anycast routing, and dynamic load balancing.
 3. **Data Integrity & Non-Fabrication:** Missing provider attributes default to `"N/A"` or null. Values are never fabricated.
-4. **Rate Limit Compliance:** Sequential execution enforces request pacing (0.5s inter-request delay) to respect external API rate limits.
+4. **Controlled Pacing:** Sequential execution enforces request pacing (0.5s inter-request delay) to respect external API rate limits.

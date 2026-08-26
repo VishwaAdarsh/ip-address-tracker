@@ -1,139 +1,178 @@
 """
-Unit tests for services/field_test_service.py.
+Unit tests for services/field_test_service.py (Manual-First Field Project Workflow).
 """
 import csv
+import os
 import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from core.normalizer import GeoStatus
+from database.db import save_lookup
+from database.models import LookupRecord
 from services.field_test_service import (
     FIELD_TEST_HEADERS,
+    export_field_dataset_from_history,
+    get_field_project_status,
     load_test_websites,
-    run_field_test,
+    run_automatic_completion,
 )
-from services.lookup_service import LookupResult, LookupStatus
+from services.lookup_service import LookupResult, LookupStatus, perform_lookup
 
 
-class TestFieldTestService(unittest.TestCase):
-    """Test suite for field-test dataset loading, validation, sequential execution, and CSV output."""
+class TestFieldTestServiceManualFirst(unittest.TestCase):
+    """Test suite for manual-first field project workflow and automatic completion."""
 
-    def test_load_test_websites_success(self):
-        """Test loading predefined websites.csv dataset."""
-        websites = load_test_websites()
-        self.assertEqual(len(websites), 50)
+    def setUp(self):
+        self.tmp_dir = tempfile.TemporaryDirectory()
+        self.db_path = os.path.join(self.tmp_dir.name, "test_field.db")
+        self.csv_path = os.path.join(self.tmp_dir.name, "test_results.csv")
 
-        ids = [w["test_id"] for w in websites]
-        domains = [w["domain"] for w in websites]
+    def tearDown(self):
+        self.tmp_dir.cleanup()
 
-        # Verify IDs 1 to 50
-        self.assertEqual(ids, [str(i) for i in range(1, 51)])
-        # Verify 50 unique domains
-        self.assertEqual(len(set(domains)), 50)
-
-    def test_load_test_websites_duplicate_validation(self):
-        """Test validation error detection for invalid CSV files."""
-        with tempfile.NamedTemporaryFile("w+", delete=False, suffix=".csv") as tmp:
-            tmp_path = tmp.name
-            tmp.write("test_id,domain,category\n1,example.com,Tech\n1,example2.com,Tech\n")
-
-        with self.assertRaises(ValueError):
-            load_test_websites(tmp_path)
-
-    @patch("services.field_test_service.perform_lookup")
-    def test_run_field_test_sequential_and_csv_output(self, mock_perform_lookup):
-        """Test sequential execution and CSV research dataset output using mocked lookups."""
-        mock_result = LookupResult(
-            input="google.com",
-            normalized_input="google.com",
+    def _create_mock_result(self, domain: str, ip: str = "1.1.1.1") -> LookupResult:
+        return LookupResult(
+            input=domain,
+            normalized_input=domain,
             input_type="DOMAIN",
             overall_status=LookupStatus.SUCCESS,
             dns_status="SUCCESS",
             geolocation_status="SUCCESS",
-            resolved_addresses=["142.250.190.46"],
-            ipv4_addresses=["142.250.190.46"],
-            ipv6_addresses=[],
-            selected_ip="142.250.190.46",
+            resolved_addresses=[ip],
+            ipv4_addresses=[ip],
+            selected_ip=ip,
             ip_version="IPv4",
             country="United States",
             country_code="US",
             region="California",
-            city="Mountain View",
-            latitude=37.386,
-            longitude=-122.0838,
-            timezone="America/Los_Angeles",
-            organization="Google LLC",
-            isp="Google LLC",
-            asn="AS15169",
-            dns_response_time_ms=12.5,
-            api_response_time_ms=110.2,
-            total_response_time_ms=122.7,
-        )
-        mock_perform_lookup.return_value = mock_result
-
-        test_websites = [
-            {"test_id": "1", "domain": "google.com", "category": "Search"},
-            {"test_id": "2", "domain": "bing.com", "category": "Search"},
-        ]
-
-        progress_calls = []
-
-        def _cb(curr, tot, dom, res):
-            progress_calls.append((curr, tot, dom))
-
-        with tempfile.NamedTemporaryFile("w+", delete=False, suffix=".csv") as tmp:
-            tmp_csv = tmp.name
-
-        results = run_field_test(
-            websites=test_websites,
-            output_csv_path=tmp_csv,
-            progress_callback=_cb,
-            delay_seconds=0.0,
+            city="San Francisco",
+            latitude=37.7749,
+            longitude=-122.4194,
+            organization="Cloudflare",
+            isp="Cloudflare",
+            asn="AS13335",
+            dns_response_time_ms=10.0,
+            api_response_time_ms=50.0,
+            total_response_time_ms=60.0,
         )
 
-        self.assertEqual(len(results), 2)
-        self.assertEqual(len(progress_calls), 2)
-        self.assertEqual(mock_perform_lookup.call_count, 2)
+    def test_scenario_1_history_0_observations(self):
+        """Scenario 1: History contains 0 valid observations -> remaining = 50."""
+        st = get_field_project_status(db_path=self.db_path)
+        self.assertEqual(st["available_count"], 0)
+        self.assertEqual(st["remaining"], 50)
+        self.assertEqual(st["status"], "INCOMPLETE")
 
-        # Verify CSV contents
-        with open(tmp_csv, "r", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            rows = list(reader)
-            self.assertEqual(len(rows), 2)
-            self.assertEqual(rows[0]["test_id"], "1")
-            self.assertEqual(rows[0]["domain"], "google.com")
-            self.assertEqual(rows[0]["selected_ip"], "142.250.190.46")
-            self.assertEqual(rows[0]["country"], "United States")
+    def test_scenario_2_history_20_observations(self):
+        """Scenario 2: History contains 20 valid observations -> remaining = 30."""
+        for i in range(1, 21):
+            res = self._create_mock_result(f"site{i}.com")
+            save_lookup(res, db_path=self.db_path)
+
+        st = get_field_project_status(db_path=self.db_path)
+        self.assertEqual(st["available_count"], 20)
+        self.assertEqual(st["remaining"], 30)
+        self.assertEqual(st["status"], "INCOMPLETE")
+
+    def test_scenario_3_history_49_observations(self):
+        """Scenario 3: History contains 49 valid observations -> remaining = 1."""
+        for i in range(1, 50):
+            res = self._create_mock_result(f"site{i}.com")
+            save_lookup(res, db_path=self.db_path)
+
+        st = get_field_project_status(db_path=self.db_path)
+        self.assertEqual(st["available_count"], 49)
+        self.assertEqual(st["remaining"], 1)
+
+    def test_scenario_4_history_exactly_50_observations(self):
+        """Scenario 4: History contains exactly 50 -> no automatic completion required."""
+        for i in range(1, 51):
+            res = self._create_mock_result(f"site{i}.com")
+            save_lookup(res, db_path=self.db_path)
+
+        st = get_field_project_status(db_path=self.db_path)
+        self.assertEqual(st["available_count"], 50)
+        self.assertEqual(st["remaining"], 0)
+        self.assertEqual(st["status"], "TARGET_REACHED")
+
+    def test_scenario_5_history_70_observations(self):
+        """Scenario 5: History contains 70 observations -> target already reached."""
+        for i in range(1, 71):
+            res = self._create_mock_result(f"site{i}.com")
+            save_lookup(res, db_path=self.db_path)
+
+        st = get_field_project_status(db_path=self.db_path)
+        self.assertEqual(st["available_count"], 70)
+        self.assertEqual(st["remaining"], 0)
+        self.assertEqual(st["status"], "TARGET_REACHED")
+
+    def test_scenario_6_duplicate_domain_deduplication(self):
+        """Scenario 6: Duplicate domain observations deduplicated properly."""
+        # Add 10 lookups for google.com
+        for _ in range(10):
+            save_lookup(self._create_mock_result("google.com"), db_path=self.db_path)
+
+        st = get_field_project_status(db_path=self.db_path)
+        self.assertEqual(st["available_count"], 1)
+        self.assertEqual(st["remaining"], 49)
 
     @patch("services.field_test_service.perform_lookup")
-    def test_run_field_test_failure_preservation(self, mock_perform_lookup):
-        """Test that individual lookup failures are preserved in CSV output."""
-        failed_result = LookupResult(
-            input="failed-domain.xyz",
-            normalized_input="failed-domain.xyz",
-            input_type="DOMAIN",
-            overall_status=LookupStatus.DNS_FAILED,
-            dns_status="DNS_FAILED",
-            geolocation_status="SKIPPED",
-            error_message="Domain resolution failed",
-        )
-        mock_perform_lookup.return_value = failed_result
-
-        test_websites = [
-            {"test_id": "1", "domain": "failed-domain.xyz", "category": "Tech"}
-        ]
-
-        with tempfile.NamedTemporaryFile("w+", delete=False, suffix=".csv") as tmp:
-            tmp_csv = tmp.name
-
-        results = run_field_test(
-            websites=test_websites, output_csv_path=tmp_csv, delay_seconds=0.0
+    def test_scenario_7_automatic_completion_overrun_prevention(self, mock_perform_lookup):
+        """Scenario 7: Automatic completion requested for 13 -> attempts at most 13 lookups."""
+        mock_perform_lookup.side_effect = lambda dom, save_to_db=True, db_path=None: save_lookup(
+            self._create_mock_result(dom), db_path=self.db_path
         )
 
-        self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]["overall_status"], "DNS_FAILED")
-        self.assertEqual(results[0]["dns_status"], "DNS_FAILED")
-        self.assertEqual(results[0]["error_message"], "Domain resolution failed")
+        # Seed 37 unique domains
+        for i in range(1, 38):
+            save_lookup(self._create_mock_result(f"existing{i}.com"), db_path=self.db_path)
+
+        st_before = get_field_project_status(db_path=self.db_path)
+        self.assertEqual(st_before["remaining"], 13)
+
+        run_automatic_completion(db_path=self.db_path, output_csv_path=self.csv_path, delay_seconds=0.0)
+
+        # Ensure no more than 13 lookups were attempted
+        self.assertEqual(mock_perform_lookup.call_count, 13)
+
+        st_after = get_field_project_status(db_path=self.db_path)
+        self.assertEqual(st_after["available_count"], 50)
+        self.assertEqual(st_after["remaining"], 0)
+
+    def test_scenario_8_existing_history_remains_intact(self):
+        """Scenario 8: Existing History records remain intact during field export."""
+        res = self._create_mock_result("example.org")
+        rec_id = save_lookup(res, db_path=self.db_path)
+
+        export_field_dataset_from_history(db_path=self.db_path, output_csv_path=self.csv_path)
+
+        st = get_field_project_status(db_path=self.db_path)
+        self.assertEqual(st["available_count"], 1)
+        self.assertTrue(os.path.exists(self.csv_path))
+
+    def test_scenario_9_normal_manual_lookup(self):
+        """Scenario 9: Normal manual lookup adds to History and updates status."""
+        st1 = get_field_project_status(db_path=self.db_path)
+        self.assertEqual(st1["available_count"], 0)
+
+        res = perform_lookup("test-manual.com", save_to_db=True, db_path=self.db_path)
+        self.assertEqual(res.normalized_input, "test-manual.com")
+
+        st2 = get_field_project_status(db_path=self.db_path)
+        self.assertEqual(st2["available_count"], 1)
+
+    def test_scenario_10_field_project_refresh(self):
+        """Scenario 10: Field project refreshes count after new manual lookups."""
+        st1 = get_field_project_status(db_path=self.db_path)
+        self.assertEqual(st1["available_count"], 0)
+
+        # Perform 5 manual lookups
+        for d in ["siteA.com", "siteB.com", "siteC.com", "siteD.com", "siteE.com"]:
+            perform_lookup(d, save_to_db=True, db_path=self.db_path)
+
+        st2 = get_field_project_status(db_path=self.db_path)
+        self.assertEqual(st2["available_count"], 5)
+        self.assertEqual(st2["remaining"], 45)
 
 
 if __name__ == "__main__":

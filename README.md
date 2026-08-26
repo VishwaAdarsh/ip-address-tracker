@@ -15,7 +15,7 @@ Developed as a College Semester Field Project adhering strictly to the architect
 - **Persistent Local SQLite History:** Auto-saves completed lookups to `data/ip_tracker.db` with parameterized queries (`database/db.py`).
 - **IP PULSE Desktop GUI Console:** Dark-themed desktop UI built with Python Tkinter/ttk featuring non-blocking background daemon threads (`gui/main_window.py`).
 - **Interactive Map Visualization:** Renders OpenStreetMap tiles with location markers via `tkintermapview` (`gui/map_view.py`).
-- **50-Website Field-Test Engine:** Automates controlled sequential batch testing across 50 predefined public websites (`data/field_test/websites.csv` & `services/field_test_service.py`).
+- **Manual-First Field-Test Engine:** Collects research observations from regular user lookups in SQLite History (`data/ip_tracker.db`). Offers controlled automatic completion only when fewer than 50 valid observations exist (`services/field_test_service.py`).
 - **Data Analysis & Visualizations:** Computes descriptive statistics (mean, median, min, max, std, percentiles) and renders 7 dark-themed PNG research plots (`analysis/analyzer.py` & `analysis/visualizer.py`).
 
 ---
