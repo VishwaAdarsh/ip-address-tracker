@@ -114,10 +114,10 @@ def normalize_geo_response(
         raw_data.get("country_name") or raw_data.get("country") or "N/A"
     ).strip()
     country_code = str(
-        raw_data.get("country_code") or raw_data.get("country") or "N/A"
+        raw_data.get("country_code") or raw_data.get("countryCode") or raw_data.get("country") or "N/A"
     ).strip()
     region = str(
-        raw_data.get("region") or raw_data.get("region_name") or "N/A"
+        raw_data.get("region_name") or raw_data.get("regionName") or raw_data.get("region") or "N/A"
     ).strip()
     city = str(raw_data.get("city") or "N/A").strip()
 
