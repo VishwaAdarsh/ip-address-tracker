@@ -106,9 +106,7 @@ class AnalyticsView(tk.Frame):
             highlightbackground=CARD_BORDER,
             highlightthickness=1,
         )
-        empty_frame.grid(row=0, column=0, sticky="nsew", pady=10)
-        empty_frame.columnconfigure(0, weight=1)
-        empty_frame.rowconfigure(0, weight=1)
+        empty_frame.pack(fill="both", expand=True, padx=5, pady=10)
 
         msg_lbl = tk.Label(
             empty_frame,
@@ -225,13 +223,13 @@ class AnalyticsView(tk.Frame):
         card = tk.Frame(parent, bg=CARD_BG, highlightbackground=CARD_BORDER, highlightthickness=1)
         card.grid(row=0, column=col, sticky="nsew", padx=5, pady=5)
 
-        t_lbl = tk.Label(card, text=title, font=("Segoe UI", 8.5, "bold"), fg=ACCENT_BLUE, bg=CARD_BG)
+        t_lbl = tk.Label(card, text=title, font=("Segoe UI", 8, "bold"), fg=ACCENT_BLUE, bg=CARD_BG)
         t_lbl.pack(anchor="w", padx=12, pady=(10, 2))
 
         v_lbl = tk.Label(card, text=val, font=("Segoe UI", 13, "bold"), fg=TEXT_LIGHT, bg=CARD_BG)
         v_lbl.pack(anchor="w", padx=12, pady=2)
 
-        s_lbl = tk.Label(card, text=sub, font=("Segoe UI", 8.5), fg=TEXT_MUTED, bg=CARD_BG)
+        s_lbl = tk.Label(card, text=sub, font=("Segoe UI", 8), fg=TEXT_MUTED, bg=CARD_BG)
         s_lbl.pack(anchor="w", padx=12, pady=(0, 10))
 
     def _display_selected_chart(self) -> None:

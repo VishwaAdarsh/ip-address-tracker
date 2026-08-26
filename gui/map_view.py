@@ -100,7 +100,7 @@ class MapView(tk.Frame):
         disc_lbl = tk.Label(
             header_frame,
             text="* DISCLAIMER: Location shown is an approximate IP geolocation and may not represent the exact physical location of the server, device, or user.",
-            font=("Segoe UI", 8.5, "bold"),
+            font=("Segoe UI", 8, "bold"),
             fg=ACCENT_BLUE,
             bg=CARD_BG,
             anchor="w",

@@ -45,7 +45,10 @@ class FieldTestView(tk.Frame):
     def _configure_styles(self) -> None:
         """Configure custom Treeview styles for Field Test table."""
         style = ttk.Style()
-        style.theme_use("clamp")
+        try:
+            style.theme_use("clam")
+        except Exception:
+            pass
         style.configure(
             "FieldTest.Treeview",
             background=CARD_BG,

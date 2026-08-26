@@ -43,7 +43,10 @@ class HistoryView(tk.Frame):
     def _configure_treeview_styles(self) -> None:
         """Configure custom dark theme styles for ttk.Treeview."""
         style = ttk.Style()
-        style.theme_use("clamp")
+        try:
+            style.theme_use("clam")
+        except Exception:
+            pass
 
         style.configure(
             "History.Treeview",
