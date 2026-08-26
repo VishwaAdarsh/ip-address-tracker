@@ -7,10 +7,16 @@ A Python-based application designed for resolving website domains to public IP a
 This project is a College Semester Field Project focused on IP/DNS analysis and approximate geolocation. It evaluates DNS resolution behaviors, public IP address locations, network providers, and infrastructure distributions.
 
 ## Current Status
-- **Current Phase:** Phase 4 — IP Geolocation Service
-- **Status:** Complete (HTTPS geolocation client, response normalizer, settings, and unit tests implemented)
-- **Primary Geolocation Provider:** `ipapi.co` (HTTPS, supports IPv4/IPv6, country, region, city, coordinates, timezone, ASN, org)
+- **Current Phase:** Phase 5 — Integrated Lookup Engine
+- **Status:** Complete (Unified lookup orchestration, deterministic IP selection rule, and integration tests implemented)
+- **Primary Geolocation Provider:** `ipapi.co` (HTTPS, supports IPv4/IPv6)
 - **Master Reference:** [architecture.md](architecture.md)
+
+### Deterministic IP Selection Rule
+When a domain resolves to multiple IP addresses:
+1. The **first valid IPv4 address** returned by DNS resolution is selected for geolocation.
+2. If no IPv4 address is available, the **first valid IPv6 address** is selected.
+3. All resolved IPv4 and IPv6 addresses are preserved in `resolved_addresses` for analysis.
 
 ## Technology Stack
 - **Language:** Python 3 (3.14+)
@@ -53,7 +59,7 @@ Implementation proceeds strictly phase-by-phase according to [architecture.md](a
 - **Phase 2:** Input Validation (Complete)
 - **Phase 3:** DNS Resolution (Complete)
 - **Phase 4:** Geolocation Service (Complete)
-- **Phase 5:** Integrated Lookup Engine
+- **Phase 5:** Integrated Lookup Engine (Complete)
 - **Phase 6:** Database & History
 - **Phase 7:** GUI Development
 - **Phase 8:** Map Visualization
