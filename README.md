@@ -7,11 +7,12 @@ A Python-based application designed for resolving website domains to public IP a
 This project is a College Semester Field Project focused on IP/DNS analysis and approximate geolocation. It evaluates DNS resolution behaviors, public IP address locations, network providers, and infrastructure distributions.
 
 ## Current Status
-- **Current Phase:** Phase 8 — Map Visualization
-- **Status:** Complete (Interactive OpenStreetMap rendering via `tkintermapview`, coordinate validation, fallback UI states, and map tests implemented)
+- **Current Phase:** Phase 9 — 50-Website Field Test & Data Collection
+- **Status:** Complete (Predefined 50-website dataset `websites.csv`, sequential field-test service, research CSV exporter, GUI batch view, methodology documentation, and test suite implemented)
 - **Primary Geolocation Provider:** `ipapi.co` (HTTPS, supports IPv4/IPv6)
 - **Database Engine:** SQLite (`data/ip_tracker.db`)
-- **GUI Engine:** Python Tkinter (`IP PULSE` Console with embedded OpenStreetMap)
+- **Research Dataset:** `data/field_test/field_test_results.csv` (Independent of lookup history)
+- **GUI Engine:** Python Tkinter (`IP PULSE` Console)
 - **Master Reference:** [architecture.md](architecture.md)
 
 ### Deterministic IP Selection Rule
@@ -68,7 +69,7 @@ Implementation proceeds strictly phase-by-phase according to [architecture.md](a
 - **Phase 6:** Database & History (Complete)
 - **Phase 7:** GUI Development (Complete)
 - **Phase 8:** Map Visualization (Complete)
-- **Phase 9:** Field-Test Module (50 Websites)
+- **Phase 9:** Field-Test Module (50 Websites) (Complete)
 - **Phase 10:** Data Analysis
 - **Phase 11:** Charts & Dashboard Analytics
 - **Phase 12:** Data Export

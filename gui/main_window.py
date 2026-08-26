@@ -3,13 +3,14 @@ Main Application Window Module for IP Address Tracker & Geolocation Tool.
 
 Provides:
 - Top Header bar ("IP PULSE - Network Intelligence Console", "SYSTEM ONLINE" status badge)
-- Slim dark sidebar navigation (Dashboard, History)
-- Main container switching between ResultsView and HistoryView
+- Slim dark sidebar navigation (Dashboard, History, Field Test)
+- Main container switching between ResultsView, HistoryView, and FieldTestView
 - Clean window geometry management and dark styling
 """
 import tkinter as tk
 from typing import Optional
 
+from gui.field_test_view import FieldTestView
 from gui.history_view import HistoryView
 from gui.results_view import ResultsView
 
@@ -29,8 +30,8 @@ class MainWindow(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
         self.title("IP PULSE — Network Intelligence Console")
-        self.geometry("1100x740")
-        self.minsize(920, 620)
+        self.geometry("1120x760")
+        self.minsize(940, 640)
         self.configure(bg=BG_DARK)
 
         # Configure root layout grid
@@ -140,6 +141,23 @@ class MainWindow(tk.Tk):
         )
         self.hist_btn.pack(fill="x", padx=10, pady=4)
 
+        self.field_btn = tk.Button(
+            sidebar_frame,
+            text="FIELD TEST",
+            font=("Segoe UI", 9, "bold"),
+            bg=SIDEBAR_BG,
+            fg=TEXT_LIGHT,
+            activebackground="#334155",
+            activeforeground="#FFFFFF",
+            bd=0,
+            cursor="hand2",
+            anchor="w",
+            padx=15,
+            pady=8,
+            command=self.show_field_test,
+        )
+        self.field_btn.pack(fill="x", padx=10, pady=4)
+
     def _create_content_area(self) -> None:
         """Create container frame housing views."""
         self.content_container = tk.Frame(self, bg=BG_DARK)
@@ -152,28 +170,44 @@ class MainWindow(tk.Tk):
             self.content_container, on_lookup_complete=self._on_lookup_complete
         )
         self.history_view = HistoryView(self.content_container)
+        self.field_test_view = FieldTestView(self.content_container)
 
     def show_dashboard(self) -> None:
         """Switch view to Dashboard."""
         self.history_view.grid_forget()
+        self.field_test_view.grid_forget()
         self.results_view.grid(row=0, column=0, sticky="nsew")
         self._update_nav_buttons(active="dashboard")
 
     def show_history(self) -> None:
         """Switch view to History."""
         self.results_view.grid_forget()
+        self.field_test_view.grid_forget()
         self.history_view.refresh_history()
         self.history_view.grid(row=0, column=0, sticky="nsew")
         self._update_nav_buttons(active="history")
 
+    def show_field_test(self) -> None:
+        """Switch view to Field Test."""
+        self.results_view.grid_forget()
+        self.history_view.grid_forget()
+        self.field_test_view.grid(row=0, column=0, sticky="nsew")
+        self._update_nav_buttons(active="field_test")
+
     def _update_nav_buttons(self, active: str) -> None:
         """Highlight active sidebar navigation button."""
-        if active == "dashboard":
-            self.dash_btn.config(bg=ACCENT_BLUE, fg="#FFFFFF")
-            self.hist_btn.config(bg=SIDEBAR_BG, fg=TEXT_LIGHT)
-        else:
-            self.dash_btn.config(bg=SIDEBAR_BG, fg=TEXT_LIGHT)
-            self.hist_btn.config(bg=ACCENT_BLUE, fg="#FFFFFF")
+        self.dash_btn.config(
+            bg=ACCENT_BLUE if active == "dashboard" else SIDEBAR_BG,
+            fg="#FFFFFF" if active == "dashboard" else TEXT_LIGHT,
+        )
+        self.hist_btn.config(
+            bg=ACCENT_BLUE if active == "history" else SIDEBAR_BG,
+            fg="#FFFFFF" if active == "history" else TEXT_LIGHT,
+        )
+        self.field_btn.config(
+            bg=ACCENT_BLUE if active == "field_test" else SIDEBAR_BG,
+            fg="#FFFFFF" if active == "field_test" else TEXT_LIGHT,
+        )
 
     def _on_lookup_complete(self) -> None:
         """Callback triggered when a lookup completes to update history data."""
