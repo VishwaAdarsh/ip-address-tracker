@@ -1,16 +1,17 @@
 """
 IP Address Tracker & Geolocation Tool
-Main Application Entry Point (Phase 5 Integrated Engine Demonstration)
+Main Application Entry Point (Phase 6 Database & History Integration)
 """
 import sys
 from config.settings import GEO_PROVIDER_NAME
+from database.db import get_lookup_history
 from services.lookup_service import perform_lookup
 
 
 def main() -> None:
     print("IP Address Tracker & Geolocation Tool")
     print("-------------------------------------")
-    print("Phase 5: Integrated Lookup Engine verified successfully.")
+    print("Phase 6: Database & Lookup History verified successfully.")
     print(f"Provider: {GEO_PROVIDER_NAME}")
     print(f"Running on Python {sys.version.split()[0]}")
     print()
@@ -18,7 +19,7 @@ def main() -> None:
     target_input = sys.argv[1] if len(sys.argv) > 1 else "google.com"
     print(f"Executing Integrated Lookup for: '{target_input}'\n")
 
-    res = perform_lookup(target_input)
+    res = perform_lookup(target_input, save_to_db=True)
 
     print("--- Lookup Summary ---")
     print(f"Input                 : {res.input}")
@@ -52,6 +53,14 @@ def main() -> None:
 
     if res.error_message:
         print(f"\nError Message         : {res.error_message}")
+
+    print("\n--- Recent SQLite Lookup History (Newest First) ---")
+    history = get_lookup_history(limit=5)
+    for rec in history:
+        print(
+            f"  [ID {rec.id}] {rec.timestamp[:19]} | Input: '{rec.input_value}' ({rec.input_type}) "
+            f"| IP: {rec.ip_address} | Location: {rec.city}, {rec.country} | Status: {rec.status}"
+        )
 
 
 if __name__ == "__main__":

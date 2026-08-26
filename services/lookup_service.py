@@ -7,18 +7,23 @@ Orchestrates:
 - Deterministic IP selection (IPv4 priority over IPv6)
 - IP Geolocation retrieval (core.geo_service)
 - Response normalization (core.normalizer)
+- SQLite Lookup History persistence (database.db)
 - Complete pipeline timing and stage error handling
 """
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
+import logging
+from pathlib import Path
 import time
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from core.dns_resolver import DNSStatus, resolve_domain
 from core.geo_service import get_geolocation
 from core.normalizer import GeoStatus
 from core.validator import InputType, validate_input
+
+logger = logging.getLogger(__name__)
 
 
 class LookupStatus(Enum):
@@ -80,7 +85,11 @@ def select_primary_ip(
     return None
 
 
-def perform_lookup(raw_input: str) -> LookupResult:
+def perform_lookup(
+    raw_input: str,
+    save_to_db: bool = True,
+    db_path: Optional[Union[str, Path]] = None,
+) -> LookupResult:
     """
     Execute the integrated lookup workflow for a domain or IP address.
 
@@ -90,23 +99,39 @@ def perform_lookup(raw_input: str) -> LookupResult:
     3. If IP: skip DNS resolution
     4. Query geolocation service for selected IP
     5. Measure component & total timing
-    6. Return unified LookupResult with stage-specific statuses
+    6. Persist result to SQLite database if save_to_db is True
+    7. Return unified LookupResult with stage-specific statuses
     """
     start_total_time = time.perf_counter()
+
+    # Helper to optionally save result without allowing DB failure to break lookup result
+    def _finalize_result(res: LookupResult) -> LookupResult:
+        if save_to_db:
+            try:
+                from database.db import save_lookup
+
+                save_lookup(res, db_path=db_path)
+            except Exception as e:
+                logger.warning(
+                    f"Failed to persist lookup result to database: {e}"
+                )
+        return res
 
     # Step 1: Validate input
     val_res = validate_input(raw_input)
     if not val_res.is_valid:
         elapsed_total = round((time.perf_counter() - start_total_time) * 1000, 2)
-        return LookupResult(
-            input=raw_input if raw_input is not None else "",
-            normalized_input=val_res.normalized_input,
-            input_type=val_res.input_type.value,
-            dns_status="NOT_ATTEMPTED",
-            geolocation_status="NOT_ATTEMPTED",
-            overall_status=LookupStatus.INVALID_INPUT,
-            error_message=val_res.error_message or "Invalid input format",
-            total_response_time_ms=elapsed_total,
+        return _finalize_result(
+            LookupResult(
+                input=raw_input if raw_input is not None else "",
+                normalized_input=val_res.normalized_input,
+                input_type=val_res.input_type.value,
+                dns_status="NOT_ATTEMPTED",
+                geolocation_status="NOT_ATTEMPTED",
+                overall_status=LookupStatus.INVALID_INPUT,
+                error_message=val_res.error_message or "Invalid input format",
+                total_response_time_ms=elapsed_total,
+            )
         )
 
     norm_input = val_res.normalized_input
@@ -141,7 +166,31 @@ def perform_lookup(raw_input: str) -> LookupResult:
             elapsed_total = round(
                 (time.perf_counter() - start_total_time) * 1000, 2
             )
-            return LookupResult(
+            return _finalize_result(
+                LookupResult(
+                    input=raw_input,
+                    normalized_input=norm_input,
+                    input_type=input_type_str,
+                    resolved_addresses=resolved_addresses,
+                    ipv4_addresses=ipv4_addresses,
+                    ipv6_addresses=ipv6_addresses,
+                    selected_ip=None,
+                    dns_response_time_ms=dns_time_ms,
+                    total_response_time_ms=elapsed_total,
+                    dns_status=dns_status_str,
+                    geolocation_status="NOT_ATTEMPTED",
+                    overall_status=LookupStatus.DNS_FAILED,
+                    error_message=dns_res.error_message
+                    or "DNS resolution failed",
+                )
+            )
+
+        selected_ip = select_primary_ip(ipv4_addresses, ipv6_addresses)
+
+    if not selected_ip:
+        elapsed_total = round((time.perf_counter() - start_total_time) * 1000, 2)
+        return _finalize_result(
+            LookupResult(
                 input=raw_input,
                 normalized_input=norm_input,
                 input_type=input_type_str,
@@ -154,27 +203,8 @@ def perform_lookup(raw_input: str) -> LookupResult:
                 dns_status=dns_status_str,
                 geolocation_status="NOT_ATTEMPTED",
                 overall_status=LookupStatus.DNS_FAILED,
-                error_message=dns_res.error_message or "DNS resolution failed",
+                error_message="No valid target IP could be selected",
             )
-
-        selected_ip = select_primary_ip(ipv4_addresses, ipv6_addresses)
-
-    if not selected_ip:
-        elapsed_total = round((time.perf_counter() - start_total_time) * 1000, 2)
-        return LookupResult(
-            input=raw_input,
-            normalized_input=norm_input,
-            input_type=input_type_str,
-            resolved_addresses=resolved_addresses,
-            ipv4_addresses=ipv4_addresses,
-            ipv6_addresses=ipv6_addresses,
-            selected_ip=None,
-            dns_response_time_ms=dns_time_ms,
-            total_response_time_ms=elapsed_total,
-            dns_status=dns_status_str,
-            geolocation_status="NOT_ATTEMPTED",
-            overall_status=LookupStatus.DNS_FAILED,
-            error_message="No valid target IP could be selected",
         )
 
     # Step 3: Perform Geolocation lookup for selected IP
@@ -189,7 +219,7 @@ def perform_lookup(raw_input: str) -> LookupResult:
         else LookupStatus.GEO_FAILED
     )
 
-    return LookupResult(
+    final_result = LookupResult(
         input=raw_input,
         normalized_input=norm_input,
         input_type=input_type_str,
@@ -216,3 +246,5 @@ def perform_lookup(raw_input: str) -> LookupResult:
         overall_status=overall_status,
         error_message=geo_res.error_message,
     )
+
+    return _finalize_result(final_result)
