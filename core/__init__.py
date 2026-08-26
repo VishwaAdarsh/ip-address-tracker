@@ -1,6 +1,7 @@
 """
 Core package for validation, resolution, geolocation, and normalization services.
 """
+from core.dns_resolver import DNSResult, DNSStatus, resolve_domain
 from core.validator import (
     InputType,
     ValidationResult,
@@ -19,4 +20,7 @@ __all__ = [
     "is_valid_ipv6",
     "normalize_input",
     "validate_input",
+    "DNSResult",
+    "DNSStatus",
+    "resolve_domain",
 ]
