@@ -1,7 +1,12 @@
 # IP Address Tracker & Geolocation Tool - Dependencies
-# Phase 8: Map Visualization
+
+# GUI Framework (PySide6 + QFluentWidgets Modern GUI)
+PySide6>=6.5.0
+PySide6-Fluent-Widgets>=1.1.0
+
+# Map Visualization Component
 tkintermapview>=1.30.0
 
-# Phase 10: Data Analysis & Visualization
+# Data Analysis & Research Visualization
 pandas>=2.0.0
 matplotlib>=3.7.0

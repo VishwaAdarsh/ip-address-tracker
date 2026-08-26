@@ -1,2 +1,3 @@
 Status,Count,Percentage
-SUCCESS,3,100.0
+SUCCESS,49,98.0
+DNS_FAILED,1,2.0

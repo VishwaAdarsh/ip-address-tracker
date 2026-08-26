@@ -1,11 +1,11 @@
 # Field-Test Data Analysis & Findings Report
 
 ## 1. Executive Summary
-- **Total Websites Analyzed:** 3
-- **Overall Success Rate:** 100.0% (3/3 lookups)
-- **Unique Geolocation Countries:** 2 (Top country: United States with 2 observations)
-- **IP Protocol Ratio:** IPv4: 3 | IPv6: 0
-- **Median Execution Time:** DNS: 12.15 ms | Geolocation API: 269.58 ms | Total Pipeline: 280.63 ms
+- **Total Websites Analyzed:** 50
+- **Overall Success Rate:** 98.0% (49/50 lookups)
+- **Unique Geolocation Countries:** 8 (Top country: United States with 20 observations)
+- **IP Protocol Ratio:** IPv4: 49 | IPv6: 0
+- **Median Execution Time:** DNS: 21.16 ms | Geolocation API: 277.29 ms | Total Pipeline: 302.2 ms
 
 ---
 
@@ -13,32 +13,32 @@
 
 | Metric | Sample Count | Mean (ms) | Std Dev (ms) | Min (ms) | P25 (ms) | Median (ms) | P75 (ms) | Max (ms) | IQR (ms) |
 |---|---|---|---|---|---|---|---|---|---|
-| **DNS Resolution** | 3 | 10.41 | 8.86 | 0.81 | 6.48 | 12.15 | 15.21 | 18.27 | 8.73 |
-| **Geolocation API** | 3 | 276.78 | 13.61 | 268.28 | 268.93 | 269.58 | 281.03 | 292.48 | 12.1 |
-| **Total Pipeline** | 3 | 287.43 | 21.09 | 270.57 | 275.6 | 280.63 | 295.86 | 311.08 | 20.25 |
+| **DNS Resolution** | 50 | 132.43 | 294.0 | 0.52 | 18.34 | 21.16 | 25.52 | 1143.83 | 7.18 |
+| **Geolocation API** | 50 | 299.25 | 155.33 | 0.0 | 269.99 | 277.29 | 289.32 | 1273.38 | 19.32 |
+| **Total Pipeline** | 50 | 431.68 | 309.4 | 249.23 | 292.54 | 302.2 | 320.24 | 1413.75 | 27.7 |
 
 *Note: Median is reported as the primary location metric due to right-skewed timing distributions caused by occasional network latencies.*
 
 ---
 
 ## 3. Geographic & Network Findings
-- **Geographic Representation:** Across 3 public websites, 2 distinct countries were identified. The United States was the most frequently geolocated country (2 sites).
+- **Geographic Representation:** Across 50 public websites, 8 distinct countries were identified. The United States was the most frequently geolocated country (20 sites).
 - **Network Providers & Infrastructure:** Major cloud and CDN infrastructure providers (e.g. Cloudflare, Fastly, Amazon CloudFront, Google LLC) represent a significant proportion of resolved target IPs.
 
 ---
 
 ## 4. Missing-Data & Quality Observations
 Missing attributes (e.g., unreturned city or region names from IP registry databases) were recorded explicitly as `"N/A"` without data fabrication:
-- **City:** 3 present (0 missing / 0.0%)
-- **Region:** 3 present (0 missing / 0.0%)
-- **Country:** 3 present (0 missing / 0.0%)
-- **Latitude:** 3 present (0 missing / 0.0%)
-- **Longitude:** 3 present (0 missing / 0.0%)
-- **Timezone:** 3 present (0 missing / 0.0%)
-- **Organization:** 3 present (0 missing / 0.0%)
-- **Isp:** 3 present (0 missing / 0.0%)
-- **Asn:** 3 present (0 missing / 0.0%)
-- **Selected_ip:** 3 present (0 missing / 0.0%)
+- **City:** 49 present (1 missing / 2.0%)
+- **Region:** 49 present (1 missing / 2.0%)
+- **Country:** 49 present (1 missing / 2.0%)
+- **Latitude:** 49 present (1 missing / 2.0%)
+- **Longitude:** 49 present (1 missing / 2.0%)
+- **Timezone:** 49 present (1 missing / 2.0%)
+- **Organization:** 46 present (4 missing / 8.0%)
+- **Isp:** 49 present (1 missing / 2.0%)
+- **Asn:** 49 present (1 missing / 2.0%)
+- **Selected_ip:** 49 present (1 missing / 2.0%)
 
 ---
 
