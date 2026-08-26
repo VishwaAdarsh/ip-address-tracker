@@ -12,6 +12,7 @@ from gui.modern.field_project_view import FieldProjectView
 from gui.modern.history_view import HistoryView
 from gui.modern.main_window import MainWindow
 from gui.modern.map_view import MapView, validate_coordinates
+from gui.modern.widgets.map_widget import MapWidget, generate_leaflet_html
 
 # Initialize single QApplication instance for Qt test environment
 app = QApplication.instance() or QApplication(sys.argv)
@@ -33,6 +34,29 @@ class TestModernGUI(unittest.TestCase):
 
         is_valid_out, _, _, _ = validate_coordinates(120.0, 45.0)
         self.assertFalse(is_valid_out)
+
+    def test_leaflet_html_generation(self):
+        """Test Leaflet.js HTML string formatting."""
+        html_str = generate_leaflet_html(37.4225, -122.0850, "8.8.8.8", "Mountain View, United States")
+        self.assertIn("37.4225", html_str)
+        self.assertIn("-122.085", html_str)
+        self.assertIn("8.8.8.8", html_str)
+        self.assertIn("OpenStreetMap", html_str)
+        self.assertIn("L.map", html_str)
+
+    def test_map_widget_instantiation(self):
+        """Test MapWidget QWebEngineView instantiation and fallback state."""
+        map_w = MapWidget()
+        self.assertIsNotNone(map_w.web_view)
+        map_w.set_location(37.4225, -122.0850, "8.8.8.8", "Mountain View, United States")
+
+        # Test missing coordinates fallback
+        map_w.set_location(None, None)
+        self.assertIn("MAP UNAVAILABLE", map_w.fallback_lbl.text())
+
+        # Test map connection failure state
+        map_w.show_map_failure()
+        self.assertIn("MAP CONNECTION UNAVAILABLE", map_w.fallback_lbl.text())
 
     def test_map_view_instantiation(self):
         """Test MapView widget instantiation and location setting."""
