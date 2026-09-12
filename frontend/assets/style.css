@@ -1,0 +1,84 @@
+/* IP PULSE - Stitch Obsidian Dark Theme Extensions */
+
+@layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+    background-color: #0f131c;
+    color: #dfe2ee;
+    font-family: 'Inter', sans-serif;
+  }
+  body {
+    overscroll-behavior: none;
+  }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0a0e16;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #262a33;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3c494e;
+  }
+}
+
+/* Custom Marker Pulsing for Leaflet Map */
+.pulse-marker-pin {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #00d2ff;
+  border: 3px solid #ffffff;
+  box-shadow: 0 0 15px #00d2ff, 0 0 30px #00d2ff;
+  animation: marker-pulse 2s infinite ease-in-out;
+}
+
+@keyframes marker-pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 10px #00d2ff;
+  }
+  50% {
+    transform: scale(1.15);
+    box-shadow: 0 0 25px #00d2ff, 0 0 45px rgba(0, 210, 255, 0.4);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 10px #00d2ff;
+  }
+}
+
+/* Leaflet Container Dark Inversion Filter for Obsidian Dark aesthetic */
+.leaflet-layer,
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out,
+.leaflet-control-attribution {
+  filter: brightness(0.7) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+}
+
+.leaflet-container {
+  background-color: #0f131c !important;
+}
+
+/* Custom Leaflet Popup Styling */
+.leaflet-popup-content-wrapper {
+  background: #181c24 !important;
+  color: #dfe2ee !important;
+  border: 1px solid #31353e !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+}
+
+.leaflet-popup-tip {
+  background: #181c24 !important;
+}
+
+/* Gauge Transitions */
+.gauge-fill {
+  transition: stroke-dashoffset 1s ease-in-out;
+}

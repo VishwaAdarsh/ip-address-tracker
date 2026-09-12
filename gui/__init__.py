@@ -1,8 +1,11 @@
 """
 GUI Package for IP Address Tracker & Geolocation Tool.
 
-Exposes modern PySide6 + QFluentWidgets interface while preserving legacy Tkinter implementation.
+Note: PySide6 GUI is retained for backward-compatibility; the primary presentation
+layer is now the Stitch Web Application (frontend/ and api/server.py).
 """
-from gui.modern.main_window import MainWindow
-
-__all__ = ["MainWindow"]
+try:
+    from gui.modern.main_window import MainWindow
+    __all__ = ["MainWindow"]
+except ImportError:
+    __all__ = []
