@@ -38,7 +38,10 @@ function initNavigation() {
 }
 
 function navigateTo(viewName) {
-  const views = ['home', 'history', 'field-study', 'analytics'];
+  if (viewName === 'research-dashboard') {
+    viewName = 'analytics';
+  }
+  const views = ['home', 'history', 'field-study', 'analytics', 'investigation'];
   
   views.forEach(v => {
     const el = document.getElementById(`view-${v}`);
@@ -78,6 +81,13 @@ function navigateTo(viewName) {
     loadFieldStudy();
   } else if (viewName === 'analytics') {
     loadAnalytics();
+    setTimeout(() => {
+      if (window.analyticsMapInstance) {
+        window.analyticsMapInstance.invalidateSize();
+      }
+    }, 200);
+  } else if (viewName === 'investigation') {
+    loadInvestigationWorkspace();
   }
 }
 
@@ -298,6 +308,11 @@ function renderAnalysisResults(data) {
   // 8. Phase 18: Render Intelligence Provenance Chain & IP Personality
   renderIntelligenceChain(data.intelligence_chain, b, intel);
   renderIPPersonality(data.ip_personality, data.personality);
+
+  // Phase 22: Reset AI Explanation view for new scan target
+  if (typeof resetAIExplanationView === 'function') {
+    resetAIExplanationView();
+  }
 
   // 9. Phase 19: Set current target for Field Study curation
   const currentTarget = data.target || b.input || b.domain || b.selected_ip || '';
@@ -1162,28 +1177,303 @@ window.confirmAutoComplete = async function() {
 };
 
 // ----------------------------------------------------------------------------
-// Analytics View Management
+// Analytics View Management (Phase 24 Visualization & Research Dashboard)
 // ----------------------------------------------------------------------------
+
+let activeAnalyticsFilters = {
+  country: 'all',
+  infrastructure: 'all',
+  trust_class: 'all',
+  risk_class: 'all',
+  https_status: 'all',
+  ip_version: 'all',
+  range: 'all'
+};
+
+window.analyticsMapInstance = null;
+window.analyticsMarkersLayer = null;
+
+function handleAnalyticsFilterChange(filterKey, filterVal) {
+  activeAnalyticsFilters[filterKey] = filterVal;
+  loadAnalytics();
+}
+
+function resetAnalyticsFilters() {
+  activeAnalyticsFilters = {
+    country: 'all',
+    infrastructure: 'all',
+    trust_class: 'all',
+    risk_class: 'all',
+    https_status: 'all',
+    ip_version: 'all',
+    range: 'all'
+  };
+
+  const selectIds = [
+    'dash-filter-country',
+    'dash-filter-infra',
+    'dash-filter-trust-class',
+    'dash-filter-risk-class',
+    'dash-filter-https',
+    'dash-filter-ip-ver',
+    'dash-filter-range'
+  ];
+  selectIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = 'all';
+  });
+
+  loadAnalytics();
+}
+
+window.handleAnalyticsFilterChange = handleAnalyticsFilterChange;
+window.resetAnalyticsFilters = resetAnalyticsFilters;
+
+function populateAnalyticsFilterDropdowns(options) {
+  if (!options) return;
+
+  function updateSelect(id, items, currentVal) {
+    const el = document.getElementById(id);
+    if (!el || !items) return;
+    const selected = currentVal || el.value || 'all';
+
+    const existingValues = Array.from(el.options).map(o => o.value);
+    const expectedValues = ['all', ...items];
+    const isSame = existingValues.length === expectedValues.length && existingValues.every((v, i) => v === expectedValues[i]);
+    if (isSame) {
+      el.value = selected;
+      return;
+    }
+
+    const firstLabel = el.options.length > 0 ? el.options[0].text : 'All';
+    el.innerHTML = `<option value="all">${escapeHtml(firstLabel)}</option>`;
+
+    items.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item;
+      opt.textContent = item;
+      if (item === selected) opt.selected = true;
+      el.appendChild(opt);
+    });
+
+    el.value = selected;
+  }
+
+  if (options.countries) {
+    updateSelect('dash-filter-country', options.countries, activeAnalyticsFilters.country);
+  }
+  if (options.infrastructures) {
+    updateSelect('dash-filter-infra', options.infrastructures, activeAnalyticsFilters.infrastructure);
+  }
+  if (options.trust_classes) {
+    updateSelect('dash-filter-trust-class', options.trust_classes, activeAnalyticsFilters.trust_class);
+  }
+  if (options.risk_classes) {
+    updateSelect('dash-filter-risk-class', options.risk_classes, activeAnalyticsFilters.risk_class);
+  }
+}
+
+function renderAnalyticsMap(mapPoints, missingCount = 0) {
+  const mapContainer = document.getElementById('analytics-map');
+  if (!mapContainer) return;
+
+  const mapStats = document.getElementById('analytics-map-stats');
+  const points = mapPoints || [];
+  if (mapStats) {
+    mapStats.textContent = `Mapped: ${points.length} endpoints | Missing Coords: ${missingCount}`;
+  }
+
+  if (!window.analyticsMapInstance) {
+    window.analyticsMapInstance = L.map('analytics-map', {
+      zoomControl: true,
+      attributionControl: false,
+    }).setView([20.0, 0.0], 2);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      subdomains: 'abcd',
+    }).addTo(window.analyticsMapInstance);
+
+    window.analyticsMarkersLayer = L.featureGroup().addTo(window.analyticsMapInstance);
+  }
+
+  if (window.analyticsMarkersLayer) {
+    window.analyticsMarkersLayer.clearLayers();
+  }
+
+  if (points.length === 0) {
+    window.analyticsMapInstance.setView([20.0, 0.0], 2);
+    setTimeout(() => {
+      if (window.analyticsMapInstance) window.analyticsMapInstance.invalidateSize();
+    }, 100);
+    return;
+  }
+
+  points.forEach(pt => {
+    const customIcon = L.divIcon({
+      className: 'analytics-map-marker',
+      html: `
+        <div style="background: rgba(0, 210, 255, 0.9); width: 12px; height: 12px; border-radius: 50%; border: 2px solid #ffffff; box-shadow: 0 0 10px #00d2ff; cursor: pointer;"></div>
+      `,
+      iconSize: [12, 12],
+      iconAnchor: [6, 6],
+    });
+
+    const marker = L.marker([pt.latitude, pt.longitude], { icon: customIcon });
+    marker.bindPopup(`
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #dfe2ee; background: #0f131c; padding: 8px; border-radius: 6px; min-width: 170px;">
+        <div style="color: #a5e7ff; font-weight: bold; font-size: 12px; margin-bottom: 3px;">${escapeHtml(pt.domain || 'Unknown')}</div>
+        <div style="color: #949aa7; font-size: 10px; margin-bottom: 4px;">${escapeHtml([pt.city, pt.country].filter(Boolean).join(', ') || 'Unknown Location')}</div>
+        <div style="margin-bottom: 2px;"><span style="color: #64748b;">IP:</span> <span style="color: #ffffff;">${escapeHtml(pt.resolved_ip || '—')}</span></div>
+        <div style="margin-bottom: 2px;"><span style="color: #64748b;">Infra:</span> <span style="color: #e2e8f0;">${escapeHtml(pt.infrastructure || '—')}</span></div>
+        <div style="margin-top: 4px; padding-top: 4px; border-top: 1px solid #1e293b; display: flex; justify-content: space-between;">
+          <span style="color: #69f6b9; font-weight: 600;">Trust: ${pt.trust_score !== null && pt.trust_score !== undefined ? pt.trust_score : '—'}</span>
+          <span style="color: #ffb4ab; font-weight: 600;">Risk: ${pt.risk_score !== null && pt.risk_score !== undefined ? pt.risk_score : '—'}</span>
+        </div>
+      </div>
+    `);
+    window.analyticsMarkersLayer.addLayer(marker);
+  });
+
+  try {
+    const bounds = window.analyticsMarkersLayer.getBounds();
+    if (bounds.isValid()) {
+      window.analyticsMapInstance.fitBounds(bounds.pad(0.2));
+    }
+  } catch (err) {
+    console.debug('Analytics map fitBounds error:', err);
+  }
+
+  setTimeout(() => {
+    if (window.analyticsMapInstance) window.analyticsMapInstance.invalidateSize();
+  }, 150);
+}
 
 async function loadAnalytics() {
   const container = document.getElementById('analytics-content');
   const emptyBanner = document.getElementById('analytics-empty');
+  const filterEmptyBanner = document.getElementById('analytics-filter-empty');
+  const loadingSkeleton = document.getElementById('analytics-loading');
+
+  // Build query string from active filters
+  const params = new URLSearchParams();
+  for (const [k, v] of Object.entries(activeAnalyticsFilters)) {
+    if (v && v !== 'all') {
+      params.set(k, v);
+    }
+  }
+  const queryString = params.toString();
+  const url = queryString ? `${API_BASE}/api/analytics?${queryString}` : `${API_BASE}/api/analytics`;
 
   try {
-    const res = await fetch(`${API_BASE}/api/analytics`);
+    if (loadingSkeleton && (!container || container.classList.contains('hidden'))) {
+      loadingSkeleton.classList.remove('hidden');
+    }
+
+    const res = await fetch(url);
     const data = await res.json();
 
-    if (!res.ok || !data.success || data.insufficient_data || !data.overview || data.overview.total_observations === 0) {
+    if (loadingSkeleton) loadingSkeleton.classList.add('hidden');
+
+    if (!res.ok || !data.success) {
       if (container) container.classList.add('hidden');
       if (emptyBanner) emptyBanner.classList.remove('hidden');
+      if (filterEmptyBanner) filterEmptyBanner.classList.add('hidden');
       return;
     }
 
+    // Populate filter dropdowns dynamically from real values
+    if (data.available_filter_options) {
+      populateAnalyticsFilterDropdowns(data.available_filter_options);
+    }
+
+    const totalObs = data.unfiltered_total_count !== undefined ? data.unfiltered_total_count : (data.overview ? data.overview.total_observations : 0);
+    const validObs = data.valid_observations !== undefined ? data.valid_observations : (data.overview && data.overview.valid_observations !== undefined ? data.overview.valid_observations : totalObs);
+    const failedObs = data.failed_observations !== undefined ? data.failed_observations : (data.overview && data.overview.failed_observations !== undefined ? data.overview.failed_observations : 0);
+    const sampleTarget = (data.overview && data.overview.sample_target) || 50;
+    const pctComplete = sampleTarget > 0 ? Math.round((totalObs / sampleTarget) * 100) : 0;
+    const remaining = Math.max(0, sampleTarget - totalObs);
+    const targetReached = totalObs >= sampleTarget;
+
+    // Update Progress Card Header (always reflect real dataset count)
+    setText('dash-prog-count-display', `${totalObs} / ${sampleTarget}`);
+    setText('dash-prog-pct-label', `(${pctComplete}% Complete)`);
+    setText('dash-prog-remaining-display', targetReached ? 'Sample quota target fulfilled (50/50)' : `${remaining} observations remaining`);
+    setText('dash-prog-valid-pill', `Valid: ${validObs}`);
+    setText('dash-prog-failed-pill', `Failed: ${failedObs}`);
+
+    const quotaBadge = document.getElementById('dash-prog-quota-badge');
+    if (quotaBadge) {
+      if (targetReached) {
+        quotaBadge.textContent = 'Quota Fulfilled (50/50)';
+        quotaBadge.className = 'px-3 py-1 rounded-lg text-xs font-mono font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
+      } else {
+        quotaBadge.textContent = `${pctComplete}% Complete`;
+        quotaBadge.className = 'px-3 py-1 rounded-lg text-xs font-mono font-semibold bg-primary/15 text-primary border border-primary/30';
+      }
+    }
+
+    const dashProgBar = document.getElementById('dash-prog-bar');
+    if (dashProgBar) {
+      dashProgBar.style.width = `${Math.min(pctComplete, 100)}%`;
+    }
+
+    // Top status badges
+    const analyticsNCount = document.getElementById('analytics-n-count');
+    if (analyticsNCount) {
+      if (data.is_filtered) {
+        analyticsNCount.textContent = `N = ${data.filtered_count} Filtered (${totalObs} Total) / ${sampleTarget} Observed Endpoints`;
+      } else {
+        analyticsNCount.textContent = `N = ${totalObs} / ${sampleTarget} Observed Endpoints`;
+      }
+    }
+    const statusBadge = document.getElementById('analytics-status-badge');
+    if (statusBadge) {
+      if (targetReached) {
+        statusBadge.textContent = 'TARGET ACHIEVED';
+        statusBadge.className = 'ml-2 px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30';
+      } else {
+        statusBadge.textContent = 'INCOMPLETE';
+        statusBadge.className = 'ml-2 px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-primary/10 text-primary border border-primary/30';
+      }
+    }
+
+    // Filter indicator banner
+    const filterIndicator = document.getElementById('dash-filter-indicator');
+    const filterIndicatorText = document.getElementById('dash-filter-indicator-text');
+    if (data.is_filtered) {
+      if (filterIndicator) filterIndicator.classList.remove('hidden');
+      if (filterIndicatorText) {
+        filterIndicatorText.textContent = `Filtered Cohort Active: Showing ${data.filtered_count} of ${totalObs} observations (${data.filter_summary || 'Custom Filter'})`;
+      }
+    } else {
+      if (filterIndicator) filterIndicator.classList.add('hidden');
+    }
+
+    // Handle Empty Database State (zero observations total)
+    if (totalObs === 0) {
+      if (container) container.classList.add('hidden');
+      if (emptyBanner) emptyBanner.classList.remove('hidden');
+      if (filterEmptyBanner) filterEmptyBanner.classList.add('hidden');
+      return;
+    }
+
+    // Handle Filter Empty State (records exist in DB, but 0 match active filter)
+    const cohortCount = data.is_filtered ? data.filtered_count : (data.overview ? data.overview.total_observations : 0);
+    if (data.is_filtered && cohortCount === 0) {
+      if (container) container.classList.add('hidden');
+      if (emptyBanner) emptyBanner.classList.add('hidden');
+      if (filterEmptyBanner) filterEmptyBanner.classList.remove('hidden');
+      return;
+    }
+
+    // Normal State with Data
     if (container) container.classList.remove('hidden');
     if (emptyBanner) emptyBanner.classList.add('hidden');
+    if (filterEmptyBanner) filterEmptyBanner.classList.add('hidden');
 
-    const ov = data.overview;
-    const total = ov.total_observations;
+    const ov = data.overview || {};
+    const total = cohortCount;
 
     // ------------------------------------------------------------------------
     // SECTION 1: Field Study Overview
@@ -1201,6 +1491,7 @@ async function loadAnalytics() {
     );
     const progressBar = document.getElementById('analytics-progress-bar');
     if (progressBar) progressBar.style.width = `${Math.min(ov.collection_progress_pct, 100)}%`;
+    setText('analytics-progress-pct-label', `${ov.collection_progress_pct}% Quota Fulfilled`);
 
     setText(
       'ov-https-pct',
@@ -1230,7 +1521,13 @@ async function loadAnalytics() {
     (trust.histogram || []).forEach((b, idx) => {
       const bar = document.getElementById(`trust-bar-${idx}`);
       const countEl = document.getElementById(`trust-bar-count-${idx}`);
-      if (bar) bar.style.height = `${Math.max(b.pct, 4)}%`;
+      if (bar) {
+        bar.style.height = `${Math.max(b.pct, 4)}%`;
+        bar.title = `${b.bin_label || b.range}: ${b.count} endpoints (${b.pct}%)`;
+        if (bar.parentElement) {
+          bar.parentElement.title = `${b.bin_label || b.range}: ${b.count} endpoints (${b.pct}%)`;
+        }
+      }
       if (countEl) countEl.textContent = `${b.count} (${b.pct}%)`;
     });
 
@@ -1257,7 +1554,13 @@ async function loadAnalytics() {
     (risk.histogram || []).forEach((b, idx) => {
       const bar = document.getElementById(`risk-bar-${idx}`);
       const countEl = document.getElementById(`risk-bar-count-${idx}`);
-      if (bar) bar.style.height = `${Math.max(b.pct, 4)}%`;
+      if (bar) {
+        bar.style.height = `${Math.max(b.pct, 4)}%`;
+        bar.title = `${b.bin_label || b.range}: ${b.count} endpoints (${b.pct}%)`;
+        if (bar.parentElement) {
+          bar.parentElement.title = `${b.bin_label || b.range}: ${b.count} endpoints (${b.pct}%)`;
+        }
+      }
       if (countEl) countEl.textContent = `${b.count} (${b.pct}%)`;
     });
 
@@ -1338,7 +1641,7 @@ async function loadAnalytics() {
     setText('threat-tor-count', threats.tor);
 
     // ------------------------------------------------------------------------
-    // SECTION 5: Country & Autonomous System Distribution
+    // SECTION 5: Country & Interactive Geographic Map
     // ------------------------------------------------------------------------
     const geoAsn = data.geographic_and_asn_distribution || {};
     const countryList = document.getElementById('analytics-top-countries');
@@ -1363,6 +1666,12 @@ async function loadAnalytics() {
       }
     }
 
+    // Render interactive Leaflet map
+    renderAnalyticsMap(data.map_points || [], data.missing_coordinates_count || 0);
+
+    // ------------------------------------------------------------------------
+    // SECTION 6: Autonomous Systems & Research Findings
+    // ------------------------------------------------------------------------
     const asnList = document.getElementById('analytics-top-asns');
     if (asnList) {
       asnList.innerHTML = '';
@@ -1385,9 +1694,6 @@ async function loadAnalytics() {
       }
     }
 
-    // ------------------------------------------------------------------------
-    // SECTION 6: Research Insights (Deterministic Empirical Findings)
-    // ------------------------------------------------------------------------
     const insightsContainer = document.getElementById('analytics-insights-container');
     if (insightsContainer) {
       insightsContainer.innerHTML = '';
@@ -1474,6 +1780,7 @@ async function loadAnalytics() {
 
   } catch (err) {
     console.error('Analytics fetch error:', err);
+    if (loadingSkeleton) loadingSkeleton.classList.add('hidden');
   }
 }
 
@@ -1870,3 +2177,1044 @@ async function triggerResearchExport(format, btnEl) {
 
 window.triggerResearchExport = triggerResearchExport;
 window.showExportToast = showExportToast;
+
+// =============================================================================
+// PHASE 22: EXPLAINABLE AI INTELLIGENCE LAYER
+// =============================================================================
+
+let _isExplainingAI = false;
+
+function resetAIExplanationView() {
+  const idleEl = document.getElementById('ai-explanation-idle');
+  const loadingEl = document.getElementById('ai-explanation-loading');
+  const errorEl = document.getElementById('ai-explanation-error');
+  const resultEl = document.getElementById('ai-explanation-result');
+  const btnEl = document.getElementById('btn-generate-ai-explanation');
+  const iconEl = document.getElementById('ai-btn-icon');
+  const labelEl = document.getElementById('ai-btn-label');
+
+  if (idleEl) idleEl.classList.remove('hidden');
+  if (loadingEl) loadingEl.classList.add('hidden');
+  if (errorEl) errorEl.classList.add('hidden');
+  if (resultEl) resultEl.classList.add('hidden');
+
+  if (btnEl) {
+    btnEl.disabled = false;
+    btnEl.classList.remove('opacity-50', 'cursor-not-allowed');
+  }
+  if (iconEl) iconEl.textContent = 'auto_awesome';
+  if (labelEl) labelEl.textContent = 'Explain with AI';
+
+  _isExplainingAI = false;
+}
+
+async function fetchAIProviderStatus() {
+  try {
+    const res = await fetch(`${API_BASE}/api/explain/status`);
+    if (res.ok) {
+      const data = await res.json();
+      const badge = document.getElementById('ai-provider-badge');
+      if (badge) {
+        const providerUpper = (data.provider || 'AI').toUpperCase();
+        badge.textContent = `ENGINE: ${providerUpper}`;
+        badge.title = `Model: ${data.model || 'default'} • Status: ${data.status || 'operational'}`;
+      }
+    }
+  } catch (err) {
+    console.debug('AI provider status check failed:', err);
+  }
+}
+
+function renderSignalList(containerId, signals, dotClass) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (!signals || signals.length === 0) {
+    const emptyEl = document.createElement('div');
+    emptyEl.className = 'text-[11px] text-outline italic py-0.5';
+    emptyEl.textContent = 'None identified';
+    container.appendChild(emptyEl);
+    return;
+  }
+
+  signals.forEach(sig => {
+    const item = document.createElement('div');
+    item.className = 'flex items-start gap-1.5 text-[11px] text-on-surface-variant leading-snug';
+    item.innerHTML = `
+      <span class="mt-1 w-1 h-1 rounded-full ${dotClass} shrink-0"></span>
+      <span>${sig}</span>
+    `;
+    container.appendChild(item);
+  });
+}
+
+async function triggerAIExplanation() {
+  if (_isExplainingAI) return;
+
+  const currentData = window.currentAnalysisResult;
+  if (!currentData || !currentData.target) {
+    alert('Please analyze a website or IP address first.');
+    return;
+  }
+
+  const idleEl = document.getElementById('ai-explanation-idle');
+  const loadingEl = document.getElementById('ai-explanation-loading');
+  const errorEl = document.getElementById('ai-explanation-error');
+  const errorMsgEl = document.getElementById('ai-error-message');
+  const resultEl = document.getElementById('ai-explanation-result');
+  const btnEl = document.getElementById('btn-generate-ai-explanation');
+  const iconEl = document.getElementById('ai-btn-icon');
+  const labelEl = document.getElementById('ai-btn-label');
+
+  _isExplainingAI = true;
+
+  if (idleEl) idleEl.classList.add('hidden');
+  if (errorEl) errorEl.classList.add('hidden');
+  if (resultEl) resultEl.classList.add('hidden');
+  if (loadingEl) loadingEl.classList.remove('hidden');
+
+  if (btnEl) {
+    btnEl.disabled = true;
+    btnEl.classList.add('opacity-50', 'cursor-not-allowed');
+  }
+  if (iconEl) iconEl.textContent = 'progress_activity';
+  if (labelEl) labelEl.textContent = 'Analyzing...';
+
+  try {
+    const res = await fetch(`${API_BASE}/api/explain`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        target: currentData.target,
+        intelligence: currentData,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || data.status === 'error' || data.status === 'provider_unavailable') {
+      if (loadingEl) loadingEl.classList.add('hidden');
+      if (errorEl) errorEl.classList.remove('hidden');
+      if (errorMsgEl) {
+        errorMsgEl.textContent = data.summary || data.error || 'AI explanation unavailable. Deterministic analysis remains fully available.';
+      }
+      return;
+    }
+
+    // Success State - Render Explanation Details
+    if (loadingEl) loadingEl.classList.add('hidden');
+    if (resultEl) resultEl.classList.remove('hidden');
+
+    setText('ai-summary-text', data.summary || 'Summary unavailable.');
+    setText('ai-trust-explanation-text', data.trust_explanation || 'Trust explanation unavailable.');
+    setText('ai-risk-explanation-text', data.risk_explanation || 'Risk explanation unavailable.');
+
+    renderSignalList('ai-positive-signals-list', data.positive_signals || [], 'bg-tertiary');
+    renderSignalList('ai-negative-signals-list', data.negative_signals || [], 'bg-error');
+    renderSignalList('ai-unknown-signals-list', data.unknown_signals || [], 'bg-outline');
+
+    setText('ai-recommendation-text', data.recommendation || 'Standard verification precautions apply.');
+    setText('ai-limitations-text', data.limitations || 'AI explanations interpret empirical scan telemetry. Deterministic classifications and technical evidence remain authoritative.');
+
+    // Update button to allow re-explaining
+    if (labelEl) labelEl.textContent = 'Re-explain';
+    if (iconEl) iconEl.textContent = 'refresh';
+
+  } catch (err) {
+    console.error('AI Explanation failed:', err);
+    if (loadingEl) loadingEl.classList.add('hidden');
+    if (errorEl) errorEl.classList.remove('hidden');
+    if (errorMsgEl) {
+      errorMsgEl.textContent = `AI request failed: ${err.message}. Deterministic analysis is fully operational.`;
+    }
+  } finally {
+    _isExplainingAI = false;
+    if (btnEl) {
+      btnEl.disabled = false;
+      btnEl.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+  }
+}
+
+// Global exports
+window.triggerAIExplanation = triggerAIExplanation;
+window.resetAIExplanationView = resetAIExplanationView;
+window.fetchAIProviderStatus = fetchAIProviderStatus;
+
+// Initialize AI provider telemetry on load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', fetchAIProviderStatus);
+} else {
+  fetchAIProviderStatus();
+}
+
+// =============================================================================
+// PHASE 23: INTELLIGENCE COMPARISON & INVESTIGATION WORKSPACE
+// =============================================================================
+
+window.selectedComparisonItems = [];
+window.availableCandidates = [];
+window.currentComparisonResult = null;
+window.candidateFilterType = 'all';
+window.compMapInstance = null;
+window.compMarkersLayer = null;
+window._isExplainingComparisonAI = false;
+
+function loadInvestigationWorkspace() {
+  updateComparisonSelectionUI();
+  if (window.compMapInstance) {
+    setTimeout(() => {
+      window.compMapInstance.invalidateSize();
+    }, 150);
+  }
+}
+
+function updateComparisonSelectionUI() {
+  const countBadge = document.getElementById('comp-selection-count-badge');
+  const hintEl = document.getElementById('comp-validation-hint');
+  const chipsContainer = document.getElementById('comp-selected-chips-container');
+  const runBtn = document.getElementById('btn-run-comparison');
+  const modalCount = document.getElementById('comp-modal-selection-count');
+
+  const count = window.selectedComparisonItems.length;
+
+  if (countBadge) {
+    countBadge.textContent = `${count} / 5 Selected`;
+  }
+  if (modalCount) {
+    modalCount.textContent = `${count} / 5 Selected`;
+  }
+
+  if (chipsContainer) {
+    chipsContainer.innerHTML = '';
+    if (count === 0) {
+      chipsContainer.innerHTML = `
+        <div class="text-xs text-outline font-mono italic py-1">
+          No observations selected. Add 2 to 5 observations from Field Study, History, or Current Scan.
+        </div>
+      `;
+    } else {
+      window.selectedComparisonItems.forEach((item, idx) => {
+        const chip = document.createElement('div');
+        chip.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-container-high border border-surface-container text-xs text-on-surface font-mono shadow-sm';
+        
+        let sourceClass = 'bg-primary/10 text-primary border-primary/20';
+        let sourceLabel = 'Current';
+        if (item.source === 'field_study') {
+          sourceClass = 'bg-tertiary/10 text-tertiary border-tertiary/20';
+          sourceLabel = 'Field Study';
+        } else if (item.source === 'history') {
+          sourceClass = 'bg-secondary/10 text-secondary border-secondary/20';
+          sourceLabel = 'History';
+        }
+
+        chip.innerHTML = `
+          <span class="px-1.5 py-0.5 rounded text-[10px] uppercase font-bold border ${sourceClass}">${sourceLabel}</span>
+          <span class="font-medium">${item.domain || item.resolved_ip || 'Unknown'}</span>
+          <button type="button" class="text-outline hover:text-error transition-colors cursor-pointer ml-1" onclick="removeComparisonItem(${idx})" title="Remove">
+            <span class="material-symbols-outlined text-[15px]">close</span>
+          </button>
+        `;
+        chipsContainer.appendChild(chip);
+      });
+    }
+  }
+
+  if (hintEl) {
+    if (count < 2) {
+      hintEl.textContent = `Select at least 2 observations to activate comparison (${2 - count} remaining).`;
+      hintEl.classList.remove('text-tertiary');
+      hintEl.classList.add('text-outline');
+    } else {
+      hintEl.textContent = `Ready: ${count} observations selected. Maximum limit is 5.`;
+      hintEl.classList.remove('text-outline');
+      hintEl.classList.add('text-tertiary');
+    }
+  }
+
+  if (runBtn) {
+    runBtn.disabled = count < 2 || count > 5;
+  }
+}
+
+function removeComparisonItem(idx) {
+  if (idx >= 0 && idx < window.selectedComparisonItems.length) {
+    window.selectedComparisonItems.splice(idx, 1);
+    updateComparisonSelectionUI();
+  }
+}
+
+async function openCandidateModal(defaultTab = 'all') {
+  window.candidateFilterType = defaultTab;
+  const modal = document.getElementById('comp-candidate-modal');
+  if (modal) modal.classList.remove('hidden');
+
+  setCandidateFilter(defaultTab);
+
+  const listEl = document.getElementById('comp-candidate-list');
+  if (listEl) {
+    listEl.innerHTML = `
+      <div class="flex items-center justify-center p-8 gap-2 text-outline text-xs font-mono">
+        <span class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+        <span>Loading observation records...</span>
+      </div>
+    `;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/compare/candidates`);
+    if (res.ok) {
+      const data = await res.json();
+      window.availableCandidates = data.candidates || [];
+      renderCandidateList();
+    } else {
+      if (listEl) listEl.innerHTML = `<div class="p-4 text-xs text-error font-mono">Failed to load candidates.</div>`;
+    }
+  } catch (err) {
+    if (listEl) listEl.innerHTML = `<div class="p-4 text-xs text-error font-mono">Network error: ${err.message}</div>`;
+  }
+}
+
+function closeCandidateModal() {
+  const modal = document.getElementById('comp-candidate-modal');
+  if (modal) modal.classList.add('hidden');
+  updateComparisonSelectionUI();
+}
+
+function setCandidateFilter(type) {
+  window.candidateFilterType = type;
+  const tabs = ['all', 'field_study', 'history'];
+  tabs.forEach(t => {
+    const btn = document.getElementById(`comp-tab-${t.replace('_', '-')}`);
+    if (btn) {
+      if (t === type) {
+        btn.classList.add('bg-surface-container-high', 'text-primary');
+        btn.classList.remove('text-outline');
+      } else {
+        btn.classList.remove('bg-surface-container-high', 'text-primary');
+        btn.classList.add('text-outline');
+      }
+    }
+  });
+  renderCandidateList();
+}
+
+function filterCandidateList() {
+  renderCandidateList();
+}
+
+function renderCandidateList() {
+  const listEl = document.getElementById('comp-candidate-list');
+  const searchInput = document.getElementById('comp-candidate-search');
+  if (!listEl) return;
+
+  const query = (searchInput ? searchInput.value : '').trim().toLowerCase();
+  const filterType = window.candidateFilterType;
+
+  const filtered = (window.availableCandidates || []).filter(c => {
+    if (filterType !== 'all' && c.source !== filterType) return false;
+    if (!query) return true;
+    const text = `${c.domain} ${c.ip_address} ${c.asn} ${c.organization} ${c.country} ${c.city}`.toLowerCase();
+    return text.includes(query);
+  });
+
+  listEl.innerHTML = '';
+
+  if (filtered.length === 0) {
+    listEl.innerHTML = `
+      <div class="text-center p-6 text-xs text-outline font-mono">
+        No matching observation candidates found.
+      </div>
+    `;
+    return;
+  }
+
+  filtered.forEach(c => {
+    const isSelected = window.selectedComparisonItems.some(
+      it => (it.domain && it.domain.toLowerCase() === (c.domain || '').toLowerCase())
+    );
+
+    const row = document.createElement('div');
+    row.className = `p-3 rounded-xl border transition-all flex items-center justify-between gap-3 cursor-pointer ${
+      isSelected
+        ? 'bg-primary/10 border-primary/40'
+        : 'bg-surface-container-lowest/80 border-surface-container hover:border-surface-container-high'
+    }`;
+
+    row.onclick = () => toggleCandidateSelection(c);
+
+    let scorePill = '';
+    if (typeof c.trust_score === 'number' && typeof c.risk_score === 'number') {
+      scorePill = `
+        <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-tertiary/10 text-tertiary border border-tertiary/20">Trust ${c.trust_score}</span>
+        <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-secondary/10 text-secondary border border-secondary/20">Risk ${c.risk_score}</span>
+      `;
+    }
+
+    row.innerHTML = `
+      <div class="flex items-center gap-3 min-w-0">
+        <input type="checkbox" class="rounded bg-surface-container border-surface-container text-primary pointer-events-none" ${isSelected ? 'checked' : ''}>
+        <div class="flex flex-col min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="font-mono text-xs font-semibold text-on-surface truncate">${c.domain || 'Unknown Target'}</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono uppercase bg-surface-container text-outline border border-surface-container">${c.badge || c.source}</span>
+          </div>
+          <div class="flex items-center gap-2 text-[11px] font-mono text-outline truncate mt-0.5">
+            <span>${c.ip_address || 'No IP'}</span>
+            <span>•</span>
+            <span>${c.asn || 'No ASN'}</span>
+            <span>•</span>
+            <span>${c.city || 'Unknown'}, ${c.country || ''}</span>
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        ${scorePill}
+        <span class="text-[11px] font-mono ${isSelected ? 'text-primary font-bold' : 'text-outline'}">
+          ${isSelected ? 'Selected' : '+ Add'}
+        </span>
+      </div>
+    `;
+
+    listEl.appendChild(row);
+  });
+}
+
+function toggleCandidateSelection(candidate) {
+  const domKey = (candidate.domain || '').trim().toLowerCase();
+  const existingIdx = window.selectedComparisonItems.findIndex(
+    it => (it.domain && it.domain.toLowerCase() === domKey)
+  );
+
+  if (existingIdx >= 0) {
+    window.selectedComparisonItems.splice(existingIdx, 1);
+  } else {
+    if (window.selectedComparisonItems.length >= 5) {
+      alert('A maximum of 5 observations can be selected for comparison.');
+      return;
+    }
+    window.selectedComparisonItems.push({
+      id: candidate.id,
+      source: candidate.source,
+      domain: candidate.domain,
+      resolved_ip: candidate.ip_address,
+      country: candidate.country,
+      city: candidate.city,
+      asn: candidate.asn,
+      organization: candidate.organization,
+      website_trust_score: candidate.trust_score,
+      ip_risk_score: candidate.risk_score,
+    });
+  }
+
+  renderCandidateList();
+  updateComparisonSelectionUI();
+}
+
+function addCurrentScanToComparison() {
+  const current = window.currentAnalysisResult;
+  if (!current || !current.target) {
+    alert('Please analyze a website or IP address on the Home page first.');
+    return;
+  }
+
+  const domKey = (current.target || '').trim().toLowerCase();
+  const exists = window.selectedComparisonItems.some(
+    it => (it.domain && it.domain.toLowerCase() === domKey)
+  );
+
+  if (exists) {
+    alert(`Target '${current.target}' is already included in comparison candidates.`);
+    return;
+  }
+
+  if (window.selectedComparisonItems.length >= 5) {
+    alert('A maximum of 5 observations can be selected for comparison.');
+    return;
+  }
+
+  const base = current.base || {};
+  const sec = current.security || {};
+  const intel = current.ip_intel || {};
+  const risk = current.risk || {};
+
+  window.selectedComparisonItems.push({
+    source: 'current',
+    domain: current.target,
+    resolved_ip: base.selected_ip || intel.ip_address || 'UNKNOWN',
+    ip_version: base.ip_version || 'IPv4',
+    country: base.country || 'Unknown',
+    region: base.region || 'Unknown',
+    city: base.city || 'Unknown',
+    latitude: base.latitude,
+    longitude: base.longitude,
+    asn: base.asn || intel.asn || 'Unknown',
+    organization: base.organization || intel.organization || 'Unknown',
+    isp: base.isp || intel.isp || 'Unknown',
+    infrastructure_type: intel.infrastructure_type || 'Unknown',
+    network_type: intel.network_type || 'Unknown',
+    https_status: sec.is_https ? 'Enabled' : 'Disabled',
+    tls_status: sec.tls_valid ? 'Valid' : 'Invalid / Expired',
+    tls_version: sec.tls_version || 'UNKNOWN',
+    tls_issuer: sec.issuer_org || 'UNKNOWN',
+    ssl_expiry_days: sec.expires_in_days !== undefined ? String(sec.expires_in_days) : 'UNKNOWN',
+    vpn_status: intel.vpn_status || 'NOT_DETECTED',
+    proxy_status: intel.proxy_status || 'NOT_DETECTED',
+    tor_status: intel.tor_status || 'NOT_DETECTED',
+    datacenter_status: intel.datacenter_status || 'NOT_DETECTED',
+    website_trust_score: risk.trust_score,
+    website_trust_classification: risk.trust?.classification || 'UNKNOWN',
+    ip_risk_score: risk.risk_score,
+    ip_risk_classification: risk.risk_category || 'UNKNOWN',
+    score_confidence: risk.confidence_rating || 'UNKNOWN',
+    ip_personality: current.personality || 'Network host endpoint',
+  });
+
+  updateComparisonSelectionUI();
+  showExportToast(`Added current scan '${current.target}' to comparison selection.`);
+}
+
+function clearComparisonSelection() {
+  window.selectedComparisonItems = [];
+  window.currentComparisonResult = null;
+  const bodyEl = document.getElementById('comp-workspace-body');
+  if (bodyEl) bodyEl.classList.add('hidden');
+
+  const csvBtn = document.getElementById('btn-export-comp-csv');
+  const jsonBtn = document.getElementById('btn-export-comp-json');
+  if (csvBtn) csvBtn.disabled = true;
+  if (jsonBtn) jsonBtn.disabled = true;
+
+  updateComparisonSelectionUI();
+}
+
+async function runInvestigationComparison() {
+  if (window.selectedComparisonItems.length < 2) {
+    alert('Please select at least 2 observations to run comparison.');
+    return;
+  }
+
+  const runBtn = document.getElementById('btn-run-comparison');
+  const statusText = document.getElementById('comp-status-text');
+  const bodyEl = document.getElementById('comp-workspace-body');
+
+  if (runBtn) {
+    runBtn.disabled = true;
+    runBtn.innerHTML = `
+      <span class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+      <span>Comparing...</span>
+    `;
+  }
+  if (statusText) statusText.textContent = 'Normalizing telemetry and computing differences...';
+
+  try {
+    const res = await fetch(`${API_BASE}/api/compare`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ observations: window.selectedComparisonItems }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Comparison computation failed.');
+    }
+
+    window.currentComparisonResult = data;
+
+    if (bodyEl) bodyEl.classList.remove('hidden');
+
+    renderComparisonMatrix(data.observations || []);
+    renderComparisonStatistics(data.statistics || {});
+    renderDifferenceHighlights(data.differences || []);
+    renderComparisonMap(data.map_points || []);
+
+    const csvBtn = document.getElementById('btn-export-comp-csv');
+    const jsonBtn = document.getElementById('btn-export-comp-json');
+    if (csvBtn) csvBtn.disabled = false;
+    if (jsonBtn) jsonBtn.disabled = false;
+
+    // Reset AI state
+    resetComparisonAIView();
+
+    if (statusText) statusText.textContent = `Comparison active for ${data.count} observations.`;
+
+  } catch (err) {
+    console.error('Comparison error:', err);
+    alert(`Comparison failed: ${err.message}`);
+    if (statusText) statusText.textContent = 'Comparison failed.';
+  } finally {
+    if (runBtn) {
+      runBtn.disabled = false;
+      runBtn.innerHTML = `
+        <span class="material-symbols-outlined text-[18px]">balance</span>
+        <span>Compare Selected Targets</span>
+      `;
+    }
+  }
+}
+
+function renderComparisonMatrix(observations) {
+  const thead = document.getElementById('comp-matrix-thead');
+  const tbody = document.getElementById('comp-matrix-tbody');
+  if (!thead || !tbody) return;
+
+  // Build Table Header
+  let headerHtml = `
+    <tr>
+      <th class="p-3 font-mono text-[11px] text-outline uppercase tracking-wider bg-surface-container-lowest min-w-[180px] border-r border-surface-container">
+        Attribute Dimension
+      </th>
+  `;
+
+  observations.forEach(obs => {
+    let sourcePill = '<span class="px-1.5 py-0.5 rounded text-[10px] font-mono uppercase bg-primary/10 text-primary border border-primary/20">Current</span>';
+    if (obs.source === 'field_study') {
+      sourcePill = '<span class="px-1.5 py-0.5 rounded text-[10px] font-mono uppercase bg-tertiary/10 text-tertiary border border-tertiary/20">Field Study</span>';
+    } else if (obs.source === 'history') {
+      sourcePill = '<span class="px-1.5 py-0.5 rounded text-[10px] font-mono uppercase bg-secondary/10 text-secondary border border-secondary/20">History</span>';
+    }
+
+    headerHtml += `
+      <th class="p-3 font-mono text-xs text-on-surface min-w-[220px]">
+        <div class="flex items-center justify-between gap-2">
+          <span class="font-bold text-primary truncate">${obs.domain}</span>
+          ${sourcePill}
+        </div>
+        <div class="text-[11px] text-outline font-normal mt-0.5">${obs.resolved_ip}</div>
+      </th>
+    `;
+  });
+  headerHtml += `</tr>`;
+  thead.innerHTML = headerHtml;
+
+  // Rows definition
+  const sections = [
+    {
+      title: 'IDENTITY & RESOLUTION',
+      rows: [
+        { label: 'Target Domain', prop: 'domain' },
+        { label: 'Resolved Primary IP', prop: 'resolved_ip' },
+      ],
+    },
+    {
+      title: 'NETWORK INFRASTRUCTURE',
+      rows: [
+        { label: 'IP Version', prop: 'ip_version' },
+        { label: 'Autonomous System (ASN)', prop: 'asn' },
+        { label: 'Organization', prop: 'organization' },
+        { label: 'ISP / Carrier', prop: 'isp' },
+        { label: 'Network Type', prop: 'network_type' },
+        { label: 'Infrastructure Type', prop: 'infrastructure_type' },
+      ],
+    },
+    {
+      title: 'GEOLOCATION TELEMETRY',
+      rows: [
+        { label: 'Country', prop: 'country' },
+        { label: 'Region / State', prop: 'region' },
+        { label: 'City', prop: 'city' },
+        { label: 'Coordinates (Lat, Lon)', format: (o) => (o.latitude !== null && o.longitude !== null ? `${o.latitude.toFixed(4)}°, ${o.longitude.toFixed(4)}°` : 'UNKNOWN') },
+        { label: 'Geolocation Confidence', prop: 'geolocation_confidence' },
+      ],
+    },
+    {
+      title: 'TRANSPORT SECURITY',
+      rows: [
+        { label: 'HTTPS Status', format: (o) => o.https_status === 'Enabled' ? '<span class="text-tertiary font-medium">Enabled</span>' : (o.https_status === 'Disabled' ? '<span class="text-error font-medium">Disabled</span>' : '<span class="text-outline">UNKNOWN</span>') },
+        { label: 'TLS Validation', format: (o) => o.tls_status === 'Valid' ? '<span class="text-tertiary">Valid</span>' : (o.tls_status === 'Invalid / Expired' ? '<span class="text-error">Invalid / Expired</span>' : '<span class="text-outline">UNKNOWN</span>') },
+        { label: 'TLS Protocol Version', prop: 'tls_version' },
+        { label: 'Certificate Issuer', prop: 'tls_issuer' },
+        { label: 'Certificate Validity Days', prop: 'ssl_expiry_days' },
+      ],
+    },
+    {
+      title: 'IP INTELLIGENCE & PROVENANCE',
+      rows: [
+        { label: 'VPN Detection', format: (o) => o.vpn_status === 'DETECTED' ? '<span class="text-error font-medium">DETECTED</span>' : (o.vpn_status === 'NOT_DETECTED' ? '<span class="text-outline">NOT DETECTED</span>' : '<span class="text-outline">UNKNOWN</span>') },
+        { label: 'Proxy Detection', format: (o) => o.proxy_status === 'DETECTED' ? '<span class="text-error font-medium">DETECTED</span>' : (o.proxy_status === 'NOT_DETECTED' ? '<span class="text-outline">NOT DETECTED</span>' : '<span class="text-outline">UNKNOWN</span>') },
+        { label: 'Tor Exit Relay', format: (o) => o.tor_status === 'DETECTED' ? '<span class="text-error font-medium">DETECTED</span>' : (o.tor_status === 'NOT_DETECTED' ? '<span class="text-outline">NOT DETECTED</span>' : '<span class="text-outline">UNKNOWN</span>') },
+        { label: 'Datacenter / Hosting', format: (o) => o.datacenter_status === 'DETECTED' ? '<span class="text-secondary font-medium">DETECTED</span>' : (o.datacenter_status === 'NOT_DETECTED' ? '<span class="text-outline">NOT DETECTED</span>' : '<span class="text-outline">UNKNOWN</span>') },
+      ],
+    },
+    {
+      title: 'RISK & TRUST EVALUATION',
+      rows: [
+        {
+          label: 'Website Trust Score',
+          format: (o) => o.website_trust_score !== null && o.website_trust_score !== undefined
+            ? `<span class="px-2 py-0.5 rounded text-xs font-mono font-bold ${o.website_trust_score >= 70 ? 'bg-tertiary/10 text-tertiary border border-tertiary/30' : (o.website_trust_score >= 40 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-error/10 text-error border border-error/30')}">${o.website_trust_score}/100</span>`
+            : '<span class="text-outline">N/A</span>'
+        },
+        { label: 'Trust Classification', prop: 'website_trust_classification' },
+        {
+          label: 'IP Risk Score',
+          format: (o) => o.ip_risk_score !== null && o.ip_risk_score !== undefined
+            ? `<span class="px-2 py-0.5 rounded text-xs font-mono font-bold ${o.ip_risk_score <= 25 ? 'bg-tertiary/10 text-tertiary border border-tertiary/30' : (o.ip_risk_score <= 60 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-error/10 text-error border border-error/30')}">${o.ip_risk_score}/100</span>`
+            : '<span class="text-outline">N/A</span>'
+        },
+        { label: 'IP Risk Classification', prop: 'ip_risk_classification' },
+        { label: 'Score Confidence', prop: 'score_confidence' },
+      ],
+    },
+    {
+      title: 'SYNTHESIS & PROVENANCE',
+      rows: [
+        { label: 'IP Personality Summary', prop: 'ip_personality' },
+      ],
+    },
+  ];
+
+  let bodyHtml = '';
+  sections.forEach(sec => {
+    // Section Header
+    bodyHtml += `
+      <tr class="bg-surface-container-high/30">
+        <td colspan="${observations.length + 1}" class="p-2.5 font-mono text-[10px] font-bold text-primary uppercase tracking-wider">
+          ${sec.title}
+        </td>
+      </tr>
+    `;
+
+    sec.rows.forEach(r => {
+      bodyHtml += `
+        <tr class="hover:bg-surface-container/30 transition-colors">
+          <td class="p-2.5 font-mono text-xs text-outline border-r border-surface-container/60">
+            ${r.label}
+          </td>
+      `;
+      observations.forEach(obs => {
+        let valHtml = '';
+        if (r.format) {
+          valHtml = r.format(obs);
+        } else {
+          const val = obs[r.prop];
+          valHtml = val !== null && val !== undefined && val !== '' ? String(val) : '<span class="text-outline">UNKNOWN</span>';
+        }
+        bodyHtml += `<td class="p-2.5 font-mono text-xs text-on-surface-variant">${valHtml}</td>`;
+      });
+      bodyHtml += `</tr>`;
+    });
+  });
+
+  tbody.innerHTML = bodyHtml;
+}
+
+function renderComparisonStatistics(stats) {
+  const container = document.getElementById('comp-stats-container');
+  if (!container) return;
+
+  const highestTrust = stats.highest_trust_score || {};
+  const lowestTrust = stats.lowest_trust_score || {};
+  const highestRisk = stats.highest_ip_risk_score || {};
+  const lowestRisk = stats.lowest_ip_risk_score || {};
+  const https = stats.https_adoption || {};
+  const anon = stats.anonymizer_detections || {};
+
+  container.innerHTML = `
+    <div class="p-3 rounded-lg bg-surface-container-lowest/80 border border-surface-container flex flex-col gap-1">
+      <span class="text-[10px] font-mono text-outline uppercase tracking-wider font-semibold">Highest Trust Score</span>
+      <span class="text-sm font-bold text-tertiary font-mono">${highestTrust.score !== null && highestTrust.score !== undefined ? `${highestTrust.score}/100` : 'N/A'}</span>
+      <span class="text-[11px] text-outline truncate">${highestTrust.domain || 'None'}</span>
+    </div>
+    <div class="p-3 rounded-lg bg-surface-container-lowest/80 border border-surface-container flex flex-col gap-1">
+      <span class="text-[10px] font-mono text-outline uppercase tracking-wider font-semibold">Lowest Trust Score</span>
+      <span class="text-sm font-bold text-amber-400 font-mono">${lowestTrust.score !== null && lowestTrust.score !== undefined ? `${lowestTrust.score}/100` : 'N/A'}</span>
+      <span class="text-[11px] text-outline truncate">${lowestTrust.domain || 'None'}</span>
+    </div>
+    <div class="p-3 rounded-lg bg-surface-container-lowest/80 border border-surface-container flex flex-col gap-1">
+      <span class="text-[10px] font-mono text-outline uppercase tracking-wider font-semibold">Highest IP Risk</span>
+      <span class="text-sm font-bold text-error font-mono">${highestRisk.score !== null && highestRisk.score !== undefined ? `${highestRisk.score}/100` : 'N/A'}</span>
+      <span class="text-[11px] text-outline truncate">${highestRisk.domain || 'None'}</span>
+    </div>
+    <div class="p-3 rounded-lg bg-surface-container-lowest/80 border border-surface-container flex flex-col gap-1">
+      <span class="text-[10px] font-mono text-outline uppercase tracking-wider font-semibold">Lowest IP Risk</span>
+      <span class="text-sm font-bold text-tertiary font-mono">${lowestRisk.score !== null && lowestRisk.score !== undefined ? `${lowestRisk.score}/100` : 'N/A'}</span>
+      <span class="text-[11px] text-outline truncate">${lowestRisk.domain || 'None'}</span>
+    </div>
+    <div class="p-3 rounded-lg bg-surface-container-lowest/80 border border-surface-container flex flex-col gap-1 col-span-2">
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <div>
+          <span class="text-[10px] font-mono text-outline block">Common ASN</span>
+          <span class="font-mono text-on-surface font-medium">${stats.common_asn || 'No common value detected.'}</span>
+        </div>
+        <div>
+          <span class="text-[10px] font-mono text-outline block">Common Organization</span>
+          <span class="font-mono text-on-surface font-medium truncate block">${stats.common_organization || 'No common value detected.'}</span>
+        </div>
+        <div>
+          <span class="text-[10px] font-mono text-outline block">Common Infrastructure</span>
+          <span class="font-mono text-on-surface font-medium">${stats.common_infrastructure_type || 'No common value detected.'}</span>
+        </div>
+        <div>
+          <span class="text-[10px] font-mono text-outline block">Common Country</span>
+          <span class="font-mono text-on-surface font-medium">${stats.common_country || 'No common value detected.'}</span>
+        </div>
+      </div>
+    </div>
+    <div class="p-3 rounded-lg bg-surface-container-lowest/80 border border-surface-container flex items-center justify-between col-span-2">
+      <div>
+        <span class="text-[10px] font-mono text-outline block">HTTPS Transport Adoption</span>
+        <span class="font-mono text-xs font-bold text-tertiary">${https.formatted || 'N/A'}</span>
+      </div>
+      <div>
+        <span class="text-[10px] font-mono text-outline block">Anonymizers / Proxies</span>
+        <span class="font-mono text-xs font-bold ${anon.total_anonymizers > 0 ? 'text-error' : 'text-outline'}">${anon.total_anonymizers || 0} Detected</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderDifferenceHighlights(diffs) {
+  const container = document.getElementById('comp-differences-container');
+  if (!container) return;
+
+  container.innerHTML = '';
+  if (!diffs || diffs.length === 0) {
+    container.innerHTML = `<div class="text-xs text-outline font-mono italic">No distinct differences detected.</div>`;
+    return;
+  }
+
+  diffs.forEach(d => {
+    const item = document.createElement('div');
+    item.className = 'flex items-start gap-2 p-2.5 rounded-lg bg-surface-container-lowest/70 border border-surface-container text-xs text-on-surface leading-snug';
+    item.innerHTML = `
+      <span class="material-symbols-outlined text-secondary text-[16px] shrink-0 mt-0.5">insights</span>
+      <span>${d}</span>
+    `;
+    container.appendChild(item);
+  });
+}
+
+function renderComparisonMap(mapPoints) {
+  const mapBadge = document.getElementById('comp-map-count-badge');
+  if (mapBadge) {
+    mapBadge.textContent = `${mapPoints.length} Coordinate Point${mapPoints.length !== 1 ? 's' : ''}`;
+  }
+
+  const mapContainer = document.getElementById('comp-map');
+  if (!mapContainer) return;
+
+  // Initialize Leaflet if not yet created
+  if (!window.compMapInstance) {
+    window.compMapInstance = L.map('comp-map', {
+      zoomControl: true,
+      attributionControl: false,
+    }).setView([20.0, 0.0], 2);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      subdomains: 'abcd',
+    }).addTo(window.compMapInstance);
+
+    window.compMarkersLayer = L.featureGroup().addTo(window.compMapInstance);
+  }
+
+  if (window.compMarkersLayer) {
+    window.compMarkersLayer.clearLayers();
+  }
+
+  if (mapPoints.length === 0) {
+    window.compMapInstance.setView([20.0, 0.0], 2);
+    return;
+  }
+
+  mapPoints.forEach(pt => {
+    const customIcon = L.divIcon({
+      className: 'comp-map-marker',
+      html: `
+        <div style="background: rgba(0, 210, 255, 0.9); width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px #00d2ff;"></div>
+      `,
+      iconSize: [14, 14],
+      iconAnchor: [7, 7],
+    });
+
+    const marker = L.marker([pt.latitude, pt.longitude], { icon: customIcon });
+    marker.bindPopup(`
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #dfe2ee; background: #0f131c; padding: 6px; border-radius: 6px;">
+        <strong style="color: #a5e7ff; font-size: 12px;">${pt.domain}</strong><br/>
+        <span>${pt.city || ''}, ${pt.country || ''}</span><br/>
+        <span>IP: ${pt.resolved_ip}</span><br/>
+        <span style="color: #69f6b9;">Trust: ${pt.trust_score !== null ? pt.trust_score : 'N/A'}</span> | 
+        <span style="color: #ffb4ab;">Risk: ${pt.risk_score !== null ? pt.risk_score : 'N/A'}</span>
+      </div>
+    `);
+    window.compMarkersLayer.addLayer(marker);
+  });
+
+  try {
+    window.compMapInstance.fitBounds(window.compMarkersLayer.getBounds().pad(0.2));
+  } catch (err) {
+    console.debug('Map fitBounds fallback:', err);
+  }
+
+  setTimeout(() => {
+    window.compMapInstance.invalidateSize();
+  }, 100);
+}
+
+function resetComparisonAIView() {
+  const idleEl = document.getElementById('comp-ai-idle');
+  const loadingEl = document.getElementById('comp-ai-loading');
+  const errorEl = document.getElementById('comp-ai-error');
+  const resultEl = document.getElementById('comp-ai-result');
+  const btnEl = document.getElementById('btn-explain-comparison-ai');
+  const iconEl = document.getElementById('comp-ai-btn-icon');
+  const labelEl = document.getElementById('comp-ai-btn-label');
+
+  if (idleEl) idleEl.classList.remove('hidden');
+  if (loadingEl) loadingEl.classList.add('hidden');
+  if (errorEl) errorEl.classList.add('hidden');
+  if (resultEl) resultEl.classList.add('hidden');
+
+  if (btnEl) btnEl.disabled = false;
+  if (iconEl) iconEl.textContent = 'auto_awesome';
+  if (labelEl) labelEl.textContent = 'Explain Comparison with AI';
+
+  window._isExplainingComparisonAI = false;
+}
+
+async function triggerComparisonAIExplanation() {
+  if (window._isExplainingComparisonAI) return;
+  if (!window.currentComparisonResult || !window.currentComparisonResult.observations) {
+    alert('Please run a comparison first.');
+    return;
+  }
+
+  const idleEl = document.getElementById('comp-ai-idle');
+  const loadingEl = document.getElementById('comp-ai-loading');
+  const errorEl = document.getElementById('comp-ai-error');
+  const errorMsgEl = document.getElementById('comp-ai-error-msg');
+  const resultEl = document.getElementById('comp-ai-result');
+  const btnEl = document.getElementById('btn-explain-comparison-ai');
+  const iconEl = document.getElementById('comp-ai-btn-icon');
+  const labelEl = document.getElementById('comp-ai-btn-label');
+
+  window._isExplainingComparisonAI = true;
+
+  if (idleEl) idleEl.classList.add('hidden');
+  if (errorEl) errorEl.classList.add('hidden');
+  if (resultEl) resultEl.classList.add('hidden');
+  if (loadingEl) loadingEl.classList.remove('hidden');
+
+  if (btnEl) btnEl.disabled = true;
+  if (iconEl) iconEl.textContent = 'progress_activity';
+  if (labelEl) labelEl.textContent = 'Analyzing...';
+
+  try {
+    const res = await fetch(`${API_BASE}/api/compare/explain`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ comparison: window.currentComparisonResult }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || data.status === 'error') {
+      if (loadingEl) loadingEl.classList.add('hidden');
+      if (errorEl) errorEl.classList.remove('hidden');
+      if (errorMsgEl) {
+        errorMsgEl.textContent = data.summary || data.error || 'AI comparison unavailable. Deterministic comparison remains fully available.';
+      }
+      return;
+    }
+
+    if (loadingEl) loadingEl.classList.add('hidden');
+    if (resultEl) resultEl.classList.remove('hidden');
+
+    setText('comp-ai-summary-text', data.summary || 'Summary unavailable.');
+    setText('comp-ai-infra-text', data.infrastructure_comparison || 'Infrastructure comparison unavailable.');
+    setText('comp-ai-sec-text', data.security_comparison || 'Security comparison unavailable.');
+    setText('comp-ai-takeaway-text', data.takeaway || 'Takeaway guidance unavailable.');
+    setText('comp-ai-limitations-text', data.limitations || 'AI comparison interprets empirical telemetry. Deterministic classifications remain authoritative.');
+
+    if (labelEl) labelEl.textContent = 'Re-explain';
+    if (iconEl) iconEl.textContent = 'refresh';
+
+  } catch (err) {
+    console.error('AI comparison error:', err);
+    if (loadingEl) loadingEl.classList.add('hidden');
+    if (errorEl) errorEl.classList.remove('hidden');
+    if (errorMsgEl) {
+      errorMsgEl.textContent = `AI request failed: ${err.message}. Deterministic comparison is fully operational.`;
+    }
+  } finally {
+    window._isExplainingComparisonAI = false;
+    if (btnEl) btnEl.disabled = false;
+  }
+}
+
+async function exportComparisonDataset(format = 'csv') {
+  if (!window.currentComparisonResult || !window.currentComparisonResult.observations) {
+    alert('Please execute comparison before exporting.');
+    return;
+  }
+
+  const btnId = format === 'json' ? 'btn-export-comp-json' : 'btn-export-comp-csv';
+  const btnEl = document.getElementById(btnId);
+  const origHtml = btnEl ? btnEl.innerHTML : '';
+
+  if (btnEl) {
+    btnEl.disabled = true;
+    btnEl.innerHTML = `<span class="material-symbols-outlined text-[15px] animate-spin">progress_activity</span><span>Exporting...</span>`;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/compare/export`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        observations: window.currentComparisonResult.observations,
+        format: format,
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Export failed with status ${res.status}`);
+    }
+
+    const fallbackName = format === 'json' ? 'IP_PULSE_Comparison.json' : 'IP_PULSE_Comparison.csv';
+    const disposition = res.headers.get('Content-Disposition') || '';
+    let downloadFilename = fallbackName;
+    const match = disposition.match(/filename=["']?([^"';]+)["']?/i);
+    if (match && match[1]) {
+      downloadFilename = match[1];
+    }
+
+    const blob = await res.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const tempLink = document.createElement('a');
+    tempLink.href = blobUrl;
+    tempLink.download = downloadFilename;
+    document.body.appendChild(tempLink);
+    tempLink.click();
+    document.body.removeChild(tempLink);
+    window.URL.revokeObjectURL(blobUrl);
+
+    showExportToast(`Downloaded comparison dataset: ${downloadFilename}`);
+  } catch (err) {
+    console.error('Export error:', err);
+    showExportToast(`Export failed: ${err.message}`, true);
+  } finally {
+    if (btnEl) {
+      btnEl.disabled = false;
+      btnEl.innerHTML = origHtml;
+    }
+  }
+}
+
+// Global exports for investigation workspace
+window.loadInvestigationWorkspace = loadInvestigationWorkspace;
+window.updateComparisonSelectionUI = updateComparisonSelectionUI;
+window.openCandidateModal = openCandidateModal;
+window.closeCandidateModal = closeCandidateModal;
+window.setCandidateFilter = setCandidateFilter;
+window.filterCandidateList = filterCandidateList;
+window.toggleCandidateSelection = toggleCandidateSelection;
+window.removeComparisonItem = removeComparisonItem;
+window.addCurrentScanToComparison = addCurrentScanToComparison;
+window.clearComparisonSelection = clearComparisonSelection;
+window.runInvestigationComparison = runInvestigationComparison;
+window.triggerComparisonAIExplanation = triggerComparisonAIExplanation;
+window.exportComparisonDataset = exportComparisonDataset;

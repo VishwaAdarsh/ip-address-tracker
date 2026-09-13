@@ -5,7 +5,7 @@
   "observations_collected": 7,
   "remaining_to_target": 43,
   "dataset_status": "INCOMPLETE",
-  "generated_at": "2026-09-13T18:36:24.174564+00:00",
+  "generated_at": "2026-09-13T19:21:00.455478+00:00",
   "validation_summary": {
     "is_valid": true,
     "total_records": 7,
@@ -21,15 +21,138 @@
       "invalid_timestamp_count": 0,
       "classification_mismatch_count": 0
     },
-    "audited_at": "2026-09-13T18:36:24.172200+00:00"
+    "audited_at": "2026-09-13T19:21:00.452330+00:00"
   },
   "analytics": {
     "success": true,
     "insufficient_data": false,
+    "is_filtered": false,
+    "unfiltered_total_count": 7,
+    "filtered_count": 7,
+    "filter_summary": {},
+    "available_filter_options": {
+      "countries": [
+        "Australia",
+        "Canada",
+        "India",
+        "United States"
+      ],
+      "infrastructures": [],
+      "trust_classes": [
+        "GENERALLY SAFE"
+      ],
+      "risk_classes": [
+        "LOW RISK"
+      ],
+      "ip_versions": [
+        "IPv4",
+        "IPv6"
+      ],
+      "https_statuses": [
+        "Enabled",
+        "Disabled",
+        "Unknown"
+      ],
+      "ranges": [
+        {
+          "id": "all",
+          "label": "All (Full Cohort)"
+        },
+        {
+          "id": "recent_10",
+          "label": "Recent 10"
+        },
+        {
+          "id": "recent_25",
+          "label": "Recent 25"
+        },
+        {
+          "id": "first_25",
+          "label": "First 25"
+        }
+      ]
+    },
+    "map_points": [
+      {
+        "id": 1,
+        "domain": "1.1.1.1",
+        "ip": "1.1.1.1",
+        "resolved_ip": "1.1.1.1",
+        "latitude": -27.4766,
+        "longitude": 153.0166,
+        "country": "Australia",
+        "city": "South Brisbane",
+        "organization": "APNIC and Cloudflare DNS Resolver project",
+        "asn": "AS13335 Cloudflare, Inc.",
+        "infrastructure": "Unknown",
+        "trust_score": 85.0,
+        "risk_score": 15.0,
+        "trust_classification": "GENERALLY SAFE",
+        "risk_classification": "LOW RISK",
+        "https_status": "Unknown"
+      },
+      {
+        "id": 2,
+        "domain": "cloudflare.com",
+        "ip": "104.16.132.229",
+        "resolved_ip": "104.16.132.229",
+        "latitude": 43.6532,
+        "longitude": -79.3832,
+        "country": "Canada",
+        "city": "Toronto",
+        "organization": "Cloudflare, Inc.",
+        "asn": "AS13335 Cloudflare, Inc.",
+        "infrastructure": "Unknown",
+        "trust_score": 85.0,
+        "risk_score": 15.0,
+        "trust_classification": "GENERALLY SAFE",
+        "risk_classification": "LOW RISK",
+        "https_status": "Unknown"
+      },
+      {
+        "id": 3,
+        "domain": "chatgpt.com",
+        "ip": "172.64.155.209",
+        "resolved_ip": "172.64.155.209",
+        "latitude": 43.6532,
+        "longitude": -79.3832,
+        "country": "Canada",
+        "city": "Toronto",
+        "organization": "Cloudflare, Inc.",
+        "asn": "AS13335 Cloudflare, Inc.",
+        "infrastructure": "Unknown",
+        "trust_score": 85.0,
+        "risk_score": 15.0,
+        "trust_classification": "GENERALLY SAFE",
+        "risk_classification": "LOW RISK",
+        "https_status": "Unknown"
+      },
+      {
+        "id": 4,
+        "domain": "google.com",
+        "ip": "142.250.182.238",
+        "resolved_ip": "142.250.182.238",
+        "latitude": 19.076,
+        "longitude": 72.8777,
+        "country": "India",
+        "city": "Mumbai",
+        "organization": "Google LLC",
+        "asn": "AS15169 Google LLC",
+        "infrastructure": "Unknown",
+        "trust_score": 85.0,
+        "risk_score": 15.0,
+        "trust_classification": "GENERALLY SAFE",
+        "risk_classification": "LOW RISK",
+        "https_status": "Unknown"
+      }
+    ],
+    "mapped_points_count": 4,
+    "missing_coordinates_count": 3,
     "overview": {
       "total_observations": 7,
       "valid_observations": 7,
       "invalid_observations": 0,
+      "failed_observations": 0,
       "target": 50,
       "sample_target": 50,
       "remaining": 43,

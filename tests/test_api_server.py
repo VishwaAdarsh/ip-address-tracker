@@ -206,7 +206,207 @@ class TestAPIServer(unittest.TestCase):
             self.assertIn("issues_count", data)
             self.assertIn("warnings", data)
 
+    def test_15_api_explain_status(self):
+        """Verify Explainable AI status endpoint returns operational metadata."""
+        req = Request(self._url("/api/explain/status"))
+        with urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertIn("status", data)
+            self.assertIn("provider", data)
+            self.assertIn("model", data)
+
+    def test_16_api_explain_post_valid_payload(self):
+        """Verify POST /api/explain returns structured evidence explanation."""
+        payload = {
+            "target": "example.com",
+            "intelligence": {
+                "base": {"selected_ip": "93.184.216.34", "country": "United States", "asn": "AS15133"},
+                "security": {"is_https": True, "tls_valid": True},
+                "ip_intel": {"infrastructure_type": "CDN / Edge Hub"},
+                "risk": {"trust_score": 90, "risk_score": 10, "positive_factors": ["HTTPS active"]},
+            },
+        }
+        body = json.dumps(payload).encode("utf-8")
+        req = Request(self._url("/api/explain"), data=body, headers={"Content-Type": "application/json"})
+        with urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertEqual(data.get("status"), "success")
+            self.assertIn("summary", data)
+            self.assertIn("trust_explanation", data)
+            self.assertIn("risk_explanation", data)
+            self.assertIn("recommendation", data)
+            self.assertIn("limitations", data)
+
+    def test_17_api_explain_empty_payload(self):
+        """Verify POST /api/explain rejects empty target with 400 error."""
+        body = json.dumps({}).encode("utf-8")
+        req = Request(self._url("/api/explain"), data=body, headers={"Content-Type": "application/json"})
+        try:
+            urlopen(req)
+            self.fail("Expected HTTP 400 error for empty target")
+        except HTTPError as e:
+            self.assertEqual(e.code, 400)
+
+    def test_18_api_compare_candidates(self):
+        """Verify GET /api/compare/candidates returns available candidate observations."""
+        req = Request(self._url("/api/compare/candidates"))
+        with urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertIn("count", data)
+            self.assertIn("candidates", data)
+            self.assertIsInstance(data["candidates"], list)
+
+    def test_19_api_compare_valid_payload(self):
+        """Verify POST /api/compare performs multi-target comparison across 2 observations."""
+        payload = {
+            "observations": [
+                {
+                    "domain": "alpha.test.com",
+                    "resolved_ip": "1.1.1.1",
+                    "asn": "AS13335",
+                    "organization": "Cloudflare",
+                    "country": "United States",
+                    "infrastructure_type": "Cloud / Hosting",
+                    "https_status": "Enabled",
+                    "website_trust_score": 90.0,
+                    "ip_risk_score": 10.0,
+                    "latitude": 37.7749,
+                    "longitude": -122.4194,
+                },
+                {
+                    "domain": "beta.test.com",
+                    "resolved_ip": "8.8.8.8",
+                    "asn": "AS15169",
+                    "organization": "Google",
+                    "country": "United States",
+                    "infrastructure_type": "Cloud / Hosting",
+                    "https_status": "Enabled",
+                    "website_trust_score": 85.0,
+                    "ip_risk_score": 15.0,
+                    "latitude": 37.4220,
+                    "longitude": -122.0841,
+                },
+            ]
+        }
+        body = json.dumps(payload).encode("utf-8")
+        req = Request(self._url("/api/compare"), data=body, headers={"Content-Type": "application/json"})
+        with urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertTrue(data.get("success"))
+            self.assertEqual(data.get("count"), 2)
+            self.assertIn("statistics", data)
+            self.assertIn("differences", data)
+            self.assertIn("map_points", data)
+            self.assertEqual(len(data["map_points"]), 2)
+
+    def test_20_api_compare_insufficient_payload(self):
+        """Verify POST /api/compare rejects fewer than 2 observations with 400."""
+        payload = {"observations": [{"domain": "single.com"}]}
+        body = json.dumps(payload).encode("utf-8")
+        req = Request(self._url("/api/compare"), data=body, headers={"Content-Type": "application/json"})
+        try:
+            urlopen(req)
+            self.fail("Expected HTTP 400 error for insufficient observations")
+        except HTTPError as e:
+            self.assertEqual(e.code, 400)
+
+    def test_21_api_compare_explain(self):
+        """Verify POST /api/compare/explain produces comparative synthesis."""
+        payload = {
+            "comparison": {
+                "observations": [
+                    {"domain": "one.com", "resolved_ip": "1.1.1.1", "asn": "AS1", "country": "US", "website_trust_score": 90, "ip_risk_score": 10},
+                    {"domain": "two.com", "resolved_ip": "2.2.2.2", "asn": "AS2", "country": "DE", "website_trust_score": 40, "ip_risk_score": 70},
+                ],
+                "statistics": {
+                    "common_asn": "No common value detected.",
+                    "common_country": "No common value detected.",
+                    "https_adoption": {"formatted": "1 of 2 (50.0%) enforced"},
+                    "anonymizer_detections": {"total_anonymizers": 0},
+                },
+                "differences": ["Geographic divergence observed."],
+            }
+        }
+        body = json.dumps(payload).encode("utf-8")
+        req = Request(self._url("/api/compare/explain"), data=body, headers={"Content-Type": "application/json"})
+        with urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertEqual(data.get("status"), "success")
+            self.assertIn("summary", data)
+            self.assertIn("infrastructure_comparison", data)
+            self.assertIn("security_comparison", data)
+
+    def test_22_api_compare_export_csv_and_json(self):
+        """Verify POST /api/compare/export delivers CSV and JSON export streams."""
+        payload = {
+            "observations": [
+                {"domain": "siteA.com", "resolved_ip": "1.1.1.1", "country": "US", "website_trust_score": 88},
+                {"domain": "siteB.com", "resolved_ip": "2.2.2.2", "country": "CA", "website_trust_score": 92},
+            ],
+            "format": "csv",
+        }
+        body = json.dumps(payload).encode("utf-8")
+        req = Request(self._url("/api/compare/export"), data=body, headers={"Content-Type": "application/json"})
+        with urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            self.assertIn("text/csv", resp.headers.get("Content-Type", ""))
+            csv_text = resp.read().decode("utf-8")
+            self.assertIn("siteA.com", csv_text)
+
+        payload["format"] = "json"
+        body_json = json.dumps(payload).encode("utf-8")
+        req_json = Request(self._url("/api/compare/export"), data=body_json, headers={"Content-Type": "application/json"})
+        with urlopen(req_json) as resp:
+            self.assertEqual(resp.status, 200)
+            self.assertIn("application/json", resp.headers.get("Content-Type", ""))
+            json_text = resp.read().decode("utf-8")
+            self.assertIn("siteB.com", json_text)
+
+    def test_23_api_analytics_filtering_query_params(self):
+        """Verify GET /api/analytics handles query parameter filters."""
+        req = Request(self._url("/api/analytics?country=United%20States&range=recent_10"))
+        with urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertTrue(data.get("success"))
+            self.assertIn("is_filtered", data)
+            self.assertIn("unfiltered_total_count", data)
+            self.assertIn("filtered_count", data)
+            self.assertIn("available_filter_options", data)
+            self.assertIn("map_points", data)
+            self.assertIn("mapped_points_count", data)
+            self.assertIn("missing_coordinates_count", data)
+
+    def test_24_api_analytics_post_and_capabilities(self):
+        """Verify POST /api/analytics with body filters and status capability."""
+        # 1. POST /api/analytics
+        payload = {"filters": {"infrastructure": "Cloud", "https_status": "Enabled"}}
+        body = json.dumps(payload).encode("utf-8")
+        req = Request(self._url("/api/analytics"), data=body, headers={"Content-Type": "application/json"})
+        with urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertTrue(data.get("success"))
+            self.assertIn("is_filtered", data)
+            self.assertIn("map_points", data)
+
+        # 2. Status capability
+        req_status = Request(self._url("/api/status"))
+        with urlopen(req_status) as resp_status:
+            self.assertEqual(resp_status.status, 200)
+            status_data = json.loads(resp_status.read().decode("utf-8"))
+            caps = status_data.get("capabilities", {})
+            self.assertTrue(caps.get("visualization_dashboard"))
+
 
 if __name__ == "__main__":
     unittest.main()
+
+
+
 

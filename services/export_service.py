@@ -427,6 +427,7 @@ def export_field_study_csv(
 def export_field_study_json(
     db_path: Optional[Union[str, Path]] = None,
     target_count: int = 50,
+    observations: Optional[List[FieldObservation]] = None,
 ) -> Dict[str, Any]:
     """
     Generate a complete, structured JSON export payload containing:
@@ -436,8 +437,11 @@ def export_field_study_json(
     - All observation records with explicit UNKNOWN values
     - Shared Phase 20 analytics & deterministic research insights
     """
-    init_db(db_path)
-    records = get_field_observations(db_path=db_path)
+    if observations is None:
+        init_db(db_path)
+        records = get_field_observations(db_path=db_path)
+    else:
+        records = observations
     total_n = len(records)
     status_str = "TARGET_REACHED" if total_n >= target_count else "INCOMPLETE"
 

@@ -17,6 +17,7 @@ Architecture:
 """
 import csv
 from dataclasses import asdict
+import datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import io
@@ -28,9 +29,15 @@ import threading
 from typing import Any, Dict, List, Optional
 from urllib.parse import parse_qs, urlparse
 
-from config.settings import BASE_DIR
+from config.settings import (
+    BASE_DIR,
+    AI_ENABLED,
+    AI_MODEL,
+    AI_PROVIDER,
+)
+from core.ai_explainer import explain_intelligence
 from database.db import clear_history, delete_lookup, get_lookup_history
-from database.models import LookupRecord
+from database.models import FieldObservation, LookupRecord
 from core.intel_chain import generate_ip_personality_profile
 from core.ip_intel import analyze_ip_intelligence
 from services.field_test_service import (
@@ -41,6 +48,11 @@ from services.field_test_service import (
     run_automatic_completion,
 )
 from services.risk_analysis_service import perform_full_intelligence_scan
+from services.comparison_service import (
+    execute_comparison,
+    generate_comparison_ai_explanation,
+    get_comparison_candidates,
+)
 from services.export_service import (
     export_field_study_csv,
     export_field_study_json,
@@ -104,7 +116,7 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
         elif path == "/api/field-study":
             self._handle_api_field_study()
         elif path == "/api/analytics":
-            self._handle_api_analytics()
+            self._handle_api_analytics(query_params)
         elif path == "/api/export/csv":
             self._handle_api_export_csv(query_params)
         elif path == "/api/export/json":
@@ -115,6 +127,12 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
             self._handle_api_export_pdf()
         elif path == "/api/export/validate":
             self._handle_api_export_validate()
+        elif path == "/api/explain/status":
+            self._handle_api_explain_status()
+        elif path == "/api/compare/candidates":
+            self._handle_api_compare_candidates()
+        elif path == "/api/compare/export":
+            self._handle_api_compare_export(query_params)
         elif path.startswith("/api/"):
             self._send_error_json(f"Endpoint not found: {path}", status=404)
         else:
@@ -137,6 +155,16 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
 
         if path == "/api/analyze":
             self._handle_api_analyze(payload)
+        elif path == "/api/explain":
+            self._handle_api_explain(payload)
+        elif path == "/api/compare":
+            self._handle_api_compare(payload)
+        elif path == "/api/compare/explain":
+            self._handle_api_compare_explain(payload)
+        elif path == "/api/compare/export":
+            self._handle_api_compare_export_post(payload)
+        elif path == "/api/analytics":
+            self._handle_api_analytics(payload=payload)
         elif path == "/api/field-study/add":
             self._handle_api_field_study_add(payload)
         elif path == "/api/field-study/complete-remaining":
@@ -185,8 +213,147 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
                 "risk_engine": True,
                 "ai_explainer": True,
                 "field_study": True,
+                "explainable_ai_layer": True,
+                "comparison_workspace": True,
+                "visualization_dashboard": True,
             },
         })
+
+    def _handle_api_compare_candidates(self) -> None:
+        """Return candidate observations from Field Study & History for investigation workspace."""
+        candidates = get_comparison_candidates()
+        self._send_json(candidates)
+
+    def _handle_api_compare(self, payload: Dict[str, Any]) -> None:
+        """Execute multi-observation comparison across 2 to 5 targets."""
+        raw_items = payload.get("observations")
+        if raw_items is None:
+            self._send_error_json("Observations array is required for comparison.", status=400)
+            return
+
+        result = execute_comparison(raw_items)
+        if not result.get("success"):
+            status_code = 400
+            self._send_error_json(result.get("error", "Comparison failed."), status=status_code, details={"code": result.get("code")})
+            return
+
+        self._send_json(result)
+
+    def _handle_api_compare_explain(self, payload: Dict[str, Any]) -> None:
+        """Generate evidence-grounded AI comparison explanation."""
+        comp_data = payload.get("comparison") or payload
+        provider_override = payload.get("provider")
+        res = generate_comparison_ai_explanation(comp_data, provider_name=provider_override)
+        self._send_json(res)
+
+    def _handle_api_compare_export_post(self, payload: Dict[str, Any]) -> None:
+        """Export compared observations as CSV or JSON."""
+        observations = payload.get("observations", [])
+        export_format = str(payload.get("format", "csv")).lower()
+
+        field_obs_list: List[FieldObservation] = []
+        for idx, obs in enumerate(observations, start=1):
+            if isinstance(obs, dict):
+                fo = FieldObservation(
+                    id=obs.get("id", idx),
+                    test_id=idx,
+                    domain=obs.get("domain", "Unknown"),
+                    resolved_ip=obs.get("resolved_ip", "Unknown"),
+                    ip_version=obs.get("ip_version", "IPv4"),
+                    country=obs.get("country", "Unknown"),
+                    region=obs.get("region", "Unknown"),
+                    city=obs.get("city", "Unknown"),
+                    latitude=obs.get("latitude"),
+                    longitude=obs.get("longitude"),
+                    geolocation_confidence=obs.get("geolocation_confidence", "Unknown"),
+                    asn=obs.get("asn", "Unknown"),
+                    organization=obs.get("organization", "Unknown"),
+                    isp=obs.get("isp", "Unknown"),
+                    network_type=obs.get("network_type", "Unknown"),
+                    infrastructure_type=obs.get("infrastructure_type", "Unknown"),
+                    https_status=obs.get("https_status", "Unknown"),
+                    tls_status=obs.get("tls_status", "Unknown"),
+                    vpn_status=obs.get("vpn_status", "Unknown"),
+                    proxy_status=obs.get("proxy_status", "Unknown"),
+                    tor_status=obs.get("tor_status", "Unknown"),
+                    website_trust_score=obs.get("website_trust_score"),
+                    website_trust_classification=obs.get("website_trust_classification", "Unknown"),
+                    ip_risk_score=obs.get("ip_risk_score"),
+                    ip_risk_classification=obs.get("ip_risk_classification", "Unknown"),
+                    score_confidence=obs.get("score_confidence", "Unknown"),
+                    observed_at=obs.get("tested_at") or datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                )
+                field_obs_list.append(fo)
+
+        if export_format == "json":
+            json_data = export_field_study_json(observations=field_obs_list)
+            json_str = json.dumps(json_data, indent=2) if isinstance(json_data, (dict, list)) else str(json_data)
+            body_bytes = json_str.encode("utf-8")
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Disposition", 'attachment; filename="IP_PULSE_Comparison.json"')
+            self.send_header("Content-Length", str(len(body_bytes)))
+            self._set_cors_headers()
+            self.end_headers()
+            self.wfile.write(body_bytes)
+        else:
+            csv_content = export_field_study_csv(observations=field_obs_list)
+            body_bytes = csv_content.encode("utf-8")
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "text/csv; charset=utf-8")
+            self.send_header("Content-Disposition", 'attachment; filename="IP_PULSE_Comparison.csv"')
+            self.send_header("Content-Length", str(len(body_bytes)))
+            self._set_cors_headers()
+            self.end_headers()
+            self.wfile.write(body_bytes)
+
+    def _handle_api_compare_export(self, query_params: Dict[str, List[str]]) -> None:
+        """Handle GET export for comparison candidates."""
+        export_format = query_params.get("format", ["csv"])[0].lower()
+        candidates = get_comparison_candidates().get("candidates", [])
+        self._handle_api_compare_export_post({"observations": candidates[:5], "format": export_format})
+
+    def _handle_api_explain_status(self) -> None:
+        """Return operational status and metadata for the Explainable AI layer."""
+        self._send_json({
+            "status": "operational" if AI_ENABLED else "disabled",
+            "enabled": AI_ENABLED,
+            "provider": AI_PROVIDER,
+            "model": AI_MODEL,
+            "description": "Evidence-grounded explainability engine for Website Trust and IP Risk.",
+        })
+
+    def _handle_api_explain(self, payload: Dict[str, Any]) -> None:
+        """Generate an evidence-grounded AI explanation for an analyzed target or payload."""
+        target = str(payload.get("target", "")).strip()
+        if not target:
+            self._send_error_json("Target domain or IP address is required.", status=400)
+            return
+
+        # If intelligence was passed in payload, use it directly (data minimization & zero redundant re-scanning)
+        intelligence = payload.get("intelligence")
+        if not intelligence:
+            try:
+                result = perform_full_intelligence_scan(target, save_to_db=False)
+                intelligence = result
+            except Exception as e:
+                logger.error(f"Scan failed while preparing explanation for {target}: {e}")
+                self._send_error_json(f"Failed to scan target for explanation: {str(e)}", status=500)
+                return
+
+        try:
+            bypass_cache = bool(payload.get("bypass_cache", False))
+            provider_override = payload.get("provider")
+            res = explain_intelligence(
+                target=target,
+                intelligence=intelligence,
+                provider_name=provider_override,
+                bypass_cache=bypass_cache,
+            )
+            self._send_json(res.to_dict())
+        except Exception as e:
+            logger.exception(f"AI explanation error for {target}: {e}")
+            self._send_error_json(f"Explanation engine error: {str(e)}", status=500)
 
     def _handle_api_analyze(self, payload: Dict[str, Any]) -> None:
         """Execute complete multi-layered IP Intelligence and Security scan."""
@@ -434,11 +601,24 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
         except Exception as e:
             self._send_error_json(f"Could not initiate completion: {str(e)}", status=500)
 
-    def _handle_api_analytics(self) -> None:
-        """Compute statistical distributions and metrics directly from real database observations."""
+    def _handle_api_analytics(
+        self,
+        query_params: Optional[Dict[str, List[str]]] = None,
+        payload: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Compute statistical distributions and metrics directly from real database observations with optional filtering."""
         try:
             from services.analytics_service import compute_field_study_analytics
-            analytics_data = compute_field_study_analytics()
+
+            filters: Dict[str, Any] = {}
+            if query_params:
+                for k, v in query_params.items():
+                    if v and len(v) > 0:
+                        filters[k] = v[0]
+            if payload and isinstance(payload, dict):
+                filters.update(payload)
+
+            analytics_data = compute_field_study_analytics(filters=filters if filters else None)
 
             # Merge top-level aliases for backward compatibility with existing tests/clients
             ov = analytics_data.get("overview", {})

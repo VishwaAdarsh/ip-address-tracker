@@ -102,7 +102,11 @@
         </a>
         <a class="sidebar-link flex items-center gap-space-sm px-space-md py-2.5 rounded-xl font-medium cursor-pointer" data-path="analytics">
           <span class="material-symbols-outlined text-[20px]">insights</span>
-          <span class="text-sm">Analytics</span>
+          <span class="text-sm">Research Dashboard</span>
+        </a>
+        <a class="sidebar-link flex items-center gap-space-sm px-space-md py-2.5 rounded-xl font-medium cursor-pointer" data-path="investigation">
+          <span class="material-symbols-outlined text-[20px]">compare_arrows</span>
+          <span class="text-sm">Investigation</span>
         </a>
       </nav>
     </div>
@@ -523,22 +527,136 @@
             </div>
 
             <!-- Tab 4: AI Explanation & Provenance -->
-            <div id="tab-content-aireport" class="hidden p-space-lg rounded-xl glass-panel border border-surface-container flex flex-col gap-3">
-              <div>
+            <div id="tab-content-aireport" class="hidden p-space-lg rounded-xl glass-panel border border-surface-container flex flex-col gap-4">
+              <!-- AI Header & Control Toolbar -->
+              <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-surface-container">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center text-primary">
+                    <span class="material-symbols-outlined text-[18px]">psychology</span>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm font-semibold text-on-surface tracking-wide">AI Intelligence & Explainability</span>
+                      <span id="ai-provider-badge" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-surface-container-high text-primary border border-primary/20">ENGINE: FACTUAL AI</span>
+                    </div>
+                    <span class="text-[11px] text-outline block">Optional evidence explanation layer • Never modifies scores</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button id="btn-generate-ai-explanation" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-primary to-secondary text-surface font-mono font-medium text-xs shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" onclick="triggerAIExplanation()">
+                    <span id="ai-btn-icon" class="material-symbols-outlined text-[15px]">auto_awesome</span>
+                    <span id="ai-btn-label">Explain with AI</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- State 1: Idle State -->
+              <div id="ai-explanation-idle" class="p-4 rounded-xl bg-surface-container-lowest/70 border border-surface-container text-center flex flex-col items-center gap-2">
+                <span class="material-symbols-outlined text-outline text-[28px]">query_stats</span>
+                <p class="text-xs text-on-surface-variant max-w-md">
+                  Click <strong class="text-primary font-medium">Explain with AI</strong> to generate an evidence-grounded natural language synthesis of this scan's transport, infrastructure, and risk telemetry.
+                </p>
+                <span class="text-[11px] text-outline font-mono">Manual-first • Strictly grounded in verified signals • Zero hallucination</span>
+              </div>
+
+              <!-- State 2: Generating / Loading State -->
+              <div id="ai-explanation-loading" class="hidden p-4 rounded-xl bg-surface-container-lowest/80 border border-surface-container flex flex-col gap-3 animate-pulse">
+                <div class="flex items-center gap-3">
+                  <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <span class="text-xs font-mono text-primary font-medium">Synthesizing evidence-based explanation from scan telemetry...</span>
+                </div>
+                <div class="space-y-2 pt-1">
+                  <div class="h-3 bg-surface-container rounded w-full"></div>
+                  <div class="h-3 bg-surface-container rounded w-5/6"></div>
+                  <div class="h-3 bg-surface-container rounded w-4/6"></div>
+                </div>
+              </div>
+
+              <!-- State 3: Error / Provider Unavailable State -->
+              <div id="ai-explanation-error" class="hidden p-3.5 rounded-xl bg-error/10 border border-error/30 text-xs text-on-surface flex items-start gap-2.5">
+                <span class="material-symbols-outlined text-error text-[18px] shrink-0 mt-0.5">info</span>
+                <div class="flex-1">
+                  <span id="ai-error-message" class="font-medium text-error block">AI explanation unavailable. Deterministic analysis remains fully available.</span>
+                  <span class="text-[11px] text-outline mt-0.5 block">Underlying trust scores, risk metrics, and infrastructure telemetry are unaffected.</span>
+                </div>
+              </div>
+
+              <!-- State 4: Explanation Results View -->
+              <div id="ai-explanation-result" class="hidden flex flex-col gap-3">
+                <!-- Summary Card -->
+                <div class="p-3 rounded-xl bg-surface-container-lowest/80 border border-surface-container">
+                  <span class="text-[11px] font-mono text-outline uppercase tracking-wider font-semibold block mb-1">Executive Summary</span>
+                  <p id="ai-summary-text" class="text-xs text-on-surface leading-relaxed font-sans"></p>
+                </div>
+
+                <!-- Dual Score Explanations -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div class="p-3 rounded-xl bg-surface-container-lowest/80 border border-surface-container flex flex-col gap-1">
+                    <div class="flex items-center justify-between pb-1 border-b border-surface-container/60">
+                      <span class="text-[11px] font-mono text-outline uppercase tracking-wider font-semibold">Trust Score Analysis</span>
+                      <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-tertiary/10 text-tertiary border border-tertiary/20">Transport</span>
+                    </div>
+                    <p id="ai-trust-explanation-text" class="text-xs text-on-surface-variant leading-relaxed font-sans pt-1"></p>
+                  </div>
+                  <div class="p-3 rounded-xl bg-surface-container-lowest/80 border border-surface-container flex flex-col gap-1">
+                    <div class="flex items-center justify-between pb-1 border-b border-surface-container/60">
+                      <span class="text-[11px] font-mono text-outline uppercase tracking-wider font-semibold">IP Risk Score Analysis</span>
+                      <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-secondary/10 text-secondary border border-secondary/20">Network</span>
+                    </div>
+                    <p id="ai-risk-explanation-text" class="text-xs text-on-surface-variant leading-relaxed font-sans pt-1"></p>
+                  </div>
+                </div>
+
+                <!-- Evidence Factor Tri-Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-xs">
+                  <!-- Positive Signals -->
+                  <div class="p-2.5 rounded-lg bg-surface-container-lowest/60 border border-surface-container flex flex-col gap-1.5">
+                    <span class="text-[10px] font-mono text-tertiary uppercase tracking-wider font-semibold flex items-center gap-1">
+                      <span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Strongest Positive Signals
+                    </span>
+                    <div id="ai-positive-signals-list" class="flex flex-col gap-1"></div>
+                  </div>
+                  <!-- Risk Signals -->
+                  <div class="p-2.5 rounded-lg bg-surface-container-lowest/60 border border-surface-container flex flex-col gap-1.5">
+                    <span class="text-[10px] font-mono text-error uppercase tracking-wider font-semibold flex items-center gap-1">
+                      <span class="w-1.5 h-1.5 rounded-full bg-error"></span> Key Risk Factors
+                    </span>
+                    <div id="ai-negative-signals-list" class="flex flex-col gap-1"></div>
+                  </div>
+                  <!-- Unknown / Unavailable Signals -->
+                  <div class="p-2.5 rounded-lg bg-surface-container-lowest/60 border border-surface-container flex flex-col gap-1.5">
+                    <span class="text-[10px] font-mono text-outline uppercase tracking-wider font-semibold flex items-center gap-1">
+                      <span class="w-1.5 h-1.5 rounded-full bg-outline"></span> Unknown / Unavailable
+                    </span>
+                    <div id="ai-unknown-signals-list" class="flex flex-col gap-1"></div>
+                  </div>
+                </div>
+
+                <!-- Assessment & Guidance -->
+                <div class="p-3 rounded-xl bg-surface-container-lowest/80 border border-surface-container">
+                  <span class="text-[11px] font-mono text-outline uppercase tracking-wider font-semibold block mb-1">Assessment & Recommendations</span>
+                  <p id="ai-recommendation-text" class="text-xs text-on-surface-variant leading-relaxed font-sans"></p>
+                </div>
+
+                <!-- Scientific Limitations Note -->
+                <div class="p-2 rounded-lg bg-surface-container-high/40 border border-surface-container/60 text-[10px] text-outline leading-tight">
+                  <span class="font-semibold text-on-surface-variant">Analytical Disclaimer:</span>
+                  <span id="ai-limitations-text">AI explanations interpret empirical scan telemetry. Deterministic classifications and technical evidence remain authoritative.</span>
+                </div>
+              </div>
+
+              <!-- Integrated IP Personality Synthesis Card -->
+              <div class="pt-2 border-t border-surface-container">
                 <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">IP Personality Synthesis</span>
                 <div id="ai-personality-text" class="text-sm text-primary font-mono mt-1 p-2.5 rounded-lg bg-surface-container-lowest/80 border border-surface-container">
                   Loading personality statement...
                 </div>
               </div>
-              <div class="mt-2">
-                <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Evidence-Based Risk Analysis</span>
-                <div id="ai-explanation-text" class="text-xs text-on-surface-variant leading-relaxed mt-1 p-2.5 rounded-lg bg-surface-container-lowest/80 border border-surface-container max-h-48 overflow-y-auto whitespace-pre-line font-mono">
-                  Loading analysis report...
-                </div>
-              </div>
-              <div class="mt-2">
+
+              <!-- Provenance Audit Chain -->
+              <div class="pt-1">
                 <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Provenance Audit Chain</span>
-                <div id="provenance-timeline" class="mt-2 flex flex-col gap-1 max-h-40 overflow-y-auto"></div>
+                <div id="provenance-timeline" class="mt-2 flex flex-col gap-1 max-h-36 overflow-y-auto"></div>
               </div>
             </div>
           </div>
@@ -794,7 +912,7 @@
       <!-- ================================================================= -->
       <!-- View 4: Analytics View (Phase 20 Research Analytics) -->
       <section id="view-analytics" class="page-view-section hidden flex flex-col gap-space-lg max-w-[1400px] mx-auto pb-margin">
-        <!-- Analytics Header -->
+        <!-- Dashboard Header -->
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-surface-container">
           <div>
             <div class="flex items-center gap-2 text-secondary text-xs font-mono mb-1">
@@ -803,16 +921,16 @@
               <span id="analytics-n-count" class="text-outline">N = 0 / 50 Observed Endpoints</span>
               <span id="analytics-status-badge" class="ml-2 px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-primary/10 text-primary border border-primary/30">INCOMPLETE</span>
             </div>
-            <h1 class="font-headline text-3xl font-bold text-on-surface">Field Study Research Analytics</h1>
-            <p class="text-sm text-on-surface-variant">Deterministic statistical distributions, infrastructure correlations, and comparative analysis computed directly from stored observations.</p>
+            <h1 class="font-headline text-3xl font-bold text-on-surface">Field Study Research Dashboard</h1>
+            <p class="text-sm text-on-surface-variant">Deterministic statistical distributions, infrastructure correlations, and empirical cohort telemetry.</p>
           </div>
           <!-- Phase 21 Export Actions Bar -->
           <div class="flex flex-wrap items-center gap-2">
-            <button onclick="triggerResearchExport('csv', this)" class="px-3 py-1.5 rounded-xl bg-surface-container/80 hover:bg-surface-container-high border border-surface-container text-xs text-on-surface font-mono transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95" title="Export standardized CSV dataset">
+            <button onclick="triggerResearchExport('csv', this)" class="px-3 py-1.5 rounded-xl bg-surface-container/80 hover:bg-surface-container-high border border-surface-container text-xs text-on-surface font-mono transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95" title="Export standardized CSV dataset (reflects active filters)">
               <span class="material-symbols-outlined text-[15px] text-primary">table_view</span>
               <span>CSV</span>
             </button>
-            <button onclick="triggerResearchExport('json', this)" class="px-3 py-1.5 rounded-xl bg-surface-container/80 hover:bg-surface-container-high border border-surface-container text-xs text-on-surface font-mono transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95" title="Export structured JSON dataset with Phase 20 analytics">
+            <button onclick="triggerResearchExport('json', this)" class="px-3 py-1.5 rounded-xl bg-surface-container/80 hover:bg-surface-container-high border border-surface-container text-xs text-on-surface font-mono transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95" title="Export structured JSON dataset with analytics">
               <span class="material-symbols-outlined text-[15px] text-secondary">data_object</span>
               <span>JSON</span>
             </button>
@@ -827,11 +945,135 @@
           </div>
         </div>
 
+        <!-- 1. FIELD STUDY PROGRESS COMPONENT (Prominent Header Progress Card) -->
+        <div class="p-space-lg rounded-2xl glass-panel border border-surface-container shadow-xl flex flex-col gap-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary shadow-[0_0_12px_rgba(0,210,255,0.2)]">
+                <span class="material-symbols-outlined text-[20px]">assignment_turned_in</span>
+              </div>
+              <div>
+                <h3 class="font-headline text-base font-bold text-on-surface">Field Study Progress &amp; Quota Fulfillment</h3>
+                <span class="text-xs font-mono text-outline">Target: 50 standardized real-world web observations</span>
+              </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span id="dash-prog-valid-pill" class="px-2.5 py-1 rounded-lg text-xs font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">Valid: 0</span>
+              <span id="dash-prog-failed-pill" class="px-2.5 py-1 rounded-lg text-xs font-mono bg-surface-container-high text-outline border border-surface-container">Failed: 0</span>
+              <span id="dash-prog-quota-badge" class="px-3 py-1 rounded-lg text-xs font-mono font-semibold bg-primary/15 text-primary border border-primary/30">0% Complete</span>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <div class="flex justify-between items-baseline text-xs font-mono">
+              <div class="flex items-baseline gap-2">
+                <span id="dash-prog-count-display" class="text-on-surface font-bold text-base">0 / 50</span>
+                <span id="dash-prog-pct-label" class="text-outline text-xs">(0% Complete)</span>
+              </div>
+              <span id="dash-prog-remaining-display" class="text-primary font-medium">50 observations remaining</span>
+            </div>
+            <div class="w-full h-2.5 rounded-full bg-surface-container overflow-hidden">
+              <div id="dash-prog-bar" class="h-full trust-gauge-gradient rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. INTERACTIVE FILTER TOOLBAR -->
+        <div id="dash-filter-toolbar" class="p-4 rounded-xl glass-panel border border-surface-container shadow-md flex flex-col gap-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary text-[18px]">filter_alt</span>
+              <span class="text-xs font-mono text-on-surface font-semibold uppercase tracking-wider">Cohort Filters</span>
+            </div>
+            <button id="dash-reset-filters-btn" onclick="resetAnalyticsFilters()" class="text-xs font-mono text-outline hover:text-primary transition-colors flex items-center gap-1 cursor-pointer">
+              <span class="material-symbols-outlined text-[14px]">refresh</span>
+              <span>Reset Filters</span>
+            </button>
+          </div>
+          <!-- Dropdowns Grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5">
+            <div>
+              <label class="block text-[10px] font-mono text-outline uppercase mb-1">Country</label>
+              <select id="dash-filter-country" onchange="handleAnalyticsFilterChange('country', this.value)" class="w-full bg-surface-container text-xs font-mono text-on-surface rounded-lg px-2 py-1.5 border border-surface-container focus:border-primary focus:outline-none">
+                <option value="all">All Countries</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-mono text-outline uppercase mb-1">Infrastructure</label>
+              <select id="dash-filter-infra" onchange="handleAnalyticsFilterChange('infrastructure', this.value)" class="w-full bg-surface-container text-xs font-mono text-on-surface rounded-lg px-2 py-1.5 border border-surface-container focus:border-primary focus:outline-none">
+                <option value="all">All Infrastructures</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-mono text-outline uppercase mb-1">Trust Class</label>
+              <select id="dash-filter-trust-class" onchange="handleAnalyticsFilterChange('trust_class', this.value)" class="w-full bg-surface-container text-xs font-mono text-on-surface rounded-lg px-2 py-1.5 border border-surface-container focus:border-primary focus:outline-none">
+                <option value="all">All Trust Classes</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-mono text-outline uppercase mb-1">Risk Class</label>
+              <select id="dash-filter-risk-class" onchange="handleAnalyticsFilterChange('risk_class', this.value)" class="w-full bg-surface-container text-xs font-mono text-on-surface rounded-lg px-2 py-1.5 border border-surface-container focus:border-primary focus:outline-none">
+                <option value="all">All Risk Classes</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-mono text-outline uppercase mb-1">HTTPS</label>
+              <select id="dash-filter-https" onchange="handleAnalyticsFilterChange('https_status', this.value)" class="w-full bg-surface-container text-xs font-mono text-on-surface rounded-lg px-2 py-1.5 border border-surface-container focus:border-primary focus:outline-none">
+                <option value="all">All States</option>
+                <option value="Enabled">Enabled</option>
+                <option value="Disabled">Disabled</option>
+                <option value="Unknown">Unknown</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-mono text-outline uppercase mb-1">IP Protocol</label>
+              <select id="dash-filter-ip-ver" onchange="handleAnalyticsFilterChange('ip_version', this.value)" class="w-full bg-surface-container text-xs font-mono text-on-surface rounded-lg px-2 py-1.5 border border-surface-container focus:border-primary focus:outline-none">
+                <option value="all">All Versions</option>
+                <option value="IPv4">IPv4</option>
+                <option value="IPv6">IPv6</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-mono text-outline uppercase mb-1">Scope</label>
+              <select id="dash-filter-range" onchange="handleAnalyticsFilterChange('range', this.value)" class="w-full bg-surface-container text-xs font-mono text-on-surface rounded-lg px-2 py-1.5 border border-surface-container focus:border-primary focus:outline-none">
+                <option value="all">All (Full Cohort)</option>
+                <option value="recent_10">Recent 10</option>
+                <option value="recent_25">Recent 25</option>
+                <option value="first_25">First 25</option>
+              </select>
+            </div>
+          </div>
+          <!-- Filter Active Indicator Banner -->
+          <div id="dash-filter-indicator" class="hidden p-2.5 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-between text-xs font-mono">
+            <div class="flex items-center gap-2 text-primary">
+              <span class="material-symbols-outlined text-[16px]">info</span>
+              <span id="dash-filter-indicator-text">Filtered Cohort Active: Showing X of Y observations</span>
+            </div>
+            <button onclick="resetAnalyticsFilters()" class="text-xs text-primary underline hover:text-white transition-colors cursor-pointer">Clear Filters</button>
+          </div>
+        </div>
+
+        <!-- Loading State Skeleton -->
+        <div id="analytics-loading" class="hidden p-12 text-center rounded-2xl glass-panel border border-surface-container text-outline shadow-xl">
+          <div class="flex flex-col items-center justify-center gap-3">
+            <span class="material-symbols-outlined text-4xl text-primary animate-spin">refresh</span>
+            <span class="font-medium text-on-surface text-sm">Computing Research Analytics &amp; Distributions...</span>
+            <span class="text-xs text-outline font-mono">Querying real SQLite field observations</span>
+          </div>
+        </div>
+
         <!-- Empty Banner -->
         <div id="analytics-empty" class="hidden p-12 text-center rounded-2xl glass-panel border border-surface-container text-outline shadow-xl">
           <span class="material-symbols-outlined text-4xl block mb-2 text-outline-variant">bar_chart</span>
           <span class="font-medium block text-on-surface mb-1">No Field Study Observations Available</span>
           <p class="text-xs text-outline max-w-md mx-auto">Look up websites from the Home page and click "Add to Field Study" to curate observations and unlock research analytics.</p>
+        </div>
+
+        <!-- Filter Empty State -->
+        <div id="analytics-filter-empty" class="hidden p-12 text-center rounded-2xl glass-panel border border-surface-container text-outline shadow-xl">
+          <span class="material-symbols-outlined text-4xl block mb-2 text-amber-400">filter_alt_off</span>
+          <span class="font-medium block text-on-surface mb-1">No Observations Match Current Filter Criteria</span>
+          <p class="text-xs text-outline max-w-md mx-auto mb-4">No recorded field study observations match the selected criteria.</p>
+          <button onclick="resetAnalyticsFilters()" class="px-4 py-2 rounded-xl bg-primary-container text-black font-semibold text-xs transition-all cursor-pointer">Clear Filters</button>
         </div>
 
         <!-- Analytics Content Sections Container -->
@@ -1164,10 +1406,22 @@
             </div>
           </div>
 
-          <!-- SECTION 5: Country & ASN Distribution -->
+          <!-- SECTION 5: Geographic Analysis & Interactive Map -->
           <div class="flex flex-col gap-3">
-            <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Section 5: Country &amp; Autonomous System Distribution</span>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Section 5: Geographic Analysis &amp; Global Cohort Topology</span>
+                <p class="text-xs text-on-surface-variant">Spatial distribution of geolocated observation endpoints across OpenStreetMap telemetric coordinates</p>
+              </div>
+              <span id="analytics-map-stats" class="text-xs font-mono text-primary bg-primary/10 px-3 py-1 rounded-lg border border-primary/30 font-medium">0 endpoints mapped</span>
+            </div>
+
+            <!-- Leaflet Map Container -->
+            <div class="gradient-border-card p-1 rounded-2xl glass-panel shadow-2xl overflow-hidden">
+              <div id="analytics-map" class="w-full h-80 rounded-xl bg-surface-container-lowest z-10"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
 
               <!-- Top Countries -->
               <div class="gradient-border-card p-space-lg rounded-xl glass-panel shadow-2xl flex flex-col">
@@ -1259,6 +1513,234 @@
               </div>
 
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================= -->
+      <!-- VIEW 5: INVESTIGATION & MULTI-TARGET COMPARISON                   -->
+      <!-- ================================================================= -->
+      <section id="view-investigation" class="page-view-section hidden flex flex-col gap-space-lg max-w-[1400px] mx-auto pb-margin">
+        <!-- Header & Action Controls -->
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="flex flex-col gap-1">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-primary/20 border border-primary/40 flex items-center justify-center text-primary shadow-[0_0_15px_rgba(0,210,255,0.25)]">
+                <span class="material-symbols-outlined text-[24px]">compare_arrows</span>
+              </div>
+              <div>
+                <h1 class="font-headline text-2xl font-bold tracking-tight text-on-surface">Intelligence Investigation &amp; Comparison</h1>
+                <span class="text-xs font-mono text-outline">Side-by-side empirical telemetry, divergence analysis, and multi-point geographic mapping across 2–5 observations.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selection Controls & Actions -->
+          <div class="flex flex-wrap items-center gap-2">
+            <span id="comp-selection-count-badge" class="px-3 py-1.5 rounded-xl font-mono text-xs font-medium bg-surface-container-high border border-surface-container text-primary">0 / 5 Selected</span>
+            <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-xs font-medium text-on-surface transition-colors cursor-pointer border border-surface-container" onclick="openCandidateModal('field_study')">
+              <span class="material-symbols-outlined text-[16px] text-tertiary">biotech</span>
+              <span>Add from Field Study</span>
+            </button>
+            <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-xs font-medium text-on-surface transition-colors cursor-pointer border border-surface-container" onclick="openCandidateModal('history')">
+              <span class="material-symbols-outlined text-[16px] text-primary">schedule</span>
+              <span>Add from History</span>
+            </button>
+            <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-xs font-medium text-on-surface transition-colors cursor-pointer border border-surface-container" onclick="addCurrentScanToComparison()">
+              <span class="material-symbols-outlined text-[16px] text-secondary">radar</span>
+              <span>Add Current Scan</span>
+            </button>
+            <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-xs font-medium text-outline hover:text-error transition-colors cursor-pointer border border-surface-container" onclick="clearComparisonSelection()">
+              <span class="material-symbols-outlined text-[16px]">clear_all</span>
+              <span>Clear</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Selected Observation Chips Bar -->
+        <div class="p-4 rounded-xl glass-panel border border-surface-container flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Active Investigation Candidates (2 to 5 Required)</span>
+            <span id="comp-validation-hint" class="text-xs font-mono text-outline">Select at least 2 observations to activate comparison.</span>
+          </div>
+          <div id="comp-selected-chips-container" class="flex flex-wrap items-center gap-2 pt-1 min-h-[44px]">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Run & Export Action Toolbar -->
+        <div id="comp-action-bar" class="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-slate-800/80 border border-slate-700/60 shadow-lg">
+          <div class="flex items-center gap-2">
+            <button id="btn-run-comparison" type="button" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-secondary text-surface font-semibold text-xs shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" onclick="runInvestigationComparison()">
+              <span class="material-symbols-outlined text-[18px]">balance</span>
+              <span>Compare Selected Targets</span>
+            </button>
+            <span id="comp-status-text" class="text-xs font-mono text-outline">Ready to compare.</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btn-export-comp-csv" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-400 border border-emerald-700/60 font-mono text-xs font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed" onclick="exportComparisonDataset('csv')" disabled>
+              <span class="material-symbols-outlined text-[16px]">table_view</span>
+              <span>Export CSV</span>
+            </button>
+            <button id="btn-export-comp-json" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-950/60 hover:bg-amber-900/80 text-amber-400 border border-amber-700/60 font-mono text-xs font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed" onclick="exportComparisonDataset('json')" disabled>
+              <span class="material-symbols-outlined text-[16px]">data_object</span>
+              <span>Export JSON</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Comparison Workspace Body (Rendered upon Comparison) -->
+        <div id="comp-workspace-body" class="hidden flex flex-col gap-space-lg">
+
+          <!-- 1. Side-by-Side Comparison Table -->
+          <div class="p-space-md rounded-xl glass-panel border border-surface-container flex flex-col gap-3 shadow-2xl">
+            <div class="flex items-center justify-between pb-2 border-b border-surface-container">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-[20px]">view_column</span>
+                <h3 class="font-headline text-base font-bold text-on-surface">Multi-Target Intelligence Comparison Matrix</h3>
+              </div>
+              <span class="text-xs font-mono text-outline">Read-Only Telemetry Synthesis</span>
+            </div>
+            <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
+              <table id="comp-matrix-table" class="w-full text-left text-xs border-collapse font-sans">
+                <thead id="comp-matrix-thead" class="sticky top-0 bg-surface-container-lowest/95 backdrop-blur-md z-10 border-b border-surface-container">
+                  <!-- Header row built dynamically -->
+                </thead>
+                <tbody id="comp-matrix-tbody" class="divide-y divide-surface-container/50">
+                  <!-- Rows built dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 2. Deterministic Statistics & Difference Highlights Grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-space-md">
+            <!-- Left: Deterministic Metrics Summary -->
+            <div class="p-space-md rounded-xl glass-panel border border-surface-container flex flex-col gap-3">
+              <div class="flex items-center justify-between pb-2 border-b border-surface-container">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-tertiary text-[18px]">equalizer</span>
+                  <h4 class="font-headline text-sm font-bold text-on-surface">Deterministic Comparison Metrics</h4>
+                </div>
+                <span class="text-[10px] font-mono text-outline">Mathematical Commonalities</span>
+              </div>
+              <div id="comp-stats-container" class="grid grid-cols-2 gap-3 text-xs">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+
+            <!-- Right: Difference Highlights -->
+            <div class="p-space-md rounded-xl glass-panel border border-surface-container flex flex-col gap-3">
+              <div class="flex items-center justify-between pb-2 border-b border-surface-container">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-secondary text-[18px]">difference</span>
+                  <h4 class="font-headline text-sm font-bold text-on-surface">Key Difference Highlights</h4>
+                </div>
+                <span class="text-[10px] font-mono text-outline">Factual Divergence Engine</span>
+              </div>
+              <div id="comp-differences-container" class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Geographic Multi-Point Comparison Map -->
+          <div class="gradient-border-card p-space-sm rounded-xl glass-panel flex flex-col gap-2 shadow-2xl">
+            <div class="flex items-center justify-between px-3 pt-2">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-[20px]">public</span>
+                <h4 class="font-headline text-sm font-bold text-on-surface">Geographic Distribution &amp; Border Gateway Comparison</h4>
+              </div>
+              <span id="comp-map-count-badge" class="text-xs font-mono text-primary font-medium">0 Coordinate Points</span>
+            </div>
+            <!-- Map Container -->
+            <div id="comp-map" class="w-full h-80 rounded-lg overflow-hidden border border-surface-container/60 shadow-inner"></div>
+            <div class="p-2.5 rounded-lg bg-surface-container-lowest/80 border border-surface-container text-[11px] text-outline leading-tight">
+              <span class="text-secondary font-semibold">Note:</span> Markers represent recorded coordinate pairs for each target. Observations lacking geographic telemetry are omitted from the map and indicated in the matrix table.
+            </div>
+          </div>
+
+          <!-- 4. Optional AI Comparative Synthesis -->
+          <div class="p-space-md rounded-xl glass-panel border border-surface-container flex flex-col gap-3 shadow-xl">
+            <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-surface-container">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center text-primary">
+                  <span class="material-symbols-outlined text-[18px]">psychology</span>
+                </div>
+                <div>
+                  <h4 class="font-headline text-sm font-bold text-on-surface">AI Comparative Synthesis</h4>
+                  <span class="text-[11px] text-outline block">Evidence interpretation across compared targets • Does not alter scores</span>
+                </div>
+              </div>
+              <button id="btn-explain-comparison-ai" type="button" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-secondary text-surface font-mono font-medium text-xs shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all cursor-pointer disabled:opacity-50" onclick="triggerComparisonAIExplanation()">
+                <span id="comp-ai-btn-icon" class="material-symbols-outlined text-[15px]">auto_awesome</span>
+                <span id="comp-ai-btn-label">Explain Comparison with AI</span>
+              </button>
+            </div>
+
+            <!-- AI State 1: Idle -->
+            <div id="comp-ai-idle" class="p-4 rounded-xl bg-surface-container-lowest/70 border border-surface-container text-center flex flex-col items-center gap-2">
+              <span class="material-symbols-outlined text-outline text-[28px]">query_stats</span>
+              <p class="text-xs text-on-surface-variant max-w-md">
+                Click <strong class="text-primary font-medium">Explain Comparison with AI</strong> to generate an evidence-grounded natural language synthesis of infrastructure convergence, transport divergence, and relative risk profiles.
+              </p>
+            </div>
+
+            <!-- AI State 2: Loading -->
+            <div id="comp-ai-loading" class="hidden p-4 rounded-xl bg-surface-container-lowest/80 border border-surface-container flex flex-col gap-3 animate-pulse">
+              <div class="flex items-center gap-3">
+                <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <span class="text-xs font-mono text-primary font-medium">Synthesizing comparative evidence across targets...</span>
+              </div>
+              <div class="space-y-2 pt-1">
+                <div class="h-3 bg-surface-container rounded w-full"></div>
+                <div class="h-3 bg-surface-container rounded w-5/6"></div>
+              </div>
+            </div>
+
+            <!-- AI State 3: Error / Unavailable -->
+            <div id="comp-ai-error" class="hidden p-3.5 rounded-xl bg-error/10 border border-error/30 text-xs text-on-surface flex items-start gap-2.5">
+              <span class="material-symbols-outlined text-error text-[18px] shrink-0 mt-0.5">info</span>
+              <span id="comp-ai-error-msg" class="font-medium text-error">AI comparison unavailable. Deterministic matrix and statistics remain fully available.</span>
+            </div>
+
+            <!-- AI State 4: Results -->
+            <div id="comp-ai-result" class="hidden flex flex-col gap-3 text-xs">
+              <div class="p-3 rounded-xl bg-surface-container-lowest/80 border border-surface-container">
+                <span class="text-[11px] font-mono text-outline uppercase tracking-wider font-semibold block mb-1">Comparative Executive Summary</span>
+                <p id="comp-ai-summary-text" class="text-on-surface leading-relaxed"></p>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="p-3 rounded-xl bg-surface-container-lowest/80 border border-surface-container">
+                  <span class="text-[11px] font-mono text-outline uppercase tracking-wider font-semibold block mb-1">Infrastructure &amp; Routing Divergence</span>
+                  <p id="comp-ai-infra-text" class="text-on-surface-variant leading-relaxed"></p>
+                </div>
+                <div class="p-3 rounded-xl bg-surface-container-lowest/80 border border-surface-container">
+                  <span class="text-[11px] font-mono text-outline uppercase tracking-wider font-semibold block mb-1">Transport Security &amp; Anonymizers</span>
+                  <p id="comp-ai-sec-text" class="text-on-surface-variant leading-relaxed"></p>
+                </div>
+              </div>
+              <div class="p-3 rounded-xl bg-surface-container-lowest/80 border border-surface-container">
+                <span class="text-[11px] font-mono text-outline uppercase tracking-wider font-semibold block mb-1">Analytical Takeaway</span>
+                <p id="comp-ai-takeaway-text" class="text-on-surface-variant leading-relaxed"></p>
+              </div>
+              <div class="p-2 rounded-lg bg-surface-container-high/40 border border-surface-container/60 text-[10px] text-outline leading-tight">
+                <span class="font-semibold text-on-surface-variant">Analytical Disclaimer:</span>
+                <span id="comp-ai-limitations-text">AI comparison explains empirical telemetry recorded at test execution time. Deterministic scores and raw observations remain authoritative.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. Investigation Analyst Notes Scratchpad -->
+          <div class="p-space-md rounded-xl glass-panel border border-surface-container flex flex-col gap-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-outline text-[18px]">edit_note</span>
+                <h4 class="font-headline text-sm font-bold text-on-surface">Investigation Analyst Notes</h4>
+              </div>
+              <span class="text-[10px] font-mono text-outline">Session Local Scratchpad • Zero Database Persistence</span>
+            </div>
+            <textarea id="comp-analyst-notes" class="w-full p-3 rounded-xl bg-surface-container-lowest/80 border border-surface-container text-xs font-mono text-on-surface placeholder-outline focus:outline-none focus:border-primary resize-y min-h-[80px]" placeholder="Record observational findings, correlation notes, or investigation hypotheses here (persists during active session)..."></textarea>
           </div>
 
         </div>
@@ -1371,6 +1853,53 @@
         <button class="px-4 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-xs font-medium text-on-surface transition-colors cursor-pointer border border-surface-container" onclick="closeFieldStudyDetail()">
           Close
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Candidate Observation Selection Modal (Phase 23) -->
+  <div id="comp-candidate-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="gradient-border-card bg-surface-container-low/95 glass-panel rounded-2xl max-w-3xl w-full p-6 shadow-2xl flex flex-col gap-4 max-h-[85vh] overflow-hidden">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-surface-container">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-primary/20 border border-primary/40 flex items-center justify-center text-primary shadow-[0_0_15px_rgba(0,210,255,0.25)]">
+            <span class="material-symbols-outlined text-[22px]">format_list_bulleted_add</span>
+          </div>
+          <div>
+            <h3 class="font-headline text-lg font-bold text-on-surface">Select Observations for Investigation</h3>
+            <span class="text-xs font-mono text-outline">Choose from recorded Field Study tests and historical scans</span>
+          </div>
+        </div>
+        <button class="p-1.5 rounded-lg hover:bg-surface-container text-outline hover:text-on-surface transition-colors cursor-pointer" onclick="closeCandidateModal()" title="Close">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <!-- Filter Controls & Search -->
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="relative flex-1 min-w-[200px]">
+          <span class="material-symbols-outlined absolute left-3 top-2 text-outline text-[18px]">search</span>
+          <input id="comp-candidate-search" type="text" placeholder="Filter by domain, IP, ASN, or country..." class="w-full pl-9 pr-3 py-1.5 rounded-xl bg-surface-container text-xs text-on-surface placeholder-outline border border-surface-container focus:outline-none focus:border-primary font-mono" oninput="filterCandidateList()">
+        </div>
+        <div class="flex items-center gap-1 bg-surface-container p-1 rounded-xl border border-surface-container">
+          <button id="comp-tab-all" class="px-3 py-1 rounded-lg text-xs font-mono font-medium transition-colors bg-surface-container-high text-primary" onclick="setCandidateFilter('all')">All</button>
+          <button id="comp-tab-field-study" class="px-3 py-1 rounded-lg text-xs font-mono font-medium transition-colors text-outline hover:text-on-surface" onclick="setCandidateFilter('field_study')">Field Study</button>
+          <button id="comp-tab-history" class="px-3 py-1 rounded-lg text-xs font-mono font-medium transition-colors text-outline hover:text-on-surface" onclick="setCandidateFilter('history')">History</button>
+        </div>
+      </div>
+
+      <!-- Candidate Scroll List -->
+      <div id="comp-candidate-list" class="flex flex-col gap-2 overflow-y-auto max-h-[360px] pr-1">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex items-center justify-between pt-3 border-t border-surface-container">
+        <span id="comp-modal-selection-count" class="text-xs font-mono text-outline">0 / 5 Selected</span>
+        <div class="flex items-center gap-2">
+          <button class="px-4 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-xs font-medium text-on-surface transition-colors cursor-pointer border border-surface-container" onclick="closeCandidateModal()">Done</button>
+        </div>
       </div>
     </div>
   </div>

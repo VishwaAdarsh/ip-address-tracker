@@ -15,7 +15,7 @@ derived strictly from empirical observations in SQLite field_study_observations:
 import logging
 import math
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from database.db import get_field_observations, init_db
 from database.models import FieldObservation
@@ -23,37 +23,338 @@ from database.models import FieldObservation
 logger = logging.getLogger("ip_pulse.analytics_service")
 
 
+def _get_field(record: Any, *keys: str, default: Any = None) -> Any:
+    """Helper to retrieve field values from either a FieldObservation dataclass or a dict."""
+    for k in keys:
+        if isinstance(record, dict):
+            if k in record and record[k] is not None:
+                return record[k]
+        else:
+            val = getattr(record, k, None)
+            if val is not None:
+                return val
+    return default
+
+
+def extract_filter_options(records: List[Any]) -> Dict[str, Any]:
+    """Extract distinct existing values from real database records to populate filter dropdowns."""
+    countries = sorted(list({
+        str(_get_field(r, "country")).strip()
+        for r in records
+        if _get_field(r, "country") and str(_get_field(r, "country")).strip() not in ("Unknown", "N/A", "")
+    }))
+    infrastructures = sorted(list({
+        str(_get_field(r, "infrastructure_type", "infrastructure")).strip()
+        for r in records
+        if _get_field(r, "infrastructure_type", "infrastructure") and str(_get_field(r, "infrastructure_type", "infrastructure")).strip() not in ("Unknown", "N/A", "")
+    }))
+    trust_classes = sorted(list({
+        str(_get_field(r, "website_trust_classification", "trust_class", "trust_classification")).strip()
+        for r in records
+        if _get_field(r, "website_trust_classification", "trust_class", "trust_classification") and str(_get_field(r, "website_trust_classification", "trust_class", "trust_classification")).strip() not in ("Unknown", "N/A", "")
+    }))
+    risk_classes = sorted(list({
+        str(_get_field(r, "ip_risk_classification", "risk_class", "risk_classification")).strip()
+        for r in records
+        if _get_field(r, "ip_risk_classification", "risk_class", "risk_classification") and str(_get_field(r, "ip_risk_classification", "risk_class", "risk_classification")).strip() not in ("Unknown", "N/A", "")
+    }))
+    has_ipv6 = any("6" in str(_get_field(r, "ip_version", default="")) for r in records)
+    ip_versions = ["IPv4", "IPv6"] if has_ipv6 else ["IPv4"]
+    https_statuses = ["Enabled", "Disabled", "Unknown"]
+    ranges = [
+        {"id": "all", "label": "All (Full Cohort)"},
+        {"id": "recent_10", "label": "Recent 10"},
+        {"id": "recent_25", "label": "Recent 25"},
+        {"id": "first_25", "label": "First 25"},
+    ]
+    return {
+        "countries": countries,
+        "infrastructures": infrastructures,
+        "trust_classes": trust_classes,
+        "risk_classes": risk_classes,
+        "ip_versions": ip_versions,
+        "https_statuses": https_statuses,
+        "ranges": ranges,
+    }
+
+
+def extract_map_coordinates_for_analytics(records: List[Any]) -> Tuple[List[Dict[str, Any]], int, int]:
+    """
+    Extract valid coordinate points for Leaflet visualization and count missing ones.
+    Returns (map_points, mapped_count, missing_count).
+    """
+    points = []
+    missing_count = 0
+    for idx, r in enumerate(records, start=1):
+        lat_val = _get_field(r, "latitude")
+        lon_val = _get_field(r, "longitude")
+        if lat_val is not None and lon_val is not None:
+            try:
+                lat = float(lat_val)
+                lon = float(lon_val)
+                if -90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0:
+                    points.append({
+                        "id": _get_field(r, "id", default=idx),
+                        "domain": _get_field(r, "domain", default="Unknown"),
+                        "ip": _get_field(r, "resolved_ip", "ip_address", "ip", default="Unknown"),
+                        "resolved_ip": _get_field(r, "resolved_ip", "ip_address", "ip", default="Unknown"),
+                        "latitude": lat,
+                        "longitude": lon,
+                        "country": _get_field(r, "country", default="Unknown"),
+                        "city": _get_field(r, "city", default="Unknown"),
+                        "organization": _get_field(r, "organization", "isp", default="Unknown"),
+                        "asn": _get_field(r, "asn", default="Unknown"),
+                        "infrastructure": _get_field(r, "infrastructure_type", "infrastructure", default="Unknown"),
+                        "trust_score": _get_field(r, "website_trust_score", "trust_score"),
+                        "risk_score": _get_field(r, "ip_risk_score", "risk_score"),
+                        "trust_classification": _get_field(r, "website_trust_classification", "trust_class", "trust_classification", default="Unknown"),
+                        "risk_classification": _get_field(r, "ip_risk_classification", "risk_class", "risk_classification", default="Unknown"),
+                        "https_status": _get_field(r, "https_status", default="Unknown"),
+                    })
+                else:
+                    missing_count += 1
+            except (ValueError, TypeError):
+                missing_count += 1
+        else:
+            missing_count += 1
+    return points, len(points), missing_count
+
+
+def apply_observation_filters(
+    records: List[Any],
+    filters: Optional[Dict[str, Any]] = None,
+) -> Tuple[List[Any], bool, Dict[str, Any]]:
+    """
+    Apply non-destructive in-memory filtering on the field observation records.
+
+    Supported filters:
+    - country: str (matches r.country or country_code case-insensitively)
+    - infrastructure: str (matches r.infrastructure_type substring or exact)
+    - trust_class: str (matches r.website_trust_classification case-insensitively)
+    - risk_class: str (matches r.ip_risk_classification case-insensitively)
+    - https_status: str ("Enabled", "Disabled", "Unknown")
+    - ip_version: str ("IPv4", "IPv6")
+    - range: str ("all", "recent_10", "recent_25", "first_25", "custom")
+    - range_from: int
+    - range_to: int
+
+    Returns:
+    - (filtered_records, is_filtered, active_filters_summary)
+    """
+    if not filters or not isinstance(filters, dict):
+        return list(records), False, {}
+
+    filtered = list(records)
+    active_summary: Dict[str, Any] = {}
+    is_filtered = False
+
+    # 1. Country
+    country_val = filters.get("country")
+    if country_val and str(country_val).strip().lower() not in ("all", "any", ""):
+        c_target = str(country_val).strip().lower()
+        filtered = [
+            r for r in filtered
+            if (str(_get_field(r, "country", default="")).strip().lower() == c_target) or
+               (str(_get_field(r, "country_code", default="")).strip().lower() == c_target)
+        ]
+        active_summary["country"] = country_val
+        is_filtered = True
+
+    # 2. Infrastructure
+    infra_val = filters.get("infrastructure")
+    if infra_val and str(infra_val).strip().lower() not in ("all", "any", ""):
+        i_target = str(infra_val).strip().lower()
+        filtered = [
+            r for r in filtered
+            if i_target in str(_get_field(r, "infrastructure_type", "infrastructure", default="")).strip().lower()
+        ]
+        active_summary["infrastructure"] = infra_val
+        is_filtered = True
+
+    # 3. Trust Classification
+    trust_class_val = filters.get("trust_class") or filters.get("trust_classification")
+    if trust_class_val and str(trust_class_val).strip().lower() not in ("all", "any", ""):
+        tc_target = str(trust_class_val).strip().lower()
+        filtered = [
+            r for r in filtered
+            if str(_get_field(r, "website_trust_classification", "trust_class", "trust_classification", default="")).strip().lower() == tc_target
+        ]
+        active_summary["trust_class"] = trust_class_val
+        is_filtered = True
+
+    # 4. Risk Classification
+    risk_class_val = filters.get("risk_class") or filters.get("risk_classification")
+    if risk_class_val and str(risk_class_val).strip().lower() not in ("all", "any", ""):
+        rc_target = str(risk_class_val).strip().lower()
+        filtered = [
+            r for r in filtered
+            if str(_get_field(r, "ip_risk_classification", "risk_class", "risk_classification", default="")).strip().lower() == rc_target
+        ]
+        active_summary["risk_class"] = risk_class_val
+        is_filtered = True
+
+    # 5. HTTPS Status
+    https_val = filters.get("https_status")
+    if https_val and str(https_val).strip().lower() not in ("all", "any", ""):
+        h_target = str(https_val).strip().lower()
+        if h_target in ("enabled", "active", "true"):
+            filtered = [
+                r for r in filtered
+                if _get_field(r, "https_status") in ("Enabled", "Active", "Valid", "SUCCESS") or
+                   _get_field(r, "https_enabled") == 1
+            ]
+            active_summary["https_status"] = "Enabled"
+            is_filtered = True
+        elif h_target in ("disabled", "inactive", "false"):
+            filtered = [
+                r for r in filtered
+                if _get_field(r, "https_status") in ("Disabled", "Inactive", "FAILURE", "Failed") or
+                   _get_field(r, "https_enabled") == 0
+            ]
+            active_summary["https_status"] = "Disabled"
+            is_filtered = True
+        elif h_target in ("unknown", "unavailable"):
+            filtered = [
+                r for r in filtered
+                if _get_field(r, "https_enabled") is None and
+                   _get_field(r, "https_status") not in ("Enabled", "Active", "Valid", "SUCCESS", "Disabled", "Inactive", "FAILURE", "Failed")
+            ]
+            active_summary["https_status"] = "Unknown"
+            is_filtered = True
+
+    # 6. IP Version
+    ip_ver_val = filters.get("ip_version")
+    if ip_ver_val and str(ip_ver_val).strip().lower() not in ("all", "any", ""):
+        v_target = str(ip_ver_val).strip().lower()
+        if "6" in v_target:
+            filtered = [r for r in filtered if "6" in str(_get_field(r, "ip_version", default=""))]
+            active_summary["ip_version"] = "IPv6"
+            is_filtered = True
+        elif "4" in v_target:
+            filtered = [r for r in filtered if "4" in str(_get_field(r, "ip_version", default="IPv4"))]
+            active_summary["ip_version"] = "IPv4"
+            is_filtered = True
+
+    # 7. Observation Scope / Range
+    range_val = filters.get("range")
+    if range_val and str(range_val).strip().lower() not in ("all", ""):
+        r_target = str(range_val).strip().lower()
+        if r_target in ("recent_10", "recent10", "last_10"):
+            filtered = filtered[-10:] if len(filtered) > 10 else filtered
+            active_summary["range"] = "Recent 10"
+            is_filtered = True
+        elif r_target in ("recent_25", "recent25", "last_25"):
+            filtered = filtered[-25:] if len(filtered) > 25 else filtered
+            active_summary["range"] = "Recent 25"
+            is_filtered = True
+        elif r_target in ("first_25", "first25"):
+            filtered = filtered[:25]
+            active_summary["range"] = "First 25"
+            is_filtered = True
+        elif r_target == "custom":
+            r_from = filters.get("range_from")
+            r_to = filters.get("range_to")
+            try:
+                start_idx = max(int(r_from) - 1, 0) if r_from is not None else 0
+                end_idx = int(r_to) if r_to is not None else len(filtered)
+                filtered = filtered[start_idx:end_idx]
+                active_summary["range"] = f"Items {start_idx+1} to {end_idx}"
+                is_filtered = True
+            except (ValueError, TypeError):
+                pass
+
+    return filtered, is_filtered, active_summary
+
+
 def compute_field_study_analytics(
-    db_path: Optional[Union[str, Path]] = None,
+    db_path: Optional[str] = None,
     target_count: int = 50,
+    records: Optional[List[FieldObservation]] = None,
+    filters: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
-    Compute comprehensive research analytics across the 50-site Field Study dataset.
+    Compute comprehensive deterministic field study analytics and distributions.
 
-    Args:
-    - db_path: Optional custom SQLite database path.
+    Parameters:
+    - db_path: Optional SQLite database path.
     - target_count: Study target quota (default: 50).
+    - records: Optional custom list of FieldObservation records.
+    - filters: Optional dictionary of observation filters.
 
     Returns:
     - Dict with structured keys:
       overview, trust_analysis, risk_analysis, network_analysis,
       security_analysis, comparison_analytics, research_insights,
-      chart_data, export_summary
+      chart_data, export_summary, is_filtered, available_filter_options, map_points
     """
-    init_db(db_path)
-    records: List[FieldObservation] = get_field_observations(db_path=db_path)
+    if records is None:
+        init_db(db_path)
+        all_records: List[FieldObservation] = get_field_observations(db_path=db_path)
+    else:
+        # Convert any dict entries to FieldObservation instances for downstream code
+        converted = []
+        for r in records:
+            if isinstance(r, dict):
+                converted.append(FieldObservation(
+                    id=r.get("id"),
+                    test_id=r.get("test_id", 0),
+                    domain=r.get("domain", ""),
+                    category=r.get("category", "General Web"),
+                    resolved_ip=r.get("resolved_ip", r.get("ip_address", "")),
+                    ip_version=r.get("ip_version", "IPv4"),
+                    country=r.get("country", "Unknown"),
+                    country_code=r.get("country_code", "N/A"),
+                    region=r.get("region", "Unknown"),
+                    city=r.get("city", "Unknown"),
+                    latitude=r.get("latitude"),
+                    longitude=r.get("longitude"),
+                    asn=r.get("asn", "Unknown"),
+                    organization=r.get("organization", "Unknown"),
+                    isp=r.get("isp", "Unknown"),
+                    infrastructure_type=r.get("infrastructure_type", r.get("infrastructure", "Unknown")),
+                    https_status="Enabled" if r.get("https_enabled") == 1 else ("Disabled" if r.get("https_enabled") == 0 else r.get("https_status", "Unknown")),
+                    tls_status="Valid" if r.get("tls_valid") == 1 else ("Invalid" if r.get("tls_valid") == 0 else r.get("tls_status", "Unknown")),
+                    website_trust_score=r.get("trust_score", r.get("website_trust_score")),
+                    website_trust_classification=r.get("trust_class", r.get("website_trust_classification", "Unknown")),
+                    ip_risk_score=r.get("risk_score", r.get("ip_risk_score")),
+                    ip_risk_classification=r.get("risk_class", r.get("ip_risk_classification", "Unknown")),
+                    observation_status=r.get("observation_status", r.get("status", "RECORDED")),
+                ))
+            else:
+                converted.append(r)
+        all_records = converted
 
-    total_n = len(records)
+    available_filter_options = extract_filter_options(all_records)
+    filtered_records, is_filtered, filter_summary = apply_observation_filters(all_records, filters)
+
+    total_unfiltered = len(all_records)
+    total_n = len(filtered_records)
     remaining_needed = max(target_count - total_n, 0)
     progress_pct = round((total_n / target_count) * 100, 1) if target_count > 0 else 0.0
     status_str = "TARGET_REACHED" if total_n >= target_count else "INCOMPLETE"
+
+    # If completely empty
+    if total_n == 0:
+        empty_res = _build_empty_analytics_response(target_count)
+        empty_res["is_filtered"] = is_filtered
+        empty_res["unfiltered_total_count"] = total_unfiltered
+        empty_res["filtered_count"] = 0
+        empty_res["filter_summary"] = filter_summary
+        empty_res["available_filter_options"] = available_filter_options
+        empty_res["map_points"] = []
+        empty_res["mapped_points_count"] = 0
+        empty_res["missing_coordinates_count"] = 0
+        return empty_res
+
+    # Extract map coordinates
+    map_points, mapped_count, missing_count = extract_map_coordinates_for_analytics(filtered_records)
 
     # Separate valid vs invalid observations
     # A valid observation must resolve to an IP address and not have an INVALID_INPUT status
     valid_records: List[FieldObservation] = []
     invalid_records: List[FieldObservation] = []
 
-    for r in records:
+    for r in filtered_records:
         ip = (r.resolved_ip or r.ip_address or "").strip()
         stat = (r.observation_status or r.status or "").strip()
         if stat == "INVALID_INPUT" or not ip or ip in ("Unknown", "N/A", "None"):
@@ -63,10 +364,6 @@ def compute_field_study_analytics(
 
     valid_n = len(valid_records)
     invalid_n = len(invalid_records)
-
-    # If completely empty
-    if total_n == 0:
-        return _build_empty_analytics_response(target_count)
 
     # -------------------------------------------------------------------------
     # 1. Trust Score Statistics & Distribution (0-100 scale)
@@ -542,6 +839,7 @@ def compute_field_study_analytics(
         "total_observations": total_n,
         "valid_observations": valid_n,
         "invalid_observations": invalid_n,
+        "failed_observations": invalid_n,
         "target": target_count,
         "sample_target": target_count,
         "remaining": remaining_needed,
@@ -567,6 +865,14 @@ def compute_field_study_analytics(
     return {
         "success": True,
         "insufficient_data": False,
+        "is_filtered": is_filtered,
+        "unfiltered_total_count": total_unfiltered,
+        "filtered_count": total_n,
+        "filter_summary": filter_summary,
+        "available_filter_options": available_filter_options,
+        "map_points": map_points,
+        "mapped_points_count": mapped_count,
+        "missing_coordinates_count": missing_count,
         "overview": overview,
         "trust_analysis": {
             "statistics": trust_stats,
@@ -694,10 +1000,22 @@ def _build_empty_analytics_response(target_count: int = 50) -> Dict[str, Any]:
     return {
         "success": True,
         "insufficient_data": True,
+        "is_filtered": False,
+        "unfiltered_total_count": 0,
+        "filtered_count": 0,
+        "filter_summary": {},
+        "available_filter_options": {
+            "countries": [], "infrastructures": [], "trust_classes": [],
+            "risk_classes": [], "ip_versions": ["IPv4"], "https_statuses": ["Enabled", "Disabled"]
+        },
+        "map_points": [],
+        "mapped_points_count": 0,
+        "missing_coordinates_count": 0,
         "overview": {
             "total_observations": 0,
             "valid_observations": 0,
             "invalid_observations": 0,
+            "failed_observations": 0,
             "target": target_count,
             "sample_target": target_count,
             "remaining": target_count,
