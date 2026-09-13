@@ -32,19 +32,24 @@ class FullIntelligenceResult:
     explanation: str
 
 
-def perform_full_intelligence_scan(target: str, save_to_db: bool = True) -> FullIntelligenceResult:
+def perform_full_intelligence_scan(
+    target: str,
+    save_to_db: bool = True,
+    db_path: Optional[Union[str, Path]] = None,
+) -> FullIntelligenceResult:
     """
     Perform a complete multi-layered IP Intelligence, Geolocation & Website Risk scan.
 
     Args:
     - target: Domain name or IP address string
     - save_to_db: bool flag to persist base lookup to SQLite History
+    - db_path: Optional custom SQLite database path
 
     Returns:
     - FullIntelligenceResult dataclass instance
     """
     # 1. Execute Base DNS & Geolocation Lookup
-    lookup_res = perform_lookup(target, save_to_db=save_to_db)
+    lookup_res = perform_lookup(target, save_to_db=save_to_db, db_path=db_path)
 
     # 2. Execute Website Security Probing
     sec_info = scan_website_security(target)

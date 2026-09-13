@@ -65,12 +65,19 @@
 </head>
 <body class="bg-surface font-sans text-on-surface antialiased selection:bg-primary-container selection:text-black">
 
+  <!-- Ambient Atmospheric Glow Blobs (2026-era lighting) -->
+  <div class="ambient-glow-layer" aria-hidden="true">
+    <div class="ambient-blob ambient-blob-cyan"></div>
+    <div class="ambient-blob ambient-blob-violet"></div>
+    <div class="ambient-blob ambient-blob-magenta"></div>
+  </div>
+
   <!-- Sidebar Navigation -->
-  <aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest z-50 flex flex-col justify-between py-space-lg border-r border-surface-container shadow-xl">
+  <aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest/90 backdrop-blur-2xl z-50 flex flex-col justify-between py-space-lg border-r border-surface-container shadow-2xl">
     <div class="flex flex-col gap-space-lg">
       <!-- Brand Logo -->
       <div class="flex items-center gap-space-sm px-space-lg">
-        <div class="w-8 h-8 rounded-lg bg-primary-container/20 border border-primary-container/50 flex items-center justify-center text-primary-container">
+        <div class="w-8 h-8 rounded-lg bg-primary-container/20 border border-primary-container/50 flex items-center justify-center text-primary-container shadow-[0_0_15px_rgba(0,210,255,0.3)]">
           <span class="material-symbols-outlined text-[20px]">radar</span>
         </div>
         <div class="flex flex-col min-w-0">
@@ -80,20 +87,20 @@
       </div>
 
       <!-- Navigation Links -->
-      <nav class="flex flex-col gap-1 px-space-sm">
-        <a aria-current="page" class="flex items-center gap-space-sm px-space-md py-2.5 transition-all bg-surface-container-high text-primary rounded-xl font-medium cursor-pointer" data-path="home">
+      <nav class="flex flex-col gap-1.5 px-space-sm">
+        <a aria-current="page" class="sidebar-link sidebar-link-active flex items-center gap-space-sm px-space-md py-2.5 rounded-xl font-medium cursor-pointer" data-path="home">
           <span class="material-symbols-outlined text-[20px]">explore</span>
           <span class="text-sm">Home</span>
         </a>
-        <a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all cursor-pointer" data-path="history">
+        <a class="sidebar-link flex items-center gap-space-sm px-space-md py-2.5 rounded-xl font-medium cursor-pointer" data-path="history">
           <span class="material-symbols-outlined text-[20px]">schedule</span>
           <span class="text-sm">History</span>
         </a>
-        <a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all cursor-pointer" data-path="field-study">
+        <a class="sidebar-link flex items-center gap-space-sm px-space-md py-2.5 rounded-xl font-medium cursor-pointer" data-path="field-study">
           <span class="material-symbols-outlined text-[20px]">biotech</span>
           <span class="text-sm">Field Study</span>
         </a>
-        <a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all cursor-pointer" data-path="analytics">
+        <a class="sidebar-link flex items-center gap-space-sm px-space-md py-2.5 rounded-xl font-medium cursor-pointer" data-path="analytics">
           <span class="material-symbols-outlined text-[20px]">insights</span>
           <span class="text-sm">Analytics</span>
         </a>
@@ -102,9 +109,9 @@
 
     <!-- Sidebar Bottom Status Card -->
     <div class="px-space-md">
-      <div class="p-space-md rounded-xl bg-surface-container-low border border-surface-container flex flex-col gap-1">
+      <div class="p-space-md rounded-xl glass-panel flex flex-col gap-1 border border-white/5">
         <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-tertiary shadow-[0_0_8px_#69f6b9]"></span>
+          <span class="w-2 h-2 rounded-full bg-tertiary shadow-[0_0_8px_#69f6b9] animate-pulse"></span>
           <span class="text-[12px] font-medium text-tertiary" id="system-status-badge">System Online</span>
         </div>
         <span class="text-[11px] font-mono text-outline">HTTP REST API v2.0 Active</span>
@@ -115,20 +122,20 @@
   <!-- Main Content Wrapper -->
   <div class="pl-64">
     <!-- Top Header -->
-    <header class="fixed top-0 left-64 right-0 h-16 bg-surface/80 backdrop-blur-xl z-40 flex items-center justify-between px-space-lg border-b border-surface-container shadow-sm">
+    <header class="fixed top-0 left-64 right-0 h-16 bg-surface/75 backdrop-blur-xl z-40 flex items-center justify-between px-space-lg border-b border-surface-container/80 shadow-sm">
       <div class="flex items-center gap-space-md w-96">
-        <div class="w-full flex items-center gap-space-sm px-space-md py-1.5 bg-surface-container-lowest rounded-lg border border-surface-container">
+        <div class="w-full flex items-center gap-space-sm px-space-md py-1.5 bg-surface-container-lowest/80 rounded-lg border border-surface-container focus-within:border-primary/50 transition-all">
           <span class="material-symbols-outlined text-outline text-[18px]">search</span>
           <span class="text-xs text-outline flex-1 select-none">Search domain or IP address...</span>
           <span class="px-1.5 py-0.5 rounded bg-surface-container font-mono text-[10px] text-outline">ENTER</span>
         </div>
       </div>
       <div class="flex items-center gap-space-md">
-        <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-low border border-surface-container">
-          <span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
-          <span class="text-xs font-mono text-tertiary">Operational</span>
+        <div class="operational-pill flex items-center gap-2 px-3 py-1 rounded-full border border-tertiary/30">
+          <span class="w-2 h-2 rounded-full bg-tertiary shadow-[0_0_8px_#69f6b9] animate-pulse"></span>
+          <span class="text-xs font-mono text-tertiary font-medium">Operational</span>
         </div>
-        <div class="w-8 h-8 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-primary">
+        <div class="w-8 h-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary shadow-[0_0_12px_rgba(0,229,255,0.15)]">
           <span class="material-symbols-outlined text-[18px]">terminal</span>
         </div>
       </div>
@@ -139,66 +146,87 @@
       <!-- ================================================================= -->
       <!-- VIEW 1: HOME / DASHBOARD                                         -->
       <!-- ================================================================= -->
-      <section id="view-home" class="flex flex-col gap-space-lg max-w-[1400px] mx-auto pb-margin">
+      <section id="view-home" class="page-view-section flex flex-col gap-space-lg max-w-[1400px] mx-auto pb-margin">
         <!-- Hero / Centered Analyze Section -->
         <div class="pt-space-md pb-space-sm flex flex-col items-center text-center w-full max-w-4xl mx-auto">
-          <!-- 1. Heading -->
-          <h1 class="font-headline text-3xl md:text-4xl font-bold tracking-tight text-on-surface mb-2">
-            Analyze a Website or IP
+          <!-- 1. Heading with Neon Gradient and Screen-Reader Accessible Exact Text -->
+          <h1 class="font-headline text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-on-surface mb-2" title="Analyze a Website or IP">
+            <span class="sr-only">Analyze a Website or IP</span>
+            <span aria-hidden="true">Analyze a <span class="bg-gradient-to-r from-[#00E5FF] via-[#3B82F6] to-[#7C3AED] bg-clip-text text-transparent">Website</span> or <span class="bg-gradient-to-r from-[#7C3AED] to-[#C026D3] bg-clip-text text-transparent">IP</span></span>
           </h1>
 
           <!-- 2. Subtitle -->
           <p class="text-sm md:text-base text-on-surface-variant max-w-2xl text-center mb-6">
-            Get IP details, geolocation, security information and infrastructure analysis — all in one place.
+            Get IP details, geolocation, security intelligence, and infrastructure analysis — all in one unified console.
           </p>
 
-          <!-- 3. Website/IP Input Field (Wide, Centered, No embedded button) -->
+          <!-- 3. Website/IP Input Field (Glass Input Container) -->
           <div class="w-full max-w-2xl md:max-w-3xl mb-5">
-            <div class="relative flex items-center bg-surface-container-lowest rounded-xl px-4 py-3.5 border border-surface-container focus-within:border-primary-container focus-within:ring-1 focus-within:ring-primary-container transition-all shadow-xl">
+            <div class="glass-input-box relative flex items-center rounded-xl px-4 py-3.5 transition-all">
               <span class="material-symbols-outlined text-[22px] text-primary mr-3 select-none">language</span>
               <input id="ip-search-input" class="w-full bg-transparent text-sm md:text-base font-mono text-on-surface placeholder:text-outline focus:outline-none" placeholder="Enter a website or IP address (e.g. google.com or 8.8.8.8)" type="text" value="google.com"/>
             </div>
           </div>
 
-          <!-- 4. Centered Analyze Button -->
+          <!-- 4. Centered Analyze Button (Premium Neon Hover Lift) -->
           <div class="flex justify-center mb-6">
-            <button id="analyze-btn" class="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl bg-primary-container hover:bg-[#47d6ff] text-black font-semibold text-sm transition-all duration-200 active:scale-[0.98] shadow-md hover:shadow-[0_0_24px_rgba(0,210,255,0.45)] cursor-pointer" type="button">
+            <button id="analyze-btn" class="premium-analyze-btn inline-flex items-center justify-center gap-2 px-9 py-3.5 rounded-xl font-semibold text-sm transition-all duration-300 cursor-pointer" type="button">
               <span class="material-symbols-outlined text-[20px]">troubleshoot</span>
-              <span>Analyze</span>
+              <span>Analyze Target</span>
             </button>
           </div>
 
-          <!-- 5. Centered Quick Examples -->
+          <!-- 5. Centered Quick Examples (Quick Chips) -->
           <div class="flex flex-col items-center gap-2">
             <span class="text-xs font-mono text-outline uppercase tracking-wider">Quick examples</span>
             <div class="flex flex-wrap items-center justify-center gap-2">
-              <button class="px-3 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-mono transition-colors cursor-pointer border border-surface-container" onclick="setQuery('google.com')">google.com</button>
-              <button class="px-3 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-mono transition-colors cursor-pointer border border-surface-container" onclick="setQuery('github.com')">github.com</button>
-              <button class="px-3 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-mono transition-colors cursor-pointer border border-surface-container" onclick="setQuery('cloudflare.com')">cloudflare.com</button>
-              <button class="px-3 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-mono transition-colors cursor-pointer border border-surface-container" onclick="setQuery('1.1.1.1')">1.1.1.1</button>
+              <button class="quick-chip px-3.5 py-1.5 rounded-lg text-on-surface text-xs font-mono transition-all cursor-pointer" onclick="setQuery('google.com')">google.com</button>
+              <button class="quick-chip px-3.5 py-1.5 rounded-lg text-on-surface text-xs font-mono transition-all cursor-pointer" onclick="setQuery('github.com')">github.com</button>
+              <button class="quick-chip px-3.5 py-1.5 rounded-lg text-on-surface text-xs font-mono transition-all cursor-pointer" onclick="setQuery('cloudflare.com')">cloudflare.com</button>
+              <button class="quick-chip px-3.5 py-1.5 rounded-lg text-on-surface text-xs font-mono transition-all cursor-pointer" onclick="setQuery('1.1.1.1')">1.1.1.1</button>
             </div>
           </div>
         </div>
 
         <!-- Dynamic Loading Banner -->
-        <div id="analysis-loading" class="hidden p-4 rounded-xl bg-surface-container-low border border-primary-container/30 flex items-center gap-3">
+        <div id="analysis-loading" class="hidden p-4 rounded-xl glass-panel border border-primary-container/40 flex items-center gap-3 shadow-lg">
           <div class="w-5 h-5 border-2 border-primary-container border-t-transparent rounded-full animate-spin"></div>
           <span id="loading-message" class="text-sm font-mono text-primary">Analyzing website &amp; resolving DNS...</span>
         </div>
 
         <!-- Dynamic Error Banner -->
-        <div id="analysis-error" class="hidden p-4 rounded-xl bg-error-container/20 border border-error/40 flex items-center gap-3">
+        <div id="analysis-error" class="hidden p-4 rounded-xl bg-error-container/20 border border-error/40 flex items-center gap-3 shadow-lg">
           <span class="material-symbols-outlined text-error text-[22px]">error</span>
           <span id="error-message-text" class="text-sm text-error">Failed to analyze target.</span>
+        </div>
+
+        <!-- Analysis Results Action Bar & Intentional Field Study Addition -->
+        <div id="results-action-bar" class="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl glass-panel border border-surface-container/60 shadow-lg">
+          <div class="flex items-center gap-2.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span>
+            <span class="text-xs font-mono text-outline uppercase tracking-wider">Target Inspection:</span>
+            <span id="active-target-badge" class="font-headline font-bold text-sm text-on-surface">google.com</span>
+            <span id="active-target-type-badge" class="px-2 py-0.5 rounded text-[11px] font-mono bg-surface-container text-primary border border-primary/20">DOMAIN</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btn-add-to-field-study" class="px-3.5 py-1.5 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/40 text-primary text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-sm" onclick="addToFieldStudy()">
+              <span class="material-symbols-outlined text-[16px]">biotech</span>
+              <span id="btn-add-to-field-study-text">Add to Field Study</span>
+            </button>
+            <span id="field-study-added-toast" class="hidden text-xs font-mono text-tertiary flex items-center gap-1">
+              <span class="material-symbols-outlined text-[15px]">check_circle</span>
+              <span id="field-study-toast-text">Recorded in Field Study ✓</span>
+            </span>
+          </div>
         </div>
 
         <!-- 4 High-Level Summary Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <!-- Location -->
-          <div class="p-space-lg rounded-xl bg-surface-container-low border border-surface-container flex flex-col justify-between shadow-md">
+          <div class="glass-card stagger-card p-space-lg rounded-xl flex flex-col justify-between" style="--stagger-idx: 0">
             <div class="flex items-center justify-between">
               <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Location</span>
-              <span class="material-symbols-outlined text-[18px] text-primary">public</span>
+              <span class="card-icon material-symbols-outlined text-[18px] text-primary">public</span>
             </div>
             <div class="mt-4">
               <div id="summary-location-country" class="font-headline text-xl font-bold text-on-surface">United States</div>
@@ -209,11 +237,11 @@
           </div>
 
           <!-- IP Address -->
-          <div class="p-space-lg rounded-xl bg-surface-container-low border border-surface-container flex flex-col justify-between shadow-md">
+          <div class="glass-card stagger-card p-space-lg rounded-xl flex flex-col justify-between" style="--stagger-idx: 1">
             <div class="flex items-center justify-between">
               <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">IP Address</span>
               <button class="text-outline hover:text-primary transition-colors cursor-pointer" onclick="copyValue(document.getElementById('summary-ip-value')?.textContent)" title="Copy IP">
-                <span class="material-symbols-outlined text-[18px]">content_copy</span>
+                <span class="card-icon material-symbols-outlined text-[18px]">content_copy</span>
               </button>
             </div>
             <div class="mt-4">
@@ -225,10 +253,10 @@
           </div>
 
           <!-- Organization -->
-          <div class="p-space-lg rounded-xl bg-surface-container-low border border-surface-container flex flex-col justify-between shadow-md">
+          <div class="glass-card stagger-card p-space-lg rounded-xl flex flex-col justify-between" style="--stagger-idx: 2">
             <div class="flex items-center justify-between">
               <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Organization</span>
-              <span class="material-symbols-outlined text-[18px] text-secondary">corporate_fare</span>
+              <span class="card-icon material-symbols-outlined text-[18px] text-secondary">corporate_fare</span>
             </div>
             <div class="mt-4">
               <div id="summary-org-name" class="font-headline text-xl font-bold text-on-surface truncate">Google LLC</div>
@@ -237,10 +265,10 @@
           </div>
 
           <!-- Infrastructure -->
-          <div class="p-space-lg rounded-xl bg-surface-container-low border border-surface-container flex flex-col justify-between shadow-md">
+          <div class="glass-card stagger-card p-space-lg rounded-xl flex flex-col justify-between" style="--stagger-idx: 3">
             <div class="flex items-center justify-between">
               <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Infrastructure</span>
-              <span class="material-symbols-outlined text-[18px] text-tertiary">dns</span>
+              <span class="card-icon material-symbols-outlined text-[18px] text-tertiary">dns</span>
             </div>
             <div class="mt-4">
               <div id="summary-infra-type" class="font-headline text-xl font-bold text-on-surface truncate">Cloud / Datacenter</div>
@@ -254,41 +282,176 @@
         <!-- Dual Trust & Risk Score Module -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <!-- Website Trust Score Card -->
-          <div class="p-space-lg rounded-xl bg-surface-container-low border border-surface-container shadow-md flex flex-col justify-between">
+          <div class="gradient-border-card p-space-lg rounded-xl glass-panel shadow-xl flex flex-col justify-between">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <span class="material-symbols-outlined text-tertiary text-[20px]">verified_user</span>
                 <span class="font-headline text-base font-semibold text-on-surface">Website Trust Score</span>
               </div>
-              <span id="trust-score-tier" class="text-xs font-mono text-tertiary px-2 py-0.5 rounded bg-tertiary/10 border border-tertiary/30">Tier: High Confidence</span>
+              <div class="flex items-center gap-2">
+                <button type="button" class="text-xs font-mono text-primary hover:text-white flex items-center gap-1 cursor-pointer transition-colors bg-surface-container/60 hover:bg-surface-container px-2.5 py-1 rounded-lg border border-surface-container" onclick="openScoreExplanationModal('trust')">
+                  <span class="material-symbols-outlined text-[15px]">help_outline</span>
+                  <span>Why this score?</span>
+                </button>
+                <span id="trust-score-tier" class="text-xs font-mono text-tertiary px-2.5 py-0.5 rounded-full bg-tertiary/10 border border-tertiary/30">Tier: High Confidence</span>
+              </div>
             </div>
-            <div class="flex items-baseline gap-2 my-3">
-              <span id="trust-score-val" class="text-3xl font-bold font-mono text-primary">85</span>
-              <span class="text-sm font-mono text-outline">/ 100</span>
+            <div class="flex items-baseline justify-between my-3">
+              <div class="flex items-baseline gap-2">
+                <span id="trust-score-val" class="text-3xl font-bold font-mono text-primary">85</span>
+                <span class="text-sm font-mono text-outline">/ 100</span>
+                <span id="trust-classification-badge" class="ml-2 px-2 py-0.5 rounded text-xs font-mono font-semibold bg-tertiary/10 text-tertiary border border-tertiary/30">LIKELY SAFE</span>
+              </div>
+              <span id="trust-evidence-coverage" class="text-xs font-mono text-outline">Evidence: 7/8 signals</span>
             </div>
-            <div class="w-full h-2 rounded-full bg-surface-container overflow-hidden">
-              <div id="trust-score-bar" class="h-full bg-tertiary rounded-full transition-all duration-700" style="width: 85%"></div>
+            <div class="w-full h-2.5 rounded-full bg-surface-container overflow-hidden">
+              <div id="trust-score-bar" class="h-full trust-gauge-gradient rounded-full transition-all duration-1000 ease-out" style="width: 85%"></div>
             </div>
             <div class="mt-3 flex flex-wrap gap-1" id="trust-factors-container"></div>
           </div>
 
           <!-- IP Risk Score Card -->
-          <div class="p-space-lg rounded-xl bg-surface-container-low border border-surface-container shadow-md flex flex-col justify-between">
+          <div class="gradient-border-card p-space-lg rounded-xl glass-panel shadow-xl flex flex-col justify-between">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <span class="material-symbols-outlined text-secondary text-[20px]">security</span>
                 <span class="font-headline text-base font-semibold text-on-surface">IP Risk Score</span>
               </div>
-              <span id="risk-score-category" class="text-xs font-mono text-secondary px-2 py-0.5 rounded bg-secondary/10 border border-secondary/30">LOW</span>
+              <div class="flex items-center gap-2">
+                <button type="button" class="text-xs font-mono text-secondary hover:text-white flex items-center gap-1 cursor-pointer transition-colors bg-surface-container/60 hover:bg-surface-container px-2.5 py-1 rounded-lg border border-surface-container" onclick="openScoreExplanationModal('ip_risk')">
+                  <span class="material-symbols-outlined text-[15px]">help_outline</span>
+                  <span>Why this score?</span>
+                </button>
+                <span id="risk-score-category" class="text-xs font-mono text-secondary px-2.5 py-0.5 rounded-full bg-secondary/10 border border-secondary/30">LOW RISK</span>
+              </div>
             </div>
-            <div class="flex items-baseline gap-2 my-3">
-              <span id="risk-score-val" class="text-3xl font-bold font-mono text-secondary">15</span>
-              <span class="text-sm font-mono text-outline">/ 100</span>
+            <div class="flex items-baseline justify-between my-3">
+              <div class="flex items-baseline gap-2">
+                <span id="risk-score-val" class="text-3xl font-bold font-mono text-secondary">15</span>
+                <span class="text-sm font-mono text-outline">/ 100</span>
+                <span id="risk-classification-badge" class="ml-2 px-2 py-0.5 rounded text-xs font-mono font-semibold bg-secondary/10 text-secondary border border-secondary/30">LOW RISK</span>
+              </div>
+              <span id="risk-evidence-coverage" class="text-xs font-mono text-outline">Evidence: 5/5 signals</span>
             </div>
-            <div class="w-full h-2 rounded-full bg-surface-container overflow-hidden">
-              <div id="risk-score-bar" class="h-full bg-secondary rounded-full transition-all duration-700" style="width: 15%"></div>
+            <div class="w-full h-2.5 rounded-full bg-surface-container overflow-hidden">
+              <div id="risk-score-bar" class="h-full risk-gauge-bar risk-gauge-low rounded-full transition-all duration-1000 ease-out" style="width: 15%"></div>
             </div>
             <div class="mt-3 flex flex-wrap gap-1" id="risk-factors-container"></div>
+          </div>
+        </div>
+
+        <!-- Section: Intelligence Chain & IP Personality (Phase 18) -->
+        <div class="flex flex-col gap-4">
+          <!-- 1. Intelligence Chain Horizontal Flow -->
+          <div class="gradient-border-card p-space-lg rounded-xl glass-panel shadow-xl flex flex-col gap-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-[20px]">account_tree</span>
+                <span class="font-headline text-base font-semibold text-on-surface">Intelligence Provenance Chain</span>
+              </div>
+              <span class="text-[11px] font-mono text-outline uppercase tracking-wider">DOMAIN → IP → ASN → ORG → INFRA → LOCATION</span>
+            </div>
+            
+            <!-- Horizontal Node Flow Container (Desktop 6 cols, Tablet 2-3, Mobile 1) -->
+            <div id="intel-chain-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-1">
+              <!-- Node 1: Domain -->
+              <div class="chain-node chain-node-animate p-3 rounded-lg bg-surface-container-lowest/80 border border-surface-container flex flex-col justify-between gap-1 hover:border-primary/40 transition-all" style="--node-idx: 0">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-mono text-outline uppercase font-semibold">1. Domain</span>
+                  <span class="material-symbols-outlined text-primary text-[14px]">language</span>
+                </div>
+                <div id="chain-node-domain" class="font-mono text-xs text-on-surface font-medium truncate" title="Target Domain">google.com</div>
+                <div class="flex items-center justify-between mt-0.5">
+                  <span id="chain-status-domain" class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-primary/10 text-primary border border-primary/20">RESOLVED</span>
+                </div>
+              </div>
+
+              <!-- Node 2: IP Address -->
+              <div class="chain-node chain-node-animate p-3 rounded-lg bg-surface-container-lowest/80 border border-surface-container flex flex-col justify-between gap-1 hover:border-primary/40 transition-all" style="--node-idx: 1">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-mono text-outline uppercase font-semibold">2. IP Address</span>
+                  <span class="material-symbols-outlined text-primary text-[14px]">tag</span>
+                </div>
+                <div id="chain-node-ip" class="font-mono text-xs text-primary font-medium truncate" title="Primary IP">142.250.190.46</div>
+                <div class="flex items-center justify-between mt-0.5">
+                  <span id="chain-status-ip" class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-primary/10 text-primary border border-primary/20">RESOLVED</span>
+                </div>
+              </div>
+
+              <!-- Node 3: ASN -->
+              <div class="chain-node chain-node-animate p-3 rounded-lg bg-surface-container-lowest/80 border border-surface-container flex flex-col justify-between gap-1 hover:border-secondary/40 transition-all" style="--node-idx: 2">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-mono text-outline uppercase font-semibold">3. ASN</span>
+                  <span class="material-symbols-outlined text-secondary text-[14px]">hub</span>
+                </div>
+                <div id="chain-node-asn" class="font-mono text-xs text-on-surface font-medium truncate" title="Autonomous System">AS15169</div>
+                <div class="flex items-center justify-between mt-0.5">
+                  <span id="chain-status-asn" class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-secondary/10 text-secondary border border-secondary/20">ASSIGNED</span>
+                </div>
+              </div>
+
+              <!-- Node 4: Organization -->
+              <div class="chain-node chain-node-animate p-3 rounded-lg bg-surface-container-lowest/80 border border-surface-container flex flex-col justify-between gap-1 hover:border-secondary/40 transition-all" style="--node-idx: 3">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-mono text-outline uppercase font-semibold">4. Organization</span>
+                  <span class="material-symbols-outlined text-secondary text-[14px]">corporate_fare</span>
+                </div>
+                <div id="chain-node-org" class="font-headline text-xs text-on-surface font-medium truncate" title="Operating Entity">Google LLC</div>
+                <div class="flex items-center justify-between mt-0.5">
+                  <span id="chain-status-org" class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-secondary/10 text-secondary border border-secondary/20">IDENTIFIED</span>
+                </div>
+              </div>
+
+              <!-- Node 5: Infrastructure -->
+              <div class="chain-node chain-node-animate p-3 rounded-lg bg-surface-container-lowest/80 border border-surface-container flex flex-col justify-between gap-1 hover:border-tertiary/40 transition-all" style="--node-idx: 4">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-mono text-outline uppercase font-semibold">5. Infrastructure</span>
+                  <span class="material-symbols-outlined text-tertiary text-[14px]">dns</span>
+                </div>
+                <div id="chain-node-infra" class="font-mono text-xs text-on-surface font-medium truncate" title="Network Classification">Cloud / Datacenter</div>
+                <div class="flex items-center justify-between mt-0.5">
+                  <span id="chain-status-infra" class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-tertiary/10 text-tertiary border border-tertiary/20">CLASSIFIED</span>
+                </div>
+              </div>
+
+              <!-- Node 6: Location -->
+              <div class="chain-node chain-node-animate p-3 rounded-lg bg-surface-container-lowest/80 border border-surface-container flex flex-col justify-between gap-1 hover:border-primary/40 transition-all" style="--node-idx: 5">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-mono text-outline uppercase font-semibold">6. Location</span>
+                  <span class="material-symbols-outlined text-primary text-[14px]">location_on</span>
+                </div>
+                <div id="chain-node-loc" class="text-xs text-on-surface font-medium truncate" title="Geographic Location">Mountain View, US</div>
+                <div class="flex items-center justify-between mt-0.5">
+                  <span id="chain-status-loc" class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-primary/10 text-primary border border-primary/20">GEOLOCATED</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. IP Personality Compact Card -->
+          <div class="gradient-border-card p-space-md rounded-xl glass-panel shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex flex-col gap-1.5 max-w-2xl">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-[18px]">psychology</span>
+                <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">IP Personality</span>
+                <span id="personality-confidence-badge" class="text-[10px] font-mono px-2 py-0.2 rounded-full bg-primary/10 text-primary border border-primary/20">CONFIDENCE: HIGH</span>
+              </div>
+              <p id="personality-summary-text" class="text-xs text-on-surface leading-relaxed font-sans">
+                The IP appears to belong to large-scale cloud/datacenter infrastructure rather than a residential network. No anonymization indicator was detected.
+              </p>
+            </div>
+            <!-- Personality Badges Container (3–5 badges) -->
+            <div id="personality-badges-container" class="flex flex-wrap items-center gap-2">
+              <span class="personality-badge px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-surface-container-lowest border border-primary/30 text-primary flex items-center gap-1.5 shadow-sm">
+                <span>☁</span> <span>CLOUD HOSTED</span>
+              </span>
+              <span class="personality-badge px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-surface-container-lowest border border-secondary/30 text-secondary flex items-center gap-1.5 shadow-sm">
+                <span>🌐</span> <span>GLOBAL NETWORK</span>
+              </span>
+              <span class="personality-badge px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-surface-container-lowest border border-tertiary/30 text-tertiary flex items-center gap-1.5 shadow-sm">
+                <span>🛡</span> <span>LOW ANONYMIZATION</span>
+              </span>
+            </div>
           </div>
         </div>
 
@@ -298,17 +461,17 @@
           <div class="lg:col-span-7 flex flex-col gap-4">
             <!-- Tabs Strip -->
             <div class="flex items-center border-b border-surface-container overflow-x-auto gap-2">
-              <button id="tab-btn-network" class="px-4 py-2.5 text-sm font-medium text-on-surface border-b-2 border-primary-container transition-colors cursor-pointer" onclick="switchHomeTab('network')">Network Details</button>
-              <button id="tab-btn-security" class="px-4 py-2.5 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer" onclick="switchHomeTab('security')">Website Security</button>
-              <button id="tab-btn-ipintel" class="px-4 py-2.5 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer" onclick="switchHomeTab('ipintel')">IP Infrastructure</button>
-              <button id="tab-btn-aireport" class="px-4 py-2.5 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer" onclick="switchHomeTab('aireport')">AI Explanation</button>
+              <button id="tab-btn-network" class="intel-tab-btn intel-tab-btn-active px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer" onclick="switchHomeTab('network')">Network Details</button>
+              <button id="tab-btn-security" class="intel-tab-btn px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer" onclick="switchHomeTab('security')">Website Security</button>
+              <button id="tab-btn-ipintel" class="intel-tab-btn px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer" onclick="switchHomeTab('ipintel')">IP Infrastructure</button>
+              <button id="tab-btn-aireport" class="intel-tab-btn px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer" onclick="switchHomeTab('aireport')">AI Explanation</button>
             </div>
 
             <!-- Tab 1: Network Details -->
-            <div id="tab-content-network" class="p-space-lg rounded-xl bg-surface-container-low border border-surface-container flex flex-col gap-3">
+            <div id="tab-content-network" class="p-space-lg rounded-xl glass-panel border border-surface-container flex flex-col gap-3">
               <div class="grid grid-cols-2 gap-3 text-sm">
                 <div><span class="text-outline text-xs block">Target Domain</span><span id="net-domain" class="font-mono text-on-surface">google.com</span></div>
-                <div><span class="text-outline text-xs block">Resolved Primary IP</span><span id="net-ip" class="font-mono text-primary">142.250.190.46</span></div>
+                <div><span class="text-outline text-xs block">Resolved Primary IP</span><span id="net-ip" class="font-mono text-primary font-medium">142.250.190.46</span></div>
                 <div><span class="text-outline text-xs block">IP Version</span><span id="net-version" class="font-mono text-on-surface">IPv4</span></div>
                 <div><span class="text-outline text-xs block">DNS Response Time</span><span id="net-dns-time" class="font-mono text-on-surface">18.4 ms</span></div>
                 <div><span class="text-outline text-xs block">API Response Time</span><span id="net-api-time" class="font-mono text-on-surface">42.1 ms</span></div>
@@ -323,12 +486,12 @@
             </div>
 
             <!-- Tab 2: Security Intelligence -->
-            <div id="tab-content-security" class="hidden p-space-lg rounded-xl bg-surface-container-low border border-surface-container flex flex-col gap-3">
+            <div id="tab-content-security" class="hidden p-space-lg rounded-xl glass-panel border border-surface-container flex flex-col gap-3">
               <div class="flex items-center justify-between pb-2 border-b border-surface-container">
-                <span class="text-xs font-mono text-outline">Target: <span id="sec-target" class="text-on-surface">google.com</span></span>
+                <span class="text-xs font-mono text-outline">Target: <span id="sec-target" class="text-on-surface font-medium">google.com</span></span>
                 <div class="flex items-center gap-2">
-                  <span id="sec-https-badge" class="px-2 py-0.5 rounded text-[11px] font-mono bg-tertiary/10 text-tertiary border border-tertiary/30">HTTPS Enforced</span>
-                  <span id="sec-tls-badge" class="px-2 py-0.5 rounded text-[11px] font-mono bg-tertiary/10 text-tertiary border border-tertiary/30">Certificate Valid</span>
+                  <span id="sec-https-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-tertiary/10 text-tertiary border border-tertiary/30">HTTPS Enforced</span>
+                  <span id="sec-tls-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-tertiary/10 text-tertiary border border-tertiary/30">Certificate Valid</span>
                 </div>
               </div>
               <div class="grid grid-cols-2 gap-3 text-sm pt-1">
@@ -336,9 +499,9 @@
                 <div><span class="text-outline text-xs block">Cipher Suite</span><span id="sec-cipher" class="font-mono text-on-surface truncate block">TLS_AES_256_GCM_SHA384</span></div>
                 <div><span class="text-outline text-xs block">Certificate Expiry</span><span id="sec-expiry" class="font-mono text-on-surface">78 days</span></div>
                 <div><span class="text-outline text-xs block">Certificate Issuer</span><span id="sec-issuer" class="text-on-surface">Google Trust Services LLC</span></div>
-                <div><span class="text-outline text-xs block">HSTS Header</span><span id="sec-hsts" class="text-xs font-mono text-tertiary">Enabled</span></div>
+                <div><span class="text-outline text-xs block">HSTS Header</span><span id="sec-hsts" class="text-xs font-mono text-tertiary font-medium">Enabled</span></div>
                 <div><span class="text-outline text-xs block">CSP Header</span><span id="sec-csp" class="text-xs font-mono text-outline">Not Detected</span></div>
-                <div><span class="text-outline text-xs block">X-Frame-Options</span><span id="sec-xframe" class="text-xs font-mono text-tertiary">SAMEORIGIN</span></div>
+                <div><span class="text-outline text-xs block">X-Frame-Options</span><span id="sec-xframe" class="text-xs font-mono text-tertiary font-medium">SAMEORIGIN</span></div>
                 <div><span class="text-outline text-xs block">Redirect Chain Count</span><span id="sec-redirects" class="font-mono text-on-surface">1</span></div>
               </div>
               <div class="pt-2 border-t border-surface-container">
@@ -348,28 +511,28 @@
             </div>
 
             <!-- Tab 3: IP Infrastructure & Anonymizer -->
-            <div id="tab-content-ipintel" class="hidden p-space-lg rounded-xl bg-surface-container-low border border-surface-container flex flex-col gap-3">
+            <div id="tab-content-ipintel" class="hidden p-space-lg rounded-xl glass-panel border border-surface-container flex flex-col gap-3">
               <div class="grid grid-cols-2 gap-3 text-sm">
-                <div><span class="text-outline text-xs block">Inspected IP</span><span id="intel-ip" class="font-mono text-primary">142.250.190.46</span></div>
+                <div><span class="text-outline text-xs block">Inspected IP</span><span id="intel-ip" class="font-mono text-primary font-medium">142.250.190.46</span></div>
                 <div><span class="text-outline text-xs block">Infrastructure Class</span><span id="intel-infra-type" class="text-on-surface">Cloud / Datacenter</span></div>
-                <div><span class="text-outline text-xs block">VPN Detection</span><span id="intel-vpn-badge" class="px-2 py-0.5 rounded text-[11px] font-mono bg-tertiary/10 text-tertiary">NOT DETECTED</span></div>
-                <div><span class="text-outline text-xs block">Proxy Detection</span><span id="intel-proxy-badge" class="px-2 py-0.5 rounded text-[11px] font-mono bg-tertiary/10 text-tertiary">NOT DETECTED</span></div>
-                <div><span class="text-outline text-xs block">Tor Exit Node</span><span id="intel-tor-badge" class="px-2 py-0.5 rounded text-[11px] font-mono bg-tertiary/10 text-tertiary">NOT DETECTED</span></div>
-                <div><span class="text-outline text-xs block">Datacenter Status</span><span id="intel-dc-badge" class="px-2 py-0.5 rounded text-[11px] font-mono bg-secondary/10 text-secondary">DETECTED</span></div>
+                <div><span class="text-outline text-xs block">VPN Detection</span><span id="intel-vpn-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-tertiary/10 text-tertiary border border-tertiary/30">NOT DETECTED</span></div>
+                <div><span class="text-outline text-xs block">Proxy Detection</span><span id="intel-proxy-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-tertiary/10 text-tertiary border border-tertiary/30">NOT DETECTED</span></div>
+                <div><span class="text-outline text-xs block">Tor Exit Node</span><span id="intel-tor-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-tertiary/10 text-tertiary border border-tertiary/30">NOT DETECTED</span></div>
+                <div><span class="text-outline text-xs block">Datacenter Status</span><span id="intel-dc-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-secondary/10 text-secondary border border-secondary/30">DETECTED</span></div>
               </div>
             </div>
 
             <!-- Tab 4: AI Explanation & Provenance -->
-            <div id="tab-content-aireport" class="hidden p-space-lg rounded-xl bg-surface-container-low border border-surface-container flex flex-col gap-3">
+            <div id="tab-content-aireport" class="hidden p-space-lg rounded-xl glass-panel border border-surface-container flex flex-col gap-3">
               <div>
                 <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">IP Personality Synthesis</span>
-                <div id="ai-personality-text" class="text-sm text-primary font-mono mt-1 p-2.5 rounded bg-surface-container-lowest border border-surface-container">
+                <div id="ai-personality-text" class="text-sm text-primary font-mono mt-1 p-2.5 rounded-lg bg-surface-container-lowest/80 border border-surface-container">
                   Loading personality statement...
                 </div>
               </div>
               <div class="mt-2">
                 <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Evidence-Based Risk Analysis</span>
-                <div id="ai-explanation-text" class="text-xs text-on-surface-variant leading-relaxed mt-1 p-2.5 rounded bg-surface-container-lowest border border-surface-container max-h-48 overflow-y-auto whitespace-pre-line font-mono">
+                <div id="ai-explanation-text" class="text-xs text-on-surface-variant leading-relaxed mt-1 p-2.5 rounded-lg bg-surface-container-lowest/80 border border-surface-container max-h-48 overflow-y-auto whitespace-pre-line font-mono">
                   Loading analysis report...
                 </div>
               </div>
@@ -382,18 +545,18 @@
 
           <!-- Right Column: Interactive Leaflet Map (5 Cols) -->
           <div class="lg:col-span-5 flex flex-col gap-2">
-            <div class="p-space-sm rounded-xl bg-surface-container-low border border-surface-container flex flex-col gap-2 shadow-xl">
+            <div class="gradient-border-card p-space-sm rounded-xl glass-panel flex flex-col gap-2 shadow-2xl">
               <div class="flex items-center justify-between px-2 pt-1">
                 <div class="flex items-center gap-2">
                   <span class="material-symbols-outlined text-primary text-[18px]">location_searching</span>
                   <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Geographic Coordinates</span>
                 </div>
-                <span id="map-coordinates-text" class="text-[11px] font-mono text-primary">37.4225°, -122.0850°</span>
+                <span id="map-coordinates-text" class="text-[11px] font-mono text-primary font-medium">37.4225°, -122.0850°</span>
               </div>
               <!-- Map Container -->
-              <div id="map" class="w-full h-80 rounded-lg overflow-hidden border border-surface-container"></div>
+              <div id="map" class="w-full h-80 rounded-lg overflow-hidden border border-surface-container/60 shadow-inner"></div>
               <!-- Mandatory Geolocation Disclaimer -->
-              <div class="p-2.5 rounded bg-surface-container-lowest border border-surface-container text-[11px] text-outline leading-tight">
+              <div class="p-2.5 rounded-lg bg-surface-container-lowest/80 border border-surface-container text-[11px] text-outline leading-tight">
                 <span class="text-secondary font-semibold">Disclaimer:</span> IP geolocation coordinates, Website Security Intelligence signals, and IP Risk Scores are analytical and approximate indicators. They do not constitute definitive proof of physical location, website legitimacy, safety, or maliciousness.
               </div>
             </div>
@@ -404,7 +567,7 @@
       <!-- ================================================================= -->
       <!-- VIEW 2: INVESTIGATION HISTORY                                    -->
       <!-- ================================================================= -->
-      <section id="view-history" class="hidden flex flex-col gap-space-lg max-w-[1400px] mx-auto pb-margin">
+      <section id="view-history" class="page-view-section hidden flex flex-col gap-space-lg max-w-[1400px] mx-auto pb-margin">
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-surface-container">
           <div>
             <div class="flex items-center gap-2 text-primary text-xs font-mono mb-1">
@@ -415,11 +578,11 @@
             <p class="text-sm text-on-surface-variant">Review all previously observed website lookups and IP resolutions stored in local database.</p>
           </div>
           <div class="flex items-center gap-3">
-            <button class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-xs text-on-surface transition-colors flex items-center gap-1.5 cursor-pointer" onclick="clearAllHistory()">
+            <button class="px-3.5 py-2 rounded-xl bg-surface-container/80 hover:bg-surface-container-high text-xs text-on-surface transition-all flex items-center gap-1.5 cursor-pointer border border-surface-container hover:border-error/40 hover:text-error" onclick="clearAllHistory()">
               <span class="material-symbols-outlined text-[16px] text-error">delete_forever</span>
               <span>Clear History</span>
             </button>
-            <a href="/api/export/csv?type=history" download class="px-3 py-1.5 rounded-lg bg-primary-container hover:bg-[#47d6ff] text-xs text-black font-medium transition-colors flex items-center gap-1.5 cursor-pointer">
+            <a href="/api/export/csv?type=history" download class="px-3.5 py-2 rounded-xl bg-primary-container hover:bg-[#47d6ff] text-xs text-black font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-md hover:shadow-[0_0_15px_rgba(0,210,255,0.4)]">
               <span class="material-symbols-outlined text-[16px]">download</span>
               <span>Export CSV</span>
             </a>
@@ -428,16 +591,16 @@
 
         <!-- Filter Omnibar -->
         <div class="w-full max-w-md relative">
-          <input id="history-search-input" class="w-full bg-surface-container-lowest text-xs font-mono text-on-surface placeholder:text-outline pl-9 pr-4 py-2 rounded-lg border border-surface-container focus:outline-none focus:border-primary" placeholder="Filter history by domain, IP, or country..."/>
-          <span class="material-symbols-outlined text-outline text-[16px] absolute left-3 top-2.5">search</span>
+          <input id="history-search-input" class="w-full bg-surface-container-lowest/80 text-xs font-mono text-on-surface placeholder:text-outline pl-9 pr-4 py-2.5 rounded-xl border border-surface-container focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/40 transition-all shadow-inner" placeholder="Filter history by domain, IP, or country..."/>
+          <span class="material-symbols-outlined text-outline text-[16px] absolute left-3 top-3">search</span>
         </div>
 
         <!-- History Ledger Table -->
-        <div class="w-full bg-surface-container-low border border-surface-container rounded-xl overflow-hidden shadow-xl">
+        <div class="w-full glass-panel border border-surface-container rounded-xl overflow-hidden shadow-2xl">
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
               <thead>
-                <tr class="bg-surface-container-lowest text-outline text-xs font-mono uppercase tracking-wider border-b border-surface-container">
+                <tr class="bg-surface-container-lowest/90 text-outline text-xs font-mono uppercase tracking-wider border-b border-surface-container">
                   <th class="py-3 px-space-lg font-medium">Timestamp</th>
                   <th class="py-3 px-space-lg font-medium">Domain Entity</th>
                   <th class="py-3 px-space-lg font-medium">Resolved IP</th>
@@ -447,7 +610,7 @@
                   <th class="py-3 px-space-lg font-medium text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody id="history-table-body" class="divide-y divide-surface-container text-xs">
+              <tbody id="history-table-body" class="divide-y divide-surface-container/60 text-xs">
                 <tr><td colspan="7" class="py-8 text-center text-outline">Loading audit ledger from database...</td></tr>
               </tbody>
             </table>
@@ -458,7 +621,7 @@
       <!-- ================================================================= -->
       <!-- VIEW 3: 50-SITE FIELD STUDY                                      -->
       <!-- ================================================================= -->
-      <section id="view-field-study" class="hidden flex flex-col gap-space-lg max-w-[1400px] mx-auto pb-margin">
+      <section id="view-field-study" class="page-view-section hidden flex flex-col gap-space-lg max-w-[1400px] mx-auto pb-margin">
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-surface-container">
           <div>
             <div class="flex items-center gap-2 text-primary text-xs font-mono mb-1">
@@ -473,57 +636,153 @@
               <span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span>
               <span class="text-xs font-mono text-on-surface-variant font-medium">Manual-First Protocol Active</span>
             </div>
-            <button class="px-3.5 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-xs font-medium text-on-surface transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95" onclick="openAutoCompleteModal()">
+            <button id="btn-auto-complete" class="px-3.5 py-2 rounded-xl bg-surface-container/80 hover:bg-surface-container-high text-xs font-medium text-on-surface transition-all flex items-center gap-1.5 cursor-pointer shadow-sm border border-surface-container active:scale-95" onclick="openAutoCompleteModal()">
               <span class="material-symbols-outlined text-[16px] text-primary">assignment_add</span>
-              <span>Complete Remaining Observations</span>
+              <span id="btn-auto-complete-text">Complete Remaining Observations</span>
             </button>
-            <a href="/api/export/csv?type=field-study" download class="px-3 py-1.5 rounded-lg bg-primary-container hover:bg-[#47d6ff] text-xs text-black font-medium transition-colors flex items-center gap-1.5 cursor-pointer">
-              <span class="material-symbols-outlined text-[16px]">download</span>
-              <span>Export CSV</span>
-            </a>
+            <!-- Phase 21 Export Actions Bar -->
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="triggerResearchExport('csv', this)" class="px-3 py-1.5 rounded-xl bg-surface-container/80 hover:bg-surface-container-high border border-surface-container text-xs text-on-surface font-mono transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95" title="Export standardized CSV dataset">
+                <span class="material-symbols-outlined text-[15px] text-primary">table_view</span>
+                <span>CSV</span>
+              </button>
+              <button onclick="triggerResearchExport('json', this)" class="px-3 py-1.5 rounded-xl bg-surface-container/80 hover:bg-surface-container-high border border-surface-container text-xs text-on-surface font-mono transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95" title="Export structured JSON dataset with Phase 20 analytics">
+                <span class="material-symbols-outlined text-[15px] text-secondary">data_object</span>
+                <span>JSON</span>
+              </button>
+              <button onclick="triggerResearchExport('report', this)" class="px-3 py-1.5 rounded-xl bg-surface-container/80 hover:bg-surface-container-high border border-surface-container text-xs text-on-surface font-mono transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95" title="Generate comprehensive Markdown research report">
+                <span class="material-symbols-outlined text-[15px] text-tertiary">description</span>
+                <span>Report (.md)</span>
+              </button>
+              <button onclick="triggerResearchExport('pdf', this)" class="px-3.5 py-1.5 rounded-xl bg-primary-container hover:bg-[#47d6ff] text-xs text-black font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-md hover:shadow-[0_0_15px_rgba(0,210,255,0.4)] active:scale-95" title="Download publication-ready PDF research report">
+                <span class="material-symbols-outlined text-[15px]">picture_as_pdf</span>
+                <span>Report (.pdf)</span>
+              </button>
+            </div>
           </div>
         </div>
 
         <!-- Running Auto-Completion Feedback Banner -->
-        <div id="field-study-running-banner" class="hidden p-3 rounded-xl bg-primary-container/10 border border-primary-container/40 flex items-center gap-3">
+        <div id="field-study-running-banner" class="hidden p-3 rounded-xl glass-panel border border-primary-container/40 flex items-center gap-3 shadow-lg">
           <div class="w-4 h-4 border-2 border-primary-container border-t-transparent rounded-full animate-spin"></div>
           <span class="text-xs font-mono text-primary">Executing automated lookup for remaining target domains in background...</span>
         </div>
 
         <!-- Progress Quota Card -->
-        <div class="rounded-xl bg-surface-container-lowest border border-surface-container p-space-lg shadow-xl flex flex-col gap-3">
+        <div class="gradient-border-card p-space-lg rounded-xl glass-panel shadow-2xl flex flex-col gap-3">
           <div class="flex flex-col md:flex-row md:items-baseline justify-between gap-2">
             <div class="flex items-baseline gap-2">
               <span id="field-study-count" class="font-headline text-4xl font-bold text-on-surface">0</span>
               <span id="field-study-target" class="text-xl text-outline font-normal">/ 50</span>
               <span class="text-sm text-on-surface-variant ml-2 font-medium">Observations Recorded</span>
+              <span id="field-study-status-badge" class="ml-3 px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-primary/10 text-primary border border-primary/30">INCOMPLETE</span>
             </div>
             <div class="text-xs font-mono text-outline">
-              <span id="field-study-pct-text">0% of target quota completed</span> • <span id="field-study-remaining-text" class="text-primary">50 observations remaining</span>
+              <span id="field-study-pct-text">0% of target quota completed</span> • <span id="field-study-remaining-text" class="text-primary font-medium">50 observations remaining</span>
             </div>
           </div>
           <!-- Gauge Bar -->
-          <div class="w-full h-2 rounded-full bg-surface-container-high overflow-hidden">
-            <div id="field-study-progress-bar" class="h-full bg-primary-container rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
+          <div class="w-full h-2.5 rounded-full bg-surface-container-high overflow-hidden">
+            <div id="field-study-progress-bar" class="h-full trust-gauge-gradient rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
           </div>
         </div>
 
-        <!-- Field Study Observations Table -->
-        <div class="w-full bg-surface-container-low border border-surface-container rounded-xl overflow-hidden shadow-xl">
+        <!-- Compact Research Summary Cards (Phase 19) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Websites Tested -->
+          <div class="glass-card stagger-card p-space-lg rounded-xl flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Websites Tested</span>
+              <span class="material-symbols-outlined text-[18px] text-primary">analytics</span>
+            </div>
+            <div class="mt-3">
+              <div class="flex items-baseline gap-2">
+                <span id="fs-summary-websites" class="font-headline text-2xl font-bold text-on-surface">0</span>
+                <span class="text-xs font-mono text-outline">/ 50 Target</span>
+              </div>
+              <span id="fs-summary-status-text" class="text-xs font-mono text-outline-variant">Sample collection active</span>
+            </div>
+          </div>
+
+          <!-- HTTPS Adoption -->
+          <div class="glass-card stagger-card p-space-lg rounded-xl flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">HTTPS Adoption</span>
+              <span class="material-symbols-outlined text-[18px] text-tertiary">lock</span>
+            </div>
+            <div class="mt-3">
+              <div class="flex items-baseline gap-1">
+                <span id="fs-summary-https" class="font-headline text-2xl font-bold text-tertiary">0.0%</span>
+              </div>
+              <span class="text-xs font-mono text-outline-variant">Observed encrypted traffic</span>
+            </div>
+          </div>
+
+          <!-- Average Trust Score -->
+          <div class="glass-card stagger-card p-space-lg rounded-xl flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Average Trust</span>
+              <span class="material-symbols-outlined text-[18px] text-primary">verified_user</span>
+            </div>
+            <div class="mt-3">
+              <div class="flex items-baseline gap-2">
+                <span id="fs-summary-trust" class="font-headline text-2xl font-bold text-primary">0.0</span>
+                <span class="text-xs font-mono text-outline">/ 100</span>
+              </div>
+              <span id="fs-summary-trust-tier" class="text-xs font-mono text-outline-variant">Confidence-weighted mean</span>
+            </div>
+          </div>
+
+          <!-- Average IP Risk -->
+          <div class="glass-card stagger-card p-space-lg rounded-xl flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Average IP Risk</span>
+              <span class="material-symbols-outlined text-[18px] text-secondary">gshield</span>
+            </div>
+            <div class="mt-3">
+              <div class="flex items-baseline gap-2">
+                <span id="fs-summary-risk" class="font-headline text-2xl font-bold text-secondary">0.0</span>
+                <span class="text-xs font-mono text-outline">/ 100</span>
+              </div>
+              <span id="fs-summary-risk-tier" class="text-xs font-mono text-outline-variant">Infrastructure risk mean</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Secondary Research Telemetry Strip -->
+        <div class="p-3.5 rounded-xl glass-panel border border-surface-container/60 flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-outline">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[16px] text-tertiary">dns</span>
+            <span>Most Common Infrastructure:</span>
+            <span id="fs-summary-infra" class="text-on-surface font-semibold">Unknown</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span>Threat Detections:</span>
+            <span class="px-2 py-0.5 rounded bg-surface-container text-on-surface-variant">VPN: <span id="fs-summary-vpn" class="text-primary font-bold">0</span></span>
+            <span class="px-2 py-0.5 rounded bg-surface-container text-on-surface-variant">Proxy: <span id="fs-summary-proxy" class="text-primary font-bold">0</span></span>
+            <span class="px-2 py-0.5 rounded bg-surface-container text-on-surface-variant">Tor: <span id="fs-summary-tor" class="text-primary font-bold">0</span></span>
+          </div>
+        </div>
+
+        <!-- Field Study Observations Table (9 Columns, Phase 19) -->
+        <div class="w-full glass-panel border border-surface-container rounded-xl overflow-hidden shadow-2xl">
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
               <thead>
-                <tr class="bg-surface-container-lowest text-outline text-xs font-mono uppercase tracking-wider border-b border-surface-container">
-                  <th class="py-3 px-space-lg font-medium">#</th>
-                  <th class="py-3 px-space-lg font-medium">Domain</th>
-                  <th class="py-3 px-space-lg font-medium">Category</th>
-                  <th class="py-3 px-space-lg font-medium">Resolved IP</th>
-                  <th class="py-3 px-space-lg font-medium">Location</th>
-                  <th class="py-3 px-space-lg font-medium">Observation Status</th>
+                <tr class="bg-surface-container-lowest/90 text-outline text-xs font-mono uppercase tracking-wider border-b border-surface-container">
+                  <th class="py-3 px-3 font-medium text-center">#</th>
+                  <th class="py-3 px-4 font-medium">Domain</th>
+                  <th class="py-3 px-4 font-medium">IP Address</th>
+                  <th class="py-3 px-4 font-medium">Country</th>
+                  <th class="py-3 px-4 font-medium">Infrastructure</th>
+                  <th class="py-3 px-3 font-medium text-center">HTTPS</th>
+                  <th class="py-3 px-3 font-medium text-center">Trust</th>
+                  <th class="py-3 px-3 font-medium text-center">Risk</th>
+                  <th class="py-3 px-4 font-medium text-right">Observed</th>
                 </tr>
               </thead>
-              <tbody id="field-study-table-body" class="divide-y divide-surface-container text-xs">
-                <tr><td colspan="6" class="py-8 text-center text-outline">Loading 50-site field study records...</td></tr>
+              <tbody id="field-study-table-body" class="divide-y divide-surface-container/60 text-xs">
+                <tr><td colspan="9" class="py-8 text-center text-outline">Loading 50-site field study records...</td></tr>
               </tbody>
             </table>
           </div>
@@ -533,111 +792,475 @@
       <!-- ================================================================= -->
       <!-- VIEW 4: ANALYTICS                                                -->
       <!-- ================================================================= -->
-      <section id="view-analytics" class="hidden flex flex-col gap-space-lg max-w-[1400px] mx-auto pb-margin">
+      <!-- View 4: Analytics View (Phase 20 Research Analytics) -->
+      <section id="view-analytics" class="page-view-section hidden flex flex-col gap-space-lg max-w-[1400px] mx-auto pb-margin">
+        <!-- Analytics Header -->
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-surface-container">
           <div>
             <div class="flex items-center gap-2 text-secondary text-xs font-mono mb-1">
-              <span>DATASET COHORT</span>
+              <span>RESEARCH COHORT</span>
               <span class="text-outline-variant">•</span>
-              <span id="analytics-n-count" class="text-outline">N = 50 Inspected Endpoints</span>
+              <span id="analytics-n-count" class="text-outline">N = 0 / 50 Observed Endpoints</span>
+              <span id="analytics-status-badge" class="ml-2 px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-primary/10 text-primary border border-primary/30">INCOMPLETE</span>
             </div>
-            <h1 class="font-headline text-3xl font-bold text-on-surface">Field Study Analytics</h1>
-            <p class="text-sm text-on-surface-variant">Statistical distributions and infrastructure correlations computed directly from stored database observations.</p>
+            <h1 class="font-headline text-3xl font-bold text-on-surface">Field Study Research Analytics</h1>
+            <p class="text-sm text-on-surface-variant">Deterministic statistical distributions, infrastructure correlations, and comparative analysis computed directly from stored observations.</p>
           </div>
-          <div>
-            <a href="/api/export/csv?type=history" download class="px-3 py-1.5 rounded-lg bg-primary-container hover:bg-[#47d6ff] text-xs text-black font-medium transition-colors flex items-center gap-1.5 cursor-pointer">
-              <span class="material-symbols-outlined text-[16px]">download</span>
-              <span>Export Raw Data</span>
-            </a>
+          <!-- Phase 21 Export Actions Bar -->
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="triggerResearchExport('csv', this)" class="px-3 py-1.5 rounded-xl bg-surface-container/80 hover:bg-surface-container-high border border-surface-container text-xs text-on-surface font-mono transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95" title="Export standardized CSV dataset">
+              <span class="material-symbols-outlined text-[15px] text-primary">table_view</span>
+              <span>CSV</span>
+            </button>
+            <button onclick="triggerResearchExport('json', this)" class="px-3 py-1.5 rounded-xl bg-surface-container/80 hover:bg-surface-container-high border border-surface-container text-xs text-on-surface font-mono transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95" title="Export structured JSON dataset with Phase 20 analytics">
+              <span class="material-symbols-outlined text-[15px] text-secondary">data_object</span>
+              <span>JSON</span>
+            </button>
+            <button onclick="triggerResearchExport('report', this)" class="px-3 py-1.5 rounded-xl bg-surface-container/80 hover:bg-surface-container-high border border-surface-container text-xs text-on-surface font-mono transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95" title="Generate comprehensive Markdown research report">
+              <span class="material-symbols-outlined text-[15px] text-tertiary">description</span>
+              <span>Report (.md)</span>
+            </button>
+            <button onclick="triggerResearchExport('pdf', this)" class="px-3.5 py-1.5 rounded-xl bg-primary-container hover:bg-[#47d6ff] text-xs text-black font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-md hover:shadow-[0_0_15px_rgba(0,210,255,0.4)] active:scale-95" title="Download publication-ready PDF research report">
+              <span class="material-symbols-outlined text-[15px]">picture_as_pdf</span>
+              <span>Report (.pdf)</span>
+            </button>
           </div>
         </div>
 
         <!-- Empty Banner -->
-        <div id="analytics-empty" class="hidden p-12 text-center rounded-xl bg-surface-container-low border border-surface-container text-outline">
+        <div id="analytics-empty" class="hidden p-12 text-center rounded-2xl glass-panel border border-surface-container text-outline shadow-xl">
           <span class="material-symbols-outlined text-4xl block mb-2 text-outline-variant">bar_chart</span>
-          Not enough observations for analysis yet. Perform lookups on the Home page to populate analytics.
+          <span class="font-medium block text-on-surface mb-1">No Field Study Observations Available</span>
+          <p class="text-xs text-outline max-w-md mx-auto">Look up websites from the Home page and click "Add to Field Study" to curate observations and unlock research analytics.</p>
         </div>
 
-        <!-- Analytics Content Grid -->
-        <div id="analytics-content" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Panel 1: Trust Score Distribution Histogram -->
-          <div class="p-space-lg rounded-xl bg-surface-container-low border border-surface-container shadow-md flex flex-col justify-between">
-            <div class="flex items-center justify-between pb-3">
-              <div>
-                <h3 class="font-headline text-base font-semibold text-on-surface">Trust Score Distribution</h3>
-                <span class="text-xs text-on-surface-variant">Safety index histogram across 5 distinct brackets</span>
-              </div>
-              <span class="text-xs font-mono text-primary">0–100 Scale</span>
+        <!-- Analytics Content Sections Container -->
+        <div id="analytics-content" class="flex flex-col gap-6">
+
+          <!-- SECTION 1: Field Study Overview (KPIs & Sample Quota Progress) -->
+          <div class="flex flex-col gap-4">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Section 1: Field Study Overview</span>
+              <span id="analytics-progress-pct-label" class="text-xs font-mono text-primary font-medium">0% Quota Fulfilled</span>
             </div>
-            <!-- Histogram Visualizer -->
-            <div class="h-48 w-full flex items-end justify-between gap-3 px-2 pt-4 pb-2 border-b border-surface-container">
-              <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
-                <span id="histogram-count-0" class="text-[11px] font-mono text-on-surface-variant">0</span>
-                <div id="histogram-bar-0" class="w-full bg-surface-container-highest rounded-t transition-all duration-500" style="height: 10%"></div>
-                <span class="text-[11px] font-mono text-outline">0–20</span>
+
+            <!-- Overview 4 Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <!-- Card 1: Sample Size -->
+              <div class="glass-card stagger-card p-space-lg rounded-xl flex flex-col justify-between">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Observations</span>
+                  <span class="material-symbols-outlined text-[18px] text-primary">data_thresholding</span>
+                </div>
+                <div class="mt-3">
+                  <div class="flex items-baseline gap-2">
+                    <span id="ov-sample-size" class="font-headline text-3xl font-bold text-on-surface">0</span>
+                    <span class="text-xs font-mono text-outline">/ 50 Target</span>
+                  </div>
+                  <span id="ov-remaining-text" class="text-xs font-mono text-primary">50 observations remaining</span>
+                </div>
               </div>
-              <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
-                <span id="histogram-count-1" class="text-[11px] font-mono text-on-surface-variant">0</span>
-                <div id="histogram-bar-1" class="w-full bg-surface-container-highest rounded-t transition-all duration-500" style="height: 10%"></div>
-                <span class="text-[11px] font-mono text-outline">21–40</span>
+
+              <!-- Card 2: HTTPS Adoption -->
+              <div class="glass-card stagger-card p-space-lg rounded-xl flex flex-col justify-between">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">HTTPS Adoption</span>
+                  <span class="material-symbols-outlined text-[18px] text-tertiary">lock</span>
+                </div>
+                <div class="mt-3">
+                  <div class="flex items-baseline gap-1">
+                    <span id="ov-https-pct" class="font-headline text-3xl font-bold text-tertiary">0.0%</span>
+                  </div>
+                  <span id="ov-https-detail" class="text-xs font-mono text-outline-variant">0 of 0 active TLS</span>
+                </div>
               </div>
-              <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
-                <span id="histogram-count-2" class="text-[11px] font-mono text-on-surface-variant">0</span>
-                <div id="histogram-bar-2" class="w-full bg-surface-container-highest rounded-t transition-all duration-500" style="height: 15%"></div>
-                <span class="text-[11px] font-mono text-outline">41–60</span>
+
+              <!-- Card 3: Average Trust Score -->
+              <div class="glass-card stagger-card p-space-lg rounded-xl flex flex-col justify-between">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Mean Trust Score</span>
+                  <span class="material-symbols-outlined text-[18px] text-primary">verified_user</span>
+                </div>
+                <div class="mt-3">
+                  <div class="flex items-baseline gap-2">
+                    <span id="ov-avg-trust" class="font-headline text-3xl font-bold text-primary">0.0</span>
+                    <span class="text-xs font-mono text-outline">/ 100</span>
+                  </div>
+                  <span id="ov-trust-tier" class="text-xs font-mono text-outline-variant">Confidence-weighted mean</span>
+                </div>
               </div>
-              <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
-                <span id="histogram-count-3" class="text-[11px] font-mono text-on-surface-variant">0</span>
-                <div id="histogram-bar-3" class="w-full bg-secondary-container/60 rounded-t transition-all duration-500" style="height: 35%"></div>
-                <span class="text-[11px] font-mono text-outline">61–80</span>
+
+              <!-- Card 4: Average IP Risk -->
+              <div class="glass-card stagger-card p-space-lg rounded-xl flex flex-col justify-between">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Mean IP Risk</span>
+                  <span class="material-symbols-outlined text-[18px] text-secondary">gshield</span>
+                </div>
+                <div class="mt-3">
+                  <div class="flex items-baseline gap-2">
+                    <span id="ov-avg-risk" class="font-headline text-3xl font-bold text-secondary">0.0</span>
+                    <span class="text-xs font-mono text-outline">/ 100</span>
+                  </div>
+                  <span id="ov-risk-tier" class="text-xs font-mono text-outline-variant">Infrastructure exposure mean</span>
+                </div>
               </div>
-              <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
-                <span id="histogram-count-4" class="text-[11px] font-mono text-primary font-medium">0</span>
-                <div id="histogram-bar-4" class="w-full bg-primary-container rounded-t shadow-[0_0_15px_rgba(0,210,255,0.4)] transition-all duration-500" style="height: 70%"></div>
-                <span class="text-[11px] font-mono text-primary font-medium">81–100</span>
+            </div>
+
+            <!-- Progress Bar Card -->
+            <div class="p-4 rounded-xl glass-panel border border-surface-container flex flex-col gap-2">
+              <div class="flex justify-between items-center text-xs font-mono">
+                <span class="text-outline">50-Website Research Sample Quota Progress</span>
+                <span id="ov-progress-summary-text" class="text-primary font-medium">0 / 50 collected</span>
+              </div>
+              <div class="w-full h-2 rounded-full bg-surface-container overflow-hidden">
+                <div id="analytics-progress-bar" class="h-full trust-gauge-gradient rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
               </div>
             </div>
           </div>
 
-          <!-- Panel 2: Latency & IP Protocols -->
-          <div class="p-space-lg rounded-xl bg-surface-container-low border border-surface-container shadow-md flex flex-col justify-between">
-            <div class="pb-3">
-              <h3 class="font-headline text-base font-semibold text-on-surface">Network Latency &amp; Protocols</h3>
-              <span class="text-xs text-on-surface-variant">Average query latency and protocol adoption</span>
-            </div>
-            <div class="grid grid-cols-2 gap-4 py-2">
-              <div class="p-3 rounded-lg bg-surface-container-lowest border border-surface-container">
-                <span class="text-xs text-outline block">Avg DNS Latency</span>
-                <span id="analytics-dns-avg" class="text-xl font-mono font-semibold text-primary">0.0 ms</span>
+          <!-- SECTION 2: Trust & Risk Analysis (Dual Histograms) -->
+          <div class="flex flex-col gap-3">
+            <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Section 2: Trust &amp; Risk Score Analysis</span>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+              <!-- Trust Score Histogram -->
+              <div class="gradient-border-card p-space-lg rounded-xl glass-panel shadow-2xl flex flex-col justify-between">
+                <div class="flex items-center justify-between pb-2">
+                  <div>
+                    <h3 class="font-headline text-base font-semibold text-on-surface">Website Trust Score Distribution</h3>
+                    <span class="text-xs text-on-surface-variant">Cryptographic posture &amp; transport security ratings</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs font-mono">
+                    <span class="text-outline">Min: <span id="trust-min-val" class="text-on-surface font-semibold">—</span></span>
+                    <span class="text-outline">Avg: <span id="trust-avg-val" class="text-primary font-bold">—</span></span>
+                    <span class="text-outline">Max: <span id="trust-max-val" class="text-emerald-400 font-semibold">—</span></span>
+                  </div>
+                </div>
+
+                <!-- Histogram Visualizer -->
+                <div class="h-44 w-full flex items-end justify-between gap-3 px-2 pt-4 pb-2 border-b border-surface-container">
+                  <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+                    <span id="trust-bar-count-0" class="text-[11px] font-mono text-outline">0</span>
+                    <div id="trust-bar-0" class="w-full bg-red-500/40 border border-red-500/60 rounded-t transition-all duration-700" style="height: 0%"></div>
+                    <span class="text-[10px] font-mono text-outline">0–20</span>
+                  </div>
+                  <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+                    <span id="trust-bar-count-1" class="text-[11px] font-mono text-outline">0</span>
+                    <div id="trust-bar-1" class="w-full bg-amber-500/40 border border-amber-500/60 rounded-t transition-all duration-700" style="height: 0%"></div>
+                    <span class="text-[10px] font-mono text-outline">21–40</span>
+                  </div>
+                  <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+                    <span id="trust-bar-count-2" class="text-[11px] font-mono text-outline">0</span>
+                    <div id="trust-bar-2" class="w-full bg-yellow-500/40 border border-yellow-500/60 rounded-t transition-all duration-700" style="height: 0%"></div>
+                    <span class="text-[10px] font-mono text-outline">41–60</span>
+                  </div>
+                  <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+                    <span id="trust-bar-count-3" class="text-[11px] font-mono text-outline">0</span>
+                    <div id="trust-bar-3" class="w-full bg-primary/40 border border-primary/60 rounded-t transition-all duration-700" style="height: 0%"></div>
+                    <span class="text-[10px] font-mono text-outline">61–80</span>
+                  </div>
+                  <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+                    <span id="trust-bar-count-4" class="text-[11px] font-mono text-emerald-400 font-bold">0</span>
+                    <div id="trust-bar-4" class="w-full bg-emerald-500/50 border border-emerald-500/80 rounded-t shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all duration-700" style="height: 0%"></div>
+                    <span class="text-[10px] font-mono text-emerald-400 font-semibold">81–100</span>
+                  </div>
+                </div>
+
+                <!-- Trust Classifications Pills -->
+                <div id="trust-classifications-list" class="flex flex-wrap gap-2 pt-3 text-xs font-mono"></div>
               </div>
-              <div class="p-3 rounded-lg bg-surface-container-lowest border border-surface-container">
-                <span class="text-xs text-outline block">Avg API Latency</span>
-                <span id="analytics-api-avg" class="text-xl font-mono font-semibold text-secondary">0.0 ms</span>
+
+              <!-- IP Risk Score Histogram -->
+              <div class="gradient-border-card p-space-lg rounded-xl glass-panel shadow-2xl flex flex-col justify-between">
+                <div class="flex items-center justify-between pb-2">
+                  <div>
+                    <h3 class="font-headline text-base font-semibold text-on-surface">IP Risk Score Distribution</h3>
+                    <span class="text-xs text-on-surface-variant">Infrastructure exposure &amp; anonymizer risk ratings</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs font-mono">
+                    <span class="text-outline">Min: <span id="risk-min-val" class="text-emerald-400 font-semibold">—</span></span>
+                    <span class="text-outline">Avg: <span id="risk-avg-val" class="text-secondary font-bold">—</span></span>
+                    <span class="text-outline">Max: <span id="risk-max-val" class="text-red-400 font-semibold">—</span></span>
+                  </div>
+                </div>
+
+                <!-- Histogram Visualizer -->
+                <div class="h-44 w-full flex items-end justify-between gap-3 px-2 pt-4 pb-2 border-b border-surface-container">
+                  <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+                    <span id="risk-bar-count-0" class="text-[11px] font-mono text-secondary font-bold">0</span>
+                    <div id="risk-bar-0" class="w-full bg-secondary/50 border border-secondary/80 rounded-t shadow-[0_0_15px_rgba(206,124,255,0.3)] transition-all duration-700" style="height: 0%"></div>
+                    <span class="text-[10px] font-mono text-secondary font-semibold">0–20</span>
+                  </div>
+                  <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+                    <span id="risk-bar-count-1" class="text-[11px] font-mono text-outline">0</span>
+                    <div id="risk-bar-1" class="w-full bg-primary/40 border border-primary/60 rounded-t transition-all duration-700" style="height: 0%"></div>
+                    <span class="text-[10px] font-mono text-outline">21–40</span>
+                  </div>
+                  <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+                    <span id="risk-bar-count-2" class="text-[11px] font-mono text-outline">0</span>
+                    <div id="risk-bar-2" class="w-full bg-yellow-500/40 border border-yellow-500/60 rounded-t transition-all duration-700" style="height: 0%"></div>
+                    <span class="text-[10px] font-mono text-outline">41–60</span>
+                  </div>
+                  <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+                    <span id="risk-bar-count-3" class="text-[11px] font-mono text-outline">0</span>
+                    <div id="risk-bar-3" class="w-full bg-amber-500/40 border border-amber-500/60 rounded-t transition-all duration-700" style="height: 0%"></div>
+                    <span class="text-[10px] font-mono text-outline">61–80</span>
+                  </div>
+                  <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+                    <span id="risk-bar-count-4" class="text-[11px] font-mono text-outline">0</span>
+                    <div id="risk-bar-4" class="w-full bg-red-500/40 border border-red-500/60 rounded-t transition-all duration-700" style="height: 0%"></div>
+                    <span class="text-[10px] font-mono text-outline">81–100</span>
+                  </div>
+                </div>
+
+                <!-- Risk Classifications Pills -->
+                <div id="risk-classifications-list" class="flex flex-wrap gap-2 pt-3 text-xs font-mono"></div>
               </div>
-              <div class="p-3 rounded-lg bg-surface-container-lowest border border-surface-container">
-                <span class="text-xs text-outline block">IPv4 Endpoints</span>
-                <span id="analytics-ipv4-count" class="text-xl font-mono font-semibold text-on-surface">0</span>
-              </div>
-              <div class="p-3 rounded-lg bg-surface-container-lowest border border-surface-container">
-                <span class="text-xs text-outline block">IPv6 Endpoints</span>
-                <span id="analytics-ipv6-count" class="text-xl font-mono font-semibold text-on-surface">0</span>
-              </div>
+
             </div>
           </div>
 
-          <!-- Panel 3: Geographic Distribution -->
-          <div class="p-space-lg rounded-xl bg-surface-container-low border border-surface-container shadow-md flex flex-col">
-            <h3 class="font-headline text-base font-semibold text-on-surface mb-1">Top Geolocation Nodes</h3>
-            <span class="text-xs text-on-surface-variant mb-3">Country distribution across recorded observations</span>
-            <div id="analytics-top-countries" class="flex flex-col"></div>
+          <!-- SECTION 3: Security Analysis (HTTPS & TLS Validity) -->
+          <div class="flex flex-col gap-3">
+            <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Section 3: Security &amp; Transport Encryption</span>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+              <!-- HTTPS Breakdown -->
+              <div class="gradient-border-card p-space-lg rounded-xl glass-panel shadow-2xl flex flex-col justify-between">
+                <div class="flex items-center justify-between pb-3 border-b border-surface-container">
+                  <div>
+                    <h3 class="font-headline text-base font-semibold text-on-surface">HTTPS Adoption Breakdown</h3>
+                    <span class="text-xs text-on-surface-variant">Encrypted transport protocol coverage</span>
+                  </div>
+                  <span id="sec-https-rate-badge" class="px-2.5 py-0.5 rounded-full text-xs font-mono bg-tertiary/10 text-tertiary border border-tertiary/30 font-semibold">0.0% ADOPTED</span>
+                </div>
+                <div class="grid grid-cols-3 gap-3 py-4">
+                  <div class="p-3 rounded-lg bg-surface-container-lowest/80 border border-surface-container flex flex-col items-center">
+                    <span class="text-[10px] font-mono text-outline uppercase">Enabled</span>
+                    <span id="sec-https-enabled-val" class="text-xl font-mono font-bold text-emerald-400">0</span>
+                    <span id="sec-https-enabled-pct" class="text-[11px] font-mono text-outline">0.0%</span>
+                  </div>
+                  <div class="p-3 rounded-lg bg-surface-container-lowest/80 border border-surface-container flex flex-col items-center">
+                    <span class="text-[10px] font-mono text-outline uppercase">Disabled</span>
+                    <span id="sec-https-disabled-val" class="text-xl font-mono font-bold text-red-400">0</span>
+                    <span id="sec-https-disabled-pct" class="text-[11px] font-mono text-outline">0.0%</span>
+                  </div>
+                  <div class="p-3 rounded-lg bg-surface-container-lowest/80 border border-surface-container flex flex-col items-center">
+                    <span class="text-[10px] font-mono text-outline uppercase">Unknown</span>
+                    <span id="sec-https-unknown-val" class="text-xl font-mono font-bold text-outline">0</span>
+                    <span id="sec-https-unknown-pct" class="text-[11px] font-mono text-outline">0.0%</span>
+                  </div>
+                </div>
+                <div class="w-full h-2 rounded-full bg-surface-container overflow-hidden flex">
+                  <div id="sec-bar-https-enabled" class="h-full bg-emerald-400 transition-all duration-700" style="width: 0%"></div>
+                  <div id="sec-bar-https-disabled" class="h-full bg-red-400 transition-all duration-700" style="width: 0%"></div>
+                  <div id="sec-bar-https-unknown" class="h-full bg-surface-container-highest transition-all duration-700" style="width: 100%"></div>
+                </div>
+              </div>
+
+              <!-- TLS Certificate Validity Breakdown -->
+              <div class="gradient-border-card p-space-lg rounded-xl glass-panel shadow-2xl flex flex-col justify-between">
+                <div class="flex items-center justify-between pb-3 border-b border-surface-container">
+                  <div>
+                    <h3 class="font-headline text-base font-semibold text-on-surface">TLS / SSL Certificate Verification</h3>
+                    <span class="text-xs text-on-surface-variant">X.509 certificate chain validation status</span>
+                  </div>
+                  <span id="sec-tls-rate-badge" class="px-2.5 py-0.5 rounded-full text-xs font-mono bg-primary/10 text-primary border border-primary/30 font-semibold">0.0% VALID</span>
+                </div>
+                <div class="grid grid-cols-3 gap-3 py-4">
+                  <div class="p-3 rounded-lg bg-surface-container-lowest/80 border border-surface-container flex flex-col items-center">
+                    <span class="text-[10px] font-mono text-outline uppercase">Valid Cert</span>
+                    <span id="sec-tls-valid-val" class="text-xl font-mono font-bold text-emerald-400">0</span>
+                    <span id="sec-tls-valid-pct" class="text-[11px] font-mono text-outline">0.0%</span>
+                  </div>
+                  <div class="p-3 rounded-lg bg-surface-container-lowest/80 border border-surface-container flex flex-col items-center">
+                    <span class="text-[10px] font-mono text-outline uppercase">Invalid / Exp</span>
+                    <span id="sec-tls-invalid-val" class="text-xl font-mono font-bold text-red-400">0</span>
+                    <span id="sec-tls-invalid-pct" class="text-[11px] font-mono text-outline">0.0%</span>
+                  </div>
+                  <div class="p-3 rounded-lg bg-surface-container-lowest/80 border border-surface-container flex flex-col items-center">
+                    <span class="text-[10px] font-mono text-outline uppercase">Unknown</span>
+                    <span id="sec-tls-unknown-val" class="text-xl font-mono font-bold text-outline">0</span>
+                    <span id="sec-tls-unknown-pct" class="text-[11px] font-mono text-outline">0.0%</span>
+                  </div>
+                </div>
+                <div class="w-full h-2 rounded-full bg-surface-container overflow-hidden flex">
+                  <div id="sec-bar-tls-valid" class="h-full bg-emerald-400 transition-all duration-700" style="width: 0%"></div>
+                  <div id="sec-bar-tls-invalid" class="h-full bg-red-400 transition-all duration-700" style="width: 0%"></div>
+                  <div id="sec-bar-tls-unknown" class="h-full bg-surface-container-highest transition-all duration-700" style="width: 100%"></div>
+                </div>
+              </div>
+
+            </div>
           </div>
 
-          <!-- Panel 4: Top Infrastructure Providers -->
-          <div class="p-space-lg rounded-xl bg-surface-container-low border border-surface-container shadow-md flex flex-col">
-            <h3 class="font-headline text-base font-semibold text-on-surface mb-1">Top Organizations &amp; ASNs</h3>
-            <span class="text-xs text-on-surface-variant mb-3">Dominant autonomous systems in the dataset</span>
-            <div id="analytics-top-orgs" class="flex flex-col"></div>
+          <!-- SECTION 4: Infrastructure & Network Analysis -->
+          <div class="flex flex-col gap-3">
+            <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Section 4: Infrastructure &amp; Network Analysis</span>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+              <!-- IP Protocols & Query Latency -->
+              <div class="gradient-border-card p-space-lg rounded-xl glass-panel shadow-2xl flex flex-col justify-between">
+                <div class="pb-3 border-b border-surface-container">
+                  <h3 class="font-headline text-base font-semibold text-on-surface">IP Protocol Version &amp; Query Latency</h3>
+                  <span class="text-xs text-on-surface-variant">Dual-stack IPv4/IPv6 ratio and measured lookup latency</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3 py-3">
+                  <div class="p-3 rounded-lg bg-surface-container-lowest/80 border border-surface-container">
+                    <span class="text-[11px] text-outline block">IPv4 Endpoints</span>
+                    <span id="analytics-ipv4-count" class="text-2xl font-mono font-bold text-primary">0</span>
+                    <span id="analytics-ipv4-pct" class="text-[11px] font-mono text-outline">0.0%</span>
+                  </div>
+                  <div class="p-3 rounded-lg bg-surface-container-lowest/80 border border-surface-container">
+                    <span class="text-[11px] text-outline block">IPv6 Endpoints</span>
+                    <span id="analytics-ipv6-count" class="text-2xl font-mono font-bold text-secondary">0</span>
+                    <span id="analytics-ipv6-pct" class="text-[11px] font-mono text-outline">0.0%</span>
+                  </div>
+                  <div class="p-3 rounded-lg bg-surface-container-lowest/80 border border-surface-container">
+                    <span class="text-[11px] text-outline block">Avg DNS Latency</span>
+                    <span id="analytics-dns-avg" class="text-xl font-mono font-semibold text-on-surface">0.0 ms</span>
+                  </div>
+                  <div class="p-3 rounded-lg bg-surface-container-lowest/80 border border-surface-container">
+                    <span class="text-[11px] text-outline block">Avg API Latency</span>
+                    <span id="analytics-api-avg" class="text-xl font-mono font-semibold text-on-surface">0.0 ms</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Hosting vs Traditional & Threats -->
+              <div class="gradient-border-card p-space-lg rounded-xl glass-panel shadow-2xl flex flex-col justify-between">
+                <div class="pb-3 border-b border-surface-container">
+                  <h3 class="font-headline text-base font-semibold text-on-surface">Infrastructure Class &amp; Threat Probing</h3>
+                  <span class="text-xs text-on-surface-variant">Cloud/Datacenter density and threat egress indicators</span>
+                </div>
+                <div class="flex flex-col gap-3 py-2">
+                  <div class="flex justify-between items-center text-xs font-mono">
+                    <span class="text-outline">Cloud / Datacenter Density</span>
+                    <span id="infra-cloud-pct-val" class="text-primary font-semibold">0.0%</span>
+                  </div>
+                  <div class="w-full h-2 rounded-full bg-surface-container overflow-hidden">
+                    <div id="infra-cloud-bar" class="h-full bg-primary transition-all duration-700" style="width: 0%"></div>
+                  </div>
+                  <div class="pt-2 border-t border-surface-container/60">
+                    <span class="text-[11px] font-mono text-outline uppercase tracking-wider block mb-2 font-semibold">Anonymization Detections</span>
+                    <div class="grid grid-cols-3 gap-2">
+                      <div class="p-2 rounded bg-surface-container/60 border border-surface-container flex flex-col items-center">
+                        <span class="text-[10px] text-outline font-mono">VPN</span>
+                        <span id="threat-vpn-count" class="text-base font-mono font-bold text-on-surface">0</span>
+                      </div>
+                      <div class="p-2 rounded bg-surface-container/60 border border-surface-container flex flex-col items-center">
+                        <span class="text-[10px] text-outline font-mono">Proxy</span>
+                        <span id="threat-proxy-count" class="text-base font-mono font-bold text-on-surface">0</span>
+                      </div>
+                      <div class="p-2 rounded bg-surface-container/60 border border-surface-container flex flex-col items-center">
+                        <span class="text-[10px] text-outline font-mono">Tor Node</span>
+                        <span id="threat-tor-count" class="text-base font-mono font-bold text-on-surface">0</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
           </div>
+
+          <!-- SECTION 5: Country & ASN Distribution -->
+          <div class="flex flex-col gap-3">
+            <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Section 5: Country &amp; Autonomous System Distribution</span>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+              <!-- Top Countries -->
+              <div class="gradient-border-card p-space-lg rounded-xl glass-panel shadow-2xl flex flex-col">
+                <div class="flex items-center justify-between pb-3 border-b border-surface-container">
+                  <div>
+                    <h3 class="font-headline text-base font-semibold text-on-surface">Top Geographic Nodes</h3>
+                    <span class="text-xs text-on-surface-variant">Country distribution across recorded observations</span>
+                  </div>
+                  <span class="material-symbols-outlined text-primary text-[20px]">public</span>
+                </div>
+                <div id="analytics-top-countries" class="flex flex-col divide-y divide-surface-container/60 pt-1"></div>
+              </div>
+
+              <!-- Top ASNs / Organizations -->
+              <div class="gradient-border-card p-space-lg rounded-xl glass-panel shadow-2xl flex flex-col">
+                <div class="flex items-center justify-between pb-3 border-b border-surface-container">
+                  <div>
+                    <h3 class="font-headline text-base font-semibold text-on-surface">Top Autonomous Systems (BGP)</h3>
+                    <span class="text-xs text-on-surface-variant">Dominant network operators routing the cohort</span>
+                  </div>
+                  <span class="material-symbols-outlined text-secondary text-[20px]">hub</span>
+                </div>
+                <div id="analytics-top-asns" class="flex flex-col divide-y divide-surface-container/60 pt-1"></div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- SECTION 6: Research Insights (Deterministic Factual Findings) -->
+          <div class="flex flex-col gap-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Section 6: Deterministic Research Insights</span>
+              <span class="text-[11px] font-mono text-outline">Empirical deductions without speculation</span>
+            </div>
+            <div id="analytics-insights-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+          </div>
+
+          <!-- SECTION 7: Observation Summary & Site Comparisons -->
+          <div class="flex flex-col gap-3">
+            <span class="text-xs font-mono text-outline uppercase tracking-wider font-semibold">Section 7: Comparative Cohort Rankings</span>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+              <!-- Highest Trust Sites Table -->
+              <div class="gradient-border-card p-space-lg rounded-xl glass-panel shadow-2xl flex flex-col">
+                <div class="flex items-center justify-between pb-3 border-b border-surface-container">
+                  <div>
+                    <h3 class="font-headline text-base font-semibold text-emerald-400">Highest Website Trust Scores</h3>
+                    <span class="text-xs text-on-surface-variant">Endpoints demonstrating strongest cryptographic posture</span>
+                  </div>
+                  <span class="material-symbols-outlined text-emerald-400 text-[20px]">verified</span>
+                </div>
+                <div class="overflow-x-auto pt-2">
+                  <table class="w-full text-left border-collapse text-xs font-mono">
+                    <thead>
+                      <tr class="text-outline border-b border-surface-container">
+                        <th class="py-2 px-2">#</th>
+                        <th class="py-2 px-2">Domain</th>
+                        <th class="py-2 px-2">Country</th>
+                        <th class="py-2 px-2 text-right">Trust Score</th>
+                      </tr>
+                    </thead>
+                    <tbody id="table-highest-trust" class="divide-y divide-surface-container/50"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Highest Risk Sites Table -->
+              <div class="gradient-border-card p-space-lg rounded-xl glass-panel shadow-2xl flex flex-col">
+                <div class="flex items-center justify-between pb-3 border-b border-surface-container">
+                  <div>
+                    <h3 class="font-headline text-base font-semibold text-secondary">Highest IP Risk Scores</h3>
+                    <span class="text-xs text-on-surface-variant">Endpoints with elevated exposure or infrastructure risks</span>
+                  </div>
+                  <span class="material-symbols-outlined text-secondary text-[20px]">warning</span>
+                </div>
+                <div class="overflow-x-auto pt-2">
+                  <table class="w-full text-left border-collapse text-xs font-mono">
+                    <thead>
+                      <tr class="text-outline border-b border-surface-container">
+                        <th class="py-2 px-2">#</th>
+                        <th class="py-2 px-2">Domain</th>
+                        <th class="py-2 px-2">Infrastructure</th>
+                        <th class="py-2 px-2 text-right">Risk Score</th>
+                      </tr>
+                    </thead>
+                    <tbody id="table-highest-risk" class="divide-y divide-surface-container/50"></tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
         </div>
       </section>
 
@@ -645,10 +1268,10 @@
   </div>
 
   <!-- Auto-Complete Confirmation Modal -->
-  <div id="autocomplete-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-surface-container-low border border-surface-container rounded-2xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4">
+  <div id="autocomplete-modal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="gradient-border-card bg-surface-container-low/95 glass-panel rounded-2xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-primary">
+        <div class="w-10 h-10 rounded-xl bg-primary/20 border border-primary/40 flex items-center justify-center text-primary shadow-[0_0_15px_rgba(0,210,255,0.25)]">
           <span class="material-symbols-outlined text-[22px]">biotech</span>
         </div>
         <div>
@@ -660,14 +1283,100 @@
         The application will automatically perform lookups only for the remaining domains required to reach the 50-website quota. Existing observations in your history database will remain intact.
       </p>
       <div class="flex items-center justify-end gap-3 pt-2">
-        <button class="px-4 py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-xs font-medium text-on-surface transition-colors cursor-pointer" onclick="closeAutoCompleteModal()">Cancel</button>
-        <button class="px-4 py-2 rounded-lg bg-primary-container hover:bg-[#47d6ff] text-xs font-semibold text-black transition-colors cursor-pointer shadow-md" onclick="confirmAutoComplete()">Run Automated Completion</button>
+        <button class="px-4 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-xs font-medium text-on-surface transition-colors cursor-pointer border border-surface-container" onclick="closeAutoCompleteModal()">Cancel</button>
+        <button class="px-4 py-2 rounded-xl bg-primary-container hover:bg-[#47d6ff] text-xs font-semibold text-black transition-all cursor-pointer shadow-md hover:shadow-[0_0_15px_rgba(0,210,255,0.4)]" onclick="confirmAutoComplete()">Run Automated Completion</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Why This Score? Explanation Modal -->
+  <div id="score-explanation-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="gradient-border-card bg-surface-container-low/95 glass-panel rounded-2xl max-w-2xl w-full p-6 shadow-2xl flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-surface-container">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-primary/20 border border-primary/40 flex items-center justify-center text-primary shadow-[0_0_15px_rgba(0,210,255,0.25)]">
+            <span class="material-symbols-outlined text-[22px]">analytics</span>
+          </div>
+          <div>
+            <h3 class="font-headline text-lg font-bold text-on-surface">Score Explainability &amp; Signal Breakdown</h3>
+            <span class="text-xs font-mono text-outline">Deterministic Evidence-Based Attribution</span>
+          </div>
+        </div>
+        <button class="p-1.5 rounded-lg hover:bg-surface-container text-outline hover:text-on-surface transition-colors cursor-pointer" onclick="closeScoreExplanationModal()" title="Close">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <!-- Tab Switcher inside Modal -->
+      <div class="flex items-center gap-2 border-b border-surface-container/80 pb-2">
+        <button id="modal-tab-trust" class="px-4 py-1.5 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer bg-primary/20 text-primary border border-primary/40" onclick="switchScoreModalTab('trust')">
+          Website Trust Score
+        </button>
+        <button id="modal-tab-risk" class="px-4 py-1.5 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer text-outline hover:text-on-surface hover:bg-surface-container" onclick="switchScoreModalTab('ip_risk')">
+          IP Risk Score
+        </button>
+      </div>
+
+      <!-- Modal Content Body -->
+      <div id="score-modal-body" class="flex flex-col gap-4">
+        <!-- Dynamically rendered by app.js -->
+      </div>
+
+      <!-- Disclaimer Footer -->
+      <div class="p-3 rounded-xl bg-surface-container-lowest/80 border border-surface-container text-[11px] text-outline leading-relaxed flex items-start gap-2">
+        <span class="material-symbols-outlined text-secondary text-[16px] shrink-0 mt-0.5">info</span>
+        <span id="score-modal-disclaimer">IP PULSE scores are heuristic analytical assessments based on available technical signals. They do not guarantee that a website is legitimate, safe, fraudulent, or malicious.</span>
+      </div>
+
+      <!-- Modal Actions -->
+      <div class="flex items-center justify-end pt-1">
+        <button class="px-4 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-xs font-medium text-on-surface transition-colors cursor-pointer border border-surface-container" onclick="closeScoreExplanationModal()">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Field Study Observation Detail Modal (Phase 19) -->
+  <div id="field-study-detail-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="gradient-border-card bg-surface-container-low/95 glass-panel rounded-2xl max-w-3xl w-full p-6 shadow-2xl flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-surface-container">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-primary/20 border border-primary/40 flex items-center justify-center text-primary shadow-[0_0_15px_rgba(0,210,255,0.25)]">
+            <span class="material-symbols-outlined text-[22px]">biotech</span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span id="modal-obs-test-id" class="text-xs font-mono text-primary font-bold">#1</span>
+              <h3 id="modal-obs-domain" class="font-headline text-xl font-bold text-on-surface">google.com</h3>
+              <span id="modal-obs-category" class="px-2 py-0.5 rounded text-[11px] font-mono bg-surface-container text-outline">Search</span>
+            </div>
+            <span id="modal-obs-timestamp" class="text-xs font-mono text-outline">Observed: 2026-09-13T08:00:00Z</span>
+          </div>
+        </div>
+        <button class="p-1.5 rounded-lg hover:bg-surface-container text-outline hover:text-on-surface transition-colors cursor-pointer" onclick="closeFieldStudyDetail()" title="Close">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <!-- Detail Grid Sections -->
+      <div id="modal-obs-body" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
+        <!-- Will be populated dynamically by app.js -->
+      </div>
+
+      <!-- Modal Actions -->
+      <div class="flex items-center justify-end pt-2 border-t border-surface-container/60">
+        <button class="px-4 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-xs font-medium text-on-surface transition-colors cursor-pointer border border-surface-container" onclick="closeFieldStudyDetail()">
+          Close
+        </button>
       </div>
     </div>
   </div>
 
   <!-- Copy Toast Notification -->
-  <div id="copy-toast" class="fixed bottom-6 right-6 px-4 py-2 rounded-lg bg-primary-container text-black font-mono text-xs shadow-2xl transition-opacity duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2">
+  <div id="copy-toast" class="fixed bottom-6 right-6 px-4 py-2.5 rounded-xl bg-primary-container text-black font-mono text-xs shadow-2xl transition-opacity duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2 font-medium">
     <span class="material-symbols-outlined text-[16px]">check_circle</span>
     <span>Copied to clipboard!</span>
   </div>

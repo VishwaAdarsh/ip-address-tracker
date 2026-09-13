@@ -1,12 +1,16 @@
-/* IP PULSE - Stitch Obsidian Dark Theme Extensions */
+/* ==========================================================================
+   IP PULSE — Premium 2026-Era Frontend Design System & Interaction Styles
+   Visual Palette: Obsidian Dark + Cyan (#00E5FF) → Electric Blue (#3B82F6) → Violet (#7C3AED) → Magenta (#C026D3)
+   ========================================================================== */
 
 @layer base {
   html, body {
     margin: 0;
     padding: 0;
-    background-color: #0f131c;
+    background-color: #0b0f17;
     color: #dfe2ee;
     font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
   }
   body {
     overscroll-behavior: none;
@@ -16,44 +20,405 @@
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #0a0e16;
+    background: rgba(10, 14, 22, 0.8);
   }
   ::-webkit-scrollbar-thumb {
-    background: #262a33;
+    background: rgba(49, 53, 62, 0.7);
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #3c494e;
+    background: rgba(0, 229, 255, 0.4);
   }
 }
 
-/* Custom Marker Pulsing for Leaflet Map */
+/* ==========================================================================
+   1. Atmospheric Ambient Background Glow (Layer 2)
+   Extremely slow, gentle, non-distracting atmospheric lighting
+   ========================================================================== */
+.ambient-glow-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.ambient-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(140px);
+  opacity: 0.16;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.ambient-blob-cyan {
+  top: -10%;
+  left: 20%;
+  width: 650px;
+  height: 650px;
+  background: radial-gradient(circle, #00e5ff 0%, transparent 70%);
+  animation: ambientFloat1 28s ease-in-out infinite alternate;
+}
+
+.ambient-blob-violet {
+  top: 30%;
+  right: 5%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, #7c3aed 0%, transparent 70%);
+  animation: ambientFloat2 32s ease-in-out infinite alternate;
+}
+
+.ambient-blob-magenta {
+  bottom: 5%;
+  left: 30%;
+  width: 550px;
+  height: 550px;
+  background: radial-gradient(circle, #c026d3 0%, transparent 70%);
+  animation: ambientFloat3 36s ease-in-out infinite alternate;
+}
+
+@keyframes ambientFloat1 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, 30px) scale(1.08); }
+  100% { transform: translate(-30px, 50px) scale(0.95); }
+}
+
+@keyframes ambientFloat2 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-50px, -40px) scale(1.05); }
+  100% { transform: translate(20px, 40px) scale(0.96); }
+}
+
+@keyframes ambientFloat3 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(30px, -30px) scale(1.06); }
+  100% { transform: translate(-40px, 20px) scale(0.94); }
+}
+
+/* ==========================================================================
+   2. Glassmorphic Surfaces & Containers (Layer 3 & 4)
+   ========================================================================== */
+.glass-panel {
+  background: rgba(18, 24, 38, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 0 1px 1px rgba(255, 255, 255, 0.03);
+}
+
+.glass-card {
+  background: rgba(22, 28, 42, 0.6);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.45);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.25s ease,
+              box-shadow 0.25s ease;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 85% 15%, rgba(0, 229, 255, 0.06), transparent 65%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.glass-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(0, 229, 255, 0.3);
+  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.6), 0 0 24px rgba(0, 229, 255, 0.1);
+}
+
+.glass-card:hover::before {
+  opacity: 1;
+}
+
+.glass-card:hover .card-icon {
+  filter: drop-shadow(0 0 10px currentColor);
+  transform: scale(1.05);
+  transition: filter 0.25s ease, transform 0.25s ease;
+}
+
+/* ==========================================================================
+   3. Subtle Animated Gradient Borders
+   ========================================================================== */
+.gradient-border-card {
+  position: relative;
+  border-radius: 1rem;
+  background: rgba(18, 24, 38, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 1;
+}
+
+.gradient-border-card::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.35), rgba(124, 58, 237, 0.2), rgba(192, 38, 211, 0.3), rgba(0, 229, 255, 0.35));
+  background-size: 300% 300%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: borderGradientShift 14s ease infinite;
+}
+
+@keyframes borderGradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ==========================================================================
+   4. Hero Analyze Area & Interactive Input
+   ========================================================================== */
+.glass-input-box {
+  background: rgba(12, 16, 26, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.2s ease;
+}
+
+.glass-input-box:hover {
+  border-color: rgba(0, 229, 255, 0.25);
+  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.55), 0 0 16px rgba(0, 229, 255, 0.08);
+}
+
+.glass-input-box:focus-within {
+  border-color: rgba(0, 229, 255, 0.6);
+  box-shadow: 0 12px 35px -5px rgba(0, 0, 0, 0.6),
+              0 0 24px rgba(0, 229, 255, 0.2),
+              0 0 45px rgba(124, 58, 237, 0.12);
+  transform: translateY(-1px);
+}
+
+/* Premium Gradient Analyze Button */
+.premium-analyze-btn {
+  background: linear-gradient(135deg, #00e5ff 0%, #3b82f6 45%, #7c3aed 100%);
+  background-size: 200% 200%;
+  color: #040711;
+  font-weight: 600;
+  box-shadow: 0 4px 20px -2px rgba(0, 229, 255, 0.35), 0 0 15px rgba(59, 130, 246, 0.2);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              background-position 0.4s ease;
+}
+
+.premium-analyze-btn:hover {
+  transform: translateY(-2px);
+  background-position: 100% 50%;
+  box-shadow: 0 8px 30px -4px rgba(0, 229, 255, 0.55), 0 0 35px rgba(124, 58, 237, 0.35);
+}
+
+.premium-analyze-btn:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 12px rgba(0, 229, 255, 0.3);
+}
+
+.premium-analyze-btn .btn-icon {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.premium-analyze-btn:hover .btn-icon {
+  transform: translateX(3px) scale(1.08);
+}
+
+/* Quick Example Chips */
+.quick-chip {
+  background: rgba(26, 32, 48, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+}
+
+.quick-chip:hover {
+  background: rgba(36, 44, 66, 0.85);
+  border-color: rgba(0, 229, 255, 0.4);
+  color: #a5e7ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 229, 255, 0.15);
+}
+
+/* ==========================================================================
+   5. Dynamic Trust & Risk Progress Gauges
+   ========================================================================== */
+.trust-gauge-gradient {
+  background: linear-gradient(90deg, #00e5ff 0%, #3b82f6 40%, #7c3aed 75%, #22c55e 100%);
+  transition: width 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.4);
+}
+
+.risk-gauge-bar {
+  transition: width 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.4s ease,
+              box-shadow 0.4s ease;
+}
+
+.risk-gauge-low {
+  background: linear-gradient(90deg, #00e5ff 0%, #22c55e 100%);
+  box-shadow: 0 0 16px rgba(34, 197, 94, 0.4);
+}
+
+.risk-gauge-moderate {
+  background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.4);
+}
+
+.risk-gauge-high {
+  background: linear-gradient(90deg, #ef4444 0%, #c026d3 100%);
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.45);
+}
+
+/* ==========================================================================
+   6. Navigation & Sidebar Micro-Interactions
+   ========================================================================== */
+.sidebar-link {
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.sidebar-link:hover {
+  background: rgba(38, 42, 51, 0.5);
+  transform: translateX(3px);
+}
+
+.sidebar-link-active {
+  background: linear-gradient(90deg, rgba(0, 229, 255, 0.12) 0%, rgba(124, 58, 237, 0.06) 100%) !important;
+  color: #a5e7ff !important;
+  border-left: 3px solid #00e5ff;
+}
+
+.sidebar-link-active .material-symbols-outlined {
+  filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.6));
+}
+
+/* Top bar operational pill */
+.operational-pill {
+  background: rgba(22, 28, 40, 0.7);
+  border: 1px solid rgba(105, 246, 185, 0.2);
+  box-shadow: 0 0 12px rgba(105, 246, 185, 0.08);
+}
+
+/* ==========================================================================
+   7. Page Transitions & Entrance Staggers
+   ========================================================================== */
+.page-view-section {
+  animation: pageViewFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes pageViewFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stagger-card {
+  animation: cardStaggerIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.stagger-delay-1 { animation-delay: 0.04s; }
+.stagger-delay-2 { animation-delay: 0.08s; }
+.stagger-delay-3 { animation-delay: 0.12s; }
+.stagger-delay-4 { animation-delay: 0.16s; }
+.stagger-delay-5 { animation-delay: 0.20s; }
+
+@keyframes cardStaggerIn {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ==========================================================================
+   8. Tabs & Data Tables Micro-Interactions
+   ========================================================================== */
+.intel-tab-btn {
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.intel-tab-btn::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #00e5ff, #7c3aed);
+  border-radius: 2px;
+  opacity: 0;
+  transform: scaleX(0.4);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.intel-tab-btn-active::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.data-table-row {
+  transition: background-color 0.18s ease;
+}
+
+.data-table-row:hover {
+  background: rgba(34, 42, 60, 0.45);
+}
+
+/* ==========================================================================
+   9. Leaflet Map Container & Marker Enhancements
+   ========================================================================== */
 .pulse-marker-pin {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #00d2ff;
+  background: #00e5ff;
   border: 3px solid #ffffff;
-  box-shadow: 0 0 15px #00d2ff, 0 0 30px #00d2ff;
+  box-shadow: 0 0 15px #00e5ff, 0 0 30px rgba(0, 229, 255, 0.6);
   animation: marker-pulse 2s infinite ease-in-out;
 }
 
 @keyframes marker-pulse {
   0% {
     transform: scale(0.95);
-    box-shadow: 0 0 10px #00d2ff;
+    box-shadow: 0 0 10px #00e5ff;
   }
   50% {
-    transform: scale(1.15);
-    box-shadow: 0 0 25px #00d2ff, 0 0 45px rgba(0, 210, 255, 0.4);
+    transform: scale(1.18);
+    box-shadow: 0 0 25px #00e5ff, 0 0 45px rgba(0, 229, 255, 0.5), 0 0 60px rgba(124, 58, 237, 0.3);
   }
   100% {
     transform: scale(0.95);
-    box-shadow: 0 0 10px #00d2ff;
+    box-shadow: 0 0 10px #00e5ff;
   }
 }
 
-/* Leaflet Container Dark Inversion Filter for Obsidian Dark aesthetic */
 .leaflet-layer,
 .leaflet-control-zoom-in,
 .leaflet-control-zoom-out,
@@ -62,23 +427,102 @@
 }
 
 .leaflet-container {
-  background-color: #0f131c !important;
+  background-color: #0b0f17 !important;
 }
 
-/* Custom Leaflet Popup Styling */
 .leaflet-popup-content-wrapper {
-  background: #181c24 !important;
+  background: rgba(22, 28, 42, 0.95) !important;
   color: #dfe2ee !important;
-  border: 1px solid #31353e !important;
-  border-radius: 8px !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid rgba(0, 229, 255, 0.3) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 12px 32px -5px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 229, 255, 0.2) !important;
+  backdrop-filter: blur(12px);
 }
 
 .leaflet-popup-tip {
-  background: #181c24 !important;
+  background: rgba(22, 28, 42, 0.95) !important;
 }
 
-/* Gauge Transitions */
-.gauge-fill {
-  transition: stroke-dashoffset 1s ease-in-out;
+/* ==========================================================================
+   10. Accessibility: Reduced Motion
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .ambient-blob {
+    animation: none !important;
+  }
+
+  .glass-card:hover {
+    transform: none !important;
+  }
+
+  .premium-analyze-btn:hover {
+    transform: none !important;
+  }
+
+  .chain-node:hover {
+    transform: none !important;
+  }
 }
+
+/* ==========================================================================
+   11. Phase 18: Intelligence Chain & IP Personality Visual Enhancements
+   ========================================================================== */
+.chain-node {
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.chain-node:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -4px rgba(0, 229, 255, 0.15);
+}
+
+@media (min-width: 1024px) {
+  .chain-node:not(:last-child)::after {
+    content: '→';
+    position: absolute;
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: rgba(0, 229, 255, 0.4);
+    font-family: monospace;
+    pointer-events: none;
+    z-index: 10;
+  }
+}
+
+.personality-badge {
+  transition: all 0.2s ease-out;
+}
+
+.personality-badge:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 16px -2px rgba(0, 229, 255, 0.2);
+}
+
+.chain-node-animate {
+  animation: chainNodeFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: calc(var(--node-idx, 0) * 60ms);
+}
+
+@keyframes chainNodeFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

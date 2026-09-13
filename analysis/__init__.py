@@ -10,8 +10,15 @@ from analysis.analyzer import (
     get_default_raw_csv_path,
     load_and_validate_dataset,
 )
-from analysis.report_generator import generate_analysis_outputs
-from analysis.visualizer import generate_all_charts, get_default_charts_dir
+try:
+    from analysis.report_generator import generate_analysis_outputs
+    from analysis.visualizer import generate_all_charts, get_default_charts_dir
+except ImportError:
+    generate_analysis_outputs = None  # type: ignore
+    generate_all_charts = None  # type: ignore
+    get_default_charts_dir = None  # type: ignore
+
+from services.analytics_service import compute_field_study_analytics
 
 __all__ = [
     "load_and_validate_dataset",
@@ -24,4 +31,5 @@ __all__ = [
     "get_default_analysis_dir",
     "get_default_raw_csv_path",
     "get_default_charts_dir",
+    "compute_field_study_analytics",
 ]

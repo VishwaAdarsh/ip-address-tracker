@@ -164,6 +164,49 @@ class TestAPIServer(unittest.TestCase):
             csv_fs = resp_fs.read().decode("utf-8")
             self.assertIn("Domain", csv_fs)
 
+    def test_11_api_export_json(self):
+        """Verify JSON export endpoint returns structured dataset."""
+        req = Request(self._url("/api/export/json"))
+        with urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            self.assertIn("application/json", resp.headers.get("Content-Type", ""))
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertEqual(data.get("target_observations"), 50)
+            self.assertIn("observations", data)
+            self.assertIn("analytics", data)
+            self.assertIn("validation_summary", data)
+
+    def test_12_api_export_report(self):
+        """Verify Markdown research report export endpoint."""
+        req = Request(self._url("/api/export/report"))
+        with urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            self.assertIn("text/markdown", resp.headers.get("Content-Type", ""))
+            report_text = resp.read().decode("utf-8")
+            self.assertIn("1. Executive Summary", report_text)
+            self.assertIn("12. Dataset Status & Integrity Attestation", report_text)
+
+    def test_13_api_export_pdf(self):
+        """Verify PDF export endpoint returns valid binary PDF."""
+        req = Request(self._url("/api/export/pdf"))
+        with urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            self.assertIn("application/pdf", resp.headers.get("Content-Type", ""))
+            pdf_bytes = resp.read()
+            self.assertTrue(pdf_bytes.startswith(b"%PDF-"))
+            self.assertGreater(len(pdf_bytes), 1000)
+
+    def test_14_api_export_validate(self):
+        """Verify data validation endpoint returns audit summary."""
+        req = Request(self._url("/api/export/validate"))
+        with urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertIn("is_valid", data)
+            self.assertIn("issues_count", data)
+            self.assertIn("warnings", data)
+
 
 if __name__ == "__main__":
     unittest.main()
+

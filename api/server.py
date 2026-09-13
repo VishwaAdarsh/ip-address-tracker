@@ -31,11 +31,24 @@ from urllib.parse import parse_qs, urlparse
 from config.settings import BASE_DIR
 from database.db import clear_history, delete_lookup, get_lookup_history
 from database.models import LookupRecord
+from core.intel_chain import generate_ip_personality_profile
+from core.ip_intel import analyze_ip_intelligence
 from services.field_test_service import (
+    FIELD_TEST_HEADERS,
+    add_field_observation,
+    export_field_dataset_from_history,
     get_field_project_status,
     run_automatic_completion,
 )
 from services.risk_analysis_service import perform_full_intelligence_scan
+from services.export_service import (
+    export_field_study_csv,
+    export_field_study_json,
+    generate_research_report_markdown,
+    generate_research_report_pdf,
+    save_export_artifact,
+    validate_field_study_dataset,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +107,14 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
             self._handle_api_analytics()
         elif path == "/api/export/csv":
             self._handle_api_export_csv(query_params)
+        elif path == "/api/export/json":
+            self._handle_api_export_json()
+        elif path in ("/api/export/report", "/api/export/markdown"):
+            self._handle_api_export_report()
+        elif path == "/api/export/pdf":
+            self._handle_api_export_pdf()
+        elif path == "/api/export/validate":
+            self._handle_api_export_validate()
         elif path.startswith("/api/"):
             self._send_error_json(f"Endpoint not found: {path}", status=404)
         else:
@@ -116,6 +137,8 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
 
         if path == "/api/analyze":
             self._handle_api_analyze(payload)
+        elif path == "/api/field-study/add":
+            self._handle_api_field_study_add(payload)
         elif path == "/api/field-study/complete-remaining":
             self._handle_api_field_study_complete()
         else:
@@ -242,11 +265,31 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
                     "trust_score": risk.trust_score,
                     "risk_score": risk.risk_score,
                     "risk_category": getattr(risk, "risk_category", getattr(risk, "risk_level", "Low")),
-                    "confidence_rating": f"{int(getattr(risk, 'confidence_score', 1.0) * 100)}%",
+                    "risk_level": getattr(risk, "risk_level", "Low"),
+                    "confidence_rating": getattr(risk, "confidence_rating", f"{int(getattr(risk, 'confidence_score', 1.0) * 100)}%"),
+                    "confidence_score": getattr(risk, "confidence_score", 1.0),
                     "risk_factors": risk.risk_factors,
                     "positive_factors": risk.positive_factors,
+                    "trust": risk.trust.to_dict() if getattr(risk, "trust", None) else None,
+                    "ip_risk": risk.ip_risk.to_dict() if getattr(risk, "ip_risk", None) else None,
+                    "disclaimer": getattr(risk, "disclaimer", "IP PULSE analytical assessment based on available technical signals."),
                 },
                 "personality": getattr(chain, "ip_personality", getattr(chain, "personality_summary", "IP personality statement")),
+                "ip_personality": chain.personality.to_dict() if getattr(chain, "personality", None) else {
+                    "labels": ["INFRASTRUCTURE UNCLASSIFIED"],
+                    "summary": getattr(chain, "ip_personality", "IP personality statement"),
+                    "confidence": "UNKNOWN",
+                    "disclaimer": getattr(chain, "disclaimer", ""),
+                },
+                "intelligence_chain": chain.to_dict() if hasattr(chain, "to_dict") else {
+                    "domain": getattr(chain, "domain_or_input", target),
+                    "ip": getattr(chain, "resolved_ip", ip_val),
+                    "asn": getattr(chain, "asn", "Unknown"),
+                    "organization": getattr(chain, "organization", "Unknown"),
+                    "infrastructure": getattr(chain, "infrastructure_type", "Unknown"),
+                    "location": f"{getattr(chain, 'city', '')}, {getattr(chain, 'country', '')}".strip(", ") or "Unknown Location",
+                    "nodes": getattr(chain, "nodes", []),
+                },
                 "explanation": result.explanation,
                 "provenance": [
                     {"stage": "DNS Resolution", "source": "Core Resolver", "status": base.dns_status, "details": f"Resolved {base.selected_ip}"},
@@ -313,28 +356,7 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
             avail = status["available_count"]
             target = status["target"]
             rem = status["remaining"]
-            pct = round((avail / target) * 100, 1) if target > 0 else 0
-
-            records_out = []
-            cat_map = status.get("category_map", {})
-            for idx, r in enumerate(status["unique_records"], start=1):
-                d = r.domain or r.input_value
-                cat = cat_map.get(d.lower(), "General Web")
-                records_out.append({
-                    "test_id": idx,
-                    "domain": d,
-                    "category": cat,
-                    "ip_address": r.ip_address or "N/A",
-                    "ip_version": r.ip_version or "IPv4",
-                    "country": r.country or "Unknown",
-                    "city": r.city or "Unknown",
-                    "latitude": r.latitude,
-                    "longitude": r.longitude,
-                    "organization": r.organization or "Unknown",
-                    "asn": r.asn or "Unknown",
-                    "status": r.status,
-                    "timestamp": r.timestamp,
-                })
+            pct = status["progress_percentage"]
 
             self._send_json({
                 "success": True,
@@ -344,11 +366,54 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
                 "progress_percentage": pct,
                 "protocol": "Manual-First Protocol Active",
                 "status": status["status"],
-                "records": records_out,
+                "summary": status["summary"],
+                "records": status["records"],
             })
         except Exception as e:
             logger.exception(f"Error retrieving field study status: {e}")
             self._send_error_json(f"Field study error: {str(e)}", status=500)
+
+    def _handle_api_field_study_add(self, payload: Dict[str, Any]) -> None:
+        """Add an intentionally curated website observation to the 50-site field study."""
+        target = str(payload.get("target") or payload.get("domain") or "").strip()
+        category = payload.get("category")
+        if not target:
+            self._send_error_json("Target domain is required.", status=400)
+            return
+
+        try:
+            success, msg, obs = add_field_observation(target=target, category=category)
+            if not success:
+                if "already recorded" in msg.lower():
+                    self._send_json({
+                        "success": False,
+                        "duplicate": True,
+                        "message": msg,
+                        "observation": obs.to_dict() if obs else None,
+                    }, status=409)
+                else:
+                    self._send_json({
+                        "success": False,
+                        "error": msg,
+                        "message": msg,
+                    }, status=400)
+                return
+
+            st = get_field_project_status(target_count=50)
+            self._send_json({
+                "success": True,
+                "message": msg,
+                "observation": obs.to_dict() if obs else None,
+                "available_count": st["available_count"],
+                "target": st["target"],
+                "remaining": st["remaining"],
+                "progress_percentage": st["progress_percentage"],
+                "status": st["status"],
+                "summary": st["summary"],
+            })
+        except Exception as e:
+            logger.exception(f"Error adding observation to field study: {e}")
+            self._send_error_json(f"Error adding observation: {str(e)}", status=500)
 
     def _handle_api_field_study_complete(self) -> None:
         """Asynchronously execute automated completion for remaining observations."""
@@ -372,100 +437,27 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
     def _handle_api_analytics(self) -> None:
         """Compute statistical distributions and metrics directly from real database observations."""
         try:
-            records = get_lookup_history()
-            if not records:
-                self._send_json({
-                    "success": True,
-                    "insufficient_data": True,
-                    "total_observations": 0,
-                    "message": "Not enough observations for analysis yet.",
-                })
-                return
+            from services.analytics_service import compute_field_study_analytics
+            analytics_data = compute_field_study_analytics()
 
-            valid_records = [r for r in records if r.status != "INVALID_INPUT"]
-            total_n = len(valid_records)
+            # Merge top-level aliases for backward compatibility with existing tests/clients
+            ov = analytics_data.get("overview", {})
+            na = analytics_data.get("network_analysis", {})
+            ta = analytics_data.get("trust_analysis", {})
 
-            if total_n == 0:
-                self._send_json({
-                    "success": True,
-                    "insufficient_data": True,
-                    "total_observations": 0,
-                    "message": "Not enough observations for analysis yet.",
-                })
-                return
+            response_payload = {
+                **analytics_data,
+                "total_observations": ov.get("total_observations", 0),
+                "mean_dns_time_ms": na.get("mean_dns_latency_ms", 0.0),
+                "mean_api_time_ms": na.get("mean_api_latency_ms", 0.0),
+                "ipv4_count": na.get("ipv4_count", 0),
+                "ipv6_count": na.get("ipv6_count", 0),
+                "top_countries": na.get("top_countries", []),
+                "top_organizations": na.get("top_organizations", []),
+                "trust_brackets": ta.get("distribution", []),
+            }
 
-            # Compute Distributions
-            # 1. Countries
-            country_counts: Dict[str, int] = {}
-            for r in valid_records:
-                c = r.country or "Unknown"
-                country_counts[c] = country_counts.get(c, 0) + 1
-
-            top_countries = sorted(
-                [{"country": k, "count": v, "pct": round(v / total_n * 100, 1)} for k, v in country_counts.items()],
-                key=lambda x: x["count"],
-                reverse=True,
-            )[:5]
-
-            # 2. IP Versions
-            ipv4_count = sum(1 for r in valid_records if "4" in (r.ip_version or ""))
-            ipv6_count = sum(1 for r in valid_records if "6" in (r.ip_version or ""))
-
-            # 3. Response Timing
-            dns_times = [r.dns_response_time_ms for r in valid_records if r.dns_response_time_ms and r.dns_response_time_ms > 0]
-            api_times = [r.api_response_time_ms for r in valid_records if r.api_response_time_ms and r.api_response_time_ms > 0]
-
-            avg_dns = round(sum(dns_times) / len(dns_times), 1) if dns_times else 0.0
-            avg_api = round(sum(api_times) / len(api_times), 1) if api_times else 0.0
-
-            # 4. Top Organizations / ASNs
-            org_counts: Dict[str, int] = {}
-            for r in valid_records:
-                o = r.organization or r.isp or "Unknown"
-                if o != "Unknown" and o != "N/A":
-                    org_counts[o] = org_counts.get(o, 0) + 1
-
-            top_orgs = sorted(
-                [{"org": k, "count": v} for k, v in org_counts.items()],
-                key=lambda x: x["count"],
-                reverse=True,
-            )[:5]
-
-            # 5. Simulated Histogram Bins for Trust Score (calculated from actual observations)
-            # Bracket tiers: 0-20, 21-40, 41-60, 61-80, 81-100
-            # We base trust score calculation on success, DNS response, and TLS validity
-            bracket_counts = [0, 0, 0, 0, 0]
-            for r in valid_records:
-                score = 85 if r.status == "SUCCESS" else 35
-                if score <= 20:
-                    bracket_counts[0] += 1
-                elif score <= 40:
-                    bracket_counts[1] += 1
-                elif score <= 60:
-                    bracket_counts[2] += 1
-                elif score <= 80:
-                    bracket_counts[3] += 1
-                else:
-                    bracket_counts[4] += 1
-
-            self._send_json({
-                "success": True,
-                "insufficient_data": False,
-                "total_observations": total_n,
-                "mean_dns_time_ms": avg_dns,
-                "mean_api_time_ms": avg_api,
-                "ipv4_count": ipv4_count,
-                "ipv6_count": ipv6_count,
-                "top_countries": top_countries,
-                "top_organizations": top_orgs,
-                "trust_brackets": [
-                    {"bracket": "0–20", "count": bracket_counts[0], "pct": round(bracket_counts[0] / total_n * 100, 1)},
-                    {"bracket": "21–40", "count": bracket_counts[1], "pct": round(bracket_counts[1] / total_n * 100, 1)},
-                    {"bracket": "41–60", "count": bracket_counts[2], "pct": round(bracket_counts[2] / total_n * 100, 1)},
-                    {"bracket": "61–80", "count": bracket_counts[3], "pct": round(bracket_counts[3] / total_n * 100, 1)},
-                    {"bracket": "81–100", "count": bracket_counts[4], "pct": round(bracket_counts[4] / total_n * 100, 1)},
-                ],
-            })
+            self._send_json(response_payload)
         except Exception as e:
             logger.exception(f"Error compiling analytics: {e}")
             self._send_error_json(f"Analytics engine error: {str(e)}", status=500)
@@ -474,26 +466,21 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
         """Export history or field study dataset as CSV."""
         export_type = query_params.get("type", ["history"])[0]
 
-        output = io.StringIO()
         if export_type == "field-study":
-            status = get_field_project_status(target_count=50)
-            writer = csv.writer(output)
-            writer.writerow(["Test ID", "Domain", "Category", "IP Address", "Version", "Country", "City", "Lat", "Lon", "Org", "ASN", "Status", "Timestamp"])
-            cat_map = status.get("category_map", {})
-            for idx, r in enumerate(status["unique_records"], start=1):
-                d = r.domain or r.input_value
-                cat = cat_map.get(d.lower(), "General Web")
-                writer.writerow([idx, d, cat, r.ip_address, r.ip_version, r.country, r.city, r.latitude, r.longitude, r.organization, r.asn, r.status, r.timestamp])
-            filename = "field_study_telemetry.csv"
+            csv_str = export_field_study_csv()
+            save_export_artifact("IP_PULSE_Field_Study.csv", csv_str)
+            filename = "IP_PULSE_Field_Study.csv"
+            csv_data = csv_str.encode("utf-8")
         else:
+            output = io.StringIO()
             records = get_lookup_history()
             writer = csv.writer(output)
             writer.writerow(["ID", "Timestamp", "Input", "Domain", "IP Address", "Version", "Country", "City", "Lat", "Lon", "Org", "ISP", "ASN", "DNS (ms)", "API (ms)", "Status"])
             for r in records:
                 writer.writerow([r.id, r.timestamp, r.input_value, r.domain, r.ip_address, r.ip_version, r.country, r.city, r.latitude, r.longitude, r.organization, r.isp, r.asn, r.dns_response_time_ms, r.api_response_time_ms, r.status])
             filename = "ip_pulse_history.csv"
+            csv_data = output.getvalue().encode("utf-8")
 
-        csv_data = output.getvalue().encode("utf-8")
         self.send_response(200)
         self._set_cors_headers()
         self.send_header("Content-Type", "text/csv; charset=utf-8")
@@ -501,6 +488,69 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(csv_data)))
         self.end_headers()
         self.wfile.write(csv_data)
+
+    def _handle_api_export_json(self) -> None:
+        """Export structured research dataset as JSON."""
+        try:
+            payload = export_field_study_json(target_count=50)
+            json_str = json.dumps(payload, indent=2)
+            save_export_artifact("IP_PULSE_Field_Study.json", json_str)
+            raw_bytes = json_str.encode("utf-8")
+
+            self.send_response(200)
+            self._set_cors_headers()
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Disposition", 'attachment; filename="IP_PULSE_Field_Study.json"')
+            self.send_header("Content-Length", str(len(raw_bytes)))
+            self.end_headers()
+            self.wfile.write(raw_bytes)
+        except Exception as e:
+            logger.exception(f"Error exporting JSON dataset: {e}")
+            self._send_error_json(f"JSON export error: {str(e)}", status=500)
+
+    def _handle_api_export_report(self) -> None:
+        """Export comprehensive academic research report as Markdown."""
+        try:
+            report_str = generate_research_report_markdown(target_count=50)
+            save_export_artifact("IP_PULSE_Research_Report.md", report_str)
+            raw_bytes = report_str.encode("utf-8")
+
+            self.send_response(200)
+            self._set_cors_headers()
+            self.send_header("Content-Type", "text/markdown; charset=utf-8")
+            self.send_header("Content-Disposition", 'attachment; filename="IP_PULSE_Research_Report.md"')
+            self.send_header("Content-Length", str(len(raw_bytes)))
+            self.end_headers()
+            self.wfile.write(raw_bytes)
+        except Exception as e:
+            logger.exception(f"Error generating Markdown report: {e}")
+            self._send_error_json(f"Markdown report error: {str(e)}", status=500)
+
+    def _handle_api_export_pdf(self) -> None:
+        """Export publication-grade research report as PDF."""
+        try:
+            pdf_bytes = generate_research_report_pdf(target_count=50)
+            save_export_artifact("IP_PULSE_Research_Report.pdf", pdf_bytes)
+
+            self.send_response(200)
+            self._set_cors_headers()
+            self.send_header("Content-Type", "application/pdf")
+            self.send_header("Content-Disposition", 'attachment; filename="IP_PULSE_Research_Report.pdf"')
+            self.send_header("Content-Length", str(len(pdf_bytes)))
+            self.end_headers()
+            self.wfile.write(pdf_bytes)
+        except Exception as e:
+            logger.exception(f"Error generating PDF report: {e}")
+            self._send_error_json(f"PDF export error: {str(e)}", status=500)
+
+    def _handle_api_export_validate(self) -> None:
+        """Run and return dataset quality audit results."""
+        try:
+            audit_result = validate_field_study_dataset()
+            self._send_json(audit_result)
+        except Exception as e:
+            logger.exception(f"Error validating field study dataset: {e}")
+            self._send_error_json(f"Dataset validation error: {str(e)}", status=500)
 
     # -------------------------------------------------------------------------
     # Static File Delivery
