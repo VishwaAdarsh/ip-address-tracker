@@ -3001,6 +3001,7 @@ function renderComparisonMap(mapPoints) {
     window.compMapInstance = L.map('comp-map', {
       zoomControl: true,
       attributionControl: false,
+      scrollWheelZoom: false,
     }).setView([20.0, 0.0], 2);
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {

@@ -21,6 +21,7 @@ function initMap(containerId = 'map', defaultLat = 37.4225, defaultLng = -122.08
     zoom: defaultZoom,
     zoomControl: true,
     attributionControl: false,
+    scrollWheelZoom: false,
   });
 
   // OpenStreetMap Tile Layer

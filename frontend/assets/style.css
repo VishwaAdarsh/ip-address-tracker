@@ -3,32 +3,61 @@
    Visual Palette: Obsidian Dark + Cyan (#00E5FF) → Electric Blue (#3B82F6) → Violet (#7C3AED) → Magenta (#C026D3)
    ========================================================================== */
 
-@layer base {
-  html, body {
-    margin: 0;
-    padding: 0;
-    background-color: #0b0f17;
-    color: #dfe2ee;
-    font-family: 'Inter', sans-serif;
-    overflow-x: hidden;
-  }
-  body {
-    overscroll-behavior: none;
-  }
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: rgba(10, 14, 22, 0.8);
-  }
-  ::-webkit-scrollbar-thumb {
-    background: rgba(49, 53, 62, 0.7);
-    border-radius: 3px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 229, 255, 0.4);
-  }
+/* ==========================================================================
+   Root Viewport & Unconstrained Smooth Scrolling Engine
+   Ensures document root (html) is the authoritative vertical scroll container.
+   ========================================================================== */
+
+html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: scroll !important; /* Force scrollbar to prevent layout shift and enable wheel */
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #0b0f17;
+  color: #dfe2ee;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Ensure hidden utility is completely non-interactive and removed from layout */
+.hidden {
+  display: none !important;
+}
+
+/* High-Visibility Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b0f17;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a3344;
+  border-radius: 5px;
+  border: 2px solid #0b0f17;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00d2ff;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a3344 #0b0f17;
 }
 
 /* ==========================================================================
