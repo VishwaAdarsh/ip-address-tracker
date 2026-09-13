@@ -1,11 +1,12 @@
 """
 GUI Package for IP Address Tracker & Geolocation Tool.
 
-Note: PySide6 GUI is retained for backward-compatibility; the primary presentation
-layer is now the Stitch Web Application (frontend/ and api/server.py).
+Note: The primary presentation layer of IP PULSE is the modern Stitch Web Application
+(frontend/ and api/server.py). The desktop GUI modules in this directory are optional legacy components.
 """
 try:
-    from gui.modern.main_window import MainWindow
+    from gui.main_window import MainWindow
     __all__ = ["MainWindow"]
 except ImportError:
     __all__ = []
+

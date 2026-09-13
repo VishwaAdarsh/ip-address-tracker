@@ -1,132 +1,51 @@
 # IP PULSE — IP Intelligence, Geolocation & Website Risk Analysis Platform
 
-A unified multi-layered cyber telemetry, IP geolocation, website security intelligence, and empirical network research platform. Built with a modern **Stitch Obsidian Dark Web Interface**, a multi-threaded **Python REST API Server**, and an extensible intelligence pipeline connecting public DNS resolution, geolocation APIs, SSL/TLS certificate probing, infrastructure classification, weighted trust/risk scoring, and local SQLite persistence.
+A unified multi-layered cyber telemetry, IP geolocation, website security intelligence, and empirical network research platform. Built with a modern **Stitch Obsidian Dark Web Interface**, a high-performance **Python REST API Server**, and an extensible intelligence pipeline connecting public DNS resolution, geolocation APIs, SSL/TLS certificate probing, infrastructure classification, explainable dual trust/risk scoring, and local SQLite persistence.
 
 ---
 
-## Target Architecture
+## 1. System Architecture
 
-```
-                       IP PULSE PLATFORM
-                               │
-            ┌──────────────────┴──────────────────┐
-            │                                     │
-     STITCH WEB UI                         PYTHON BACKEND
- (Obsidian Dark Theme)                   (Core & Services)
-            │                                     │
-     ┌──────┴──────┐                              │
-     │ Home        │                       IP Resolution & DNS
-     │ History     │                       Geolocation & Leaflet Map
-     │ Field Study │                       Website Security Intel
-     │ Analytics   │                       IP Infrastructure Intel
-     └──────┬──────┘                       Dual Trust / Risk Engine
-            │                              Field Project & Analytics
-            │                              SQLite DB (data/ip_tracker.db)
-            │                                     │
-            └────────── HTTP / REST API ──────────┘
-                  (ThreadingHTTPServer / JSON)
-```
-
----
-
-## Key Features
-
-1. **Stitch Obsidian Dark Web Application (`frontend/`):**
-   - **Modern Aesthetic:** Dark palette (`#0F131C` surface, `#181C24` cards, `#00D2FF` electric cyan, `#69F6B9` emerald).
-   - **Telemetry Dashboard:** Search omnibar, quick inquiry chips (`google.com`, `github.com`, `cloudflare.com`, `1.1.1.1`), 4 high-level telemetry metric cards (Location, IP, Org, Infrastructure).
-   - **Interactive Geographic Map:** Leaflet + OpenStreetMap dynamic coordinate centering, glowing pulse marker, and popups.
-   - **Multi-Tab Intelligence Strip:** Network Details, Website Security, IP Infrastructure, and AI Explanation with Provenance timeline.
-   - **Investigation History:** Real audit ledger reading directly from SQLite database with domain search, single-item deletion, clear history, and CSV export.
-   - **50-Site Field Study:** Manual-first research protocol tracker with live progress quota, real metric cards, and optional auto-completion.
-   - **Field Study Analytics:** Real statistical distributions (Trust score histogram bins, geographic distribution, latency averages, IPv4/IPv6 ratios).
-
-2. **Clean REST API Layer (`api/server.py`):**
-   - Built on Python's standard library `ThreadingHTTPServer` for maximum concurrency, zero external dependencies, and instant startup.
-   - CORS headers enabled for decoupled frontend development.
-   - Endpoints:
-     - `GET /` & `/assets/*`: Serves the Stitch web frontend and static assets.
-     - `GET /api/status`: System health, capabilities, and version info.
-     - `POST /api/analyze`: Unified domain/IP intelligence analysis pipeline.
-     - `GET /api/history`: Returns SQLite lookup history records.
-     - `DELETE /api/history/<id>` & `DELETE /api/history`: Deletes single record or clears table.
-     - `GET /api/field-study`: Manual-first field study status and observation count.
-     - `POST /api/field-study/complete-remaining`: Optional manual-triggered background completion for remaining observations up to 50.
-     - `GET /api/analytics`: Statistical metrics calculated from actual stored observations.
-     - `GET /api/export/csv`: Exports history or field study dataset as RFC-4180 CSV.
-
-3. **Core Intelligence Backend (`core/` & `services/`):**
-   - **Website Security Intelligence (`core/security_scanner.py`):** HTTPS enforcement, TLS certificate validation, expiration countdown, cipher suite, and security headers (HSTS, CSP, X-Frame-Options).
-   - **IP Infrastructure Engine (`core/ip_intel.py`):** Provider pattern abstraction detecting VPN, Proxy, Tor exit nodes, and Datacenter hosting status.
-   - **Dual Risk Engine (`core/risk_engine.py`):** Computes Website Trust Score (0–100) and IP Risk Score (0–100) with factor attribution.
-   - **IP Personality & AI Explainer (`core/intel_chain.py`, `core/ai_explainer.py`):** Natural language personality statement and evidence-driven security report.
-   - **Persistent SQLite Database (`database/db.py`):** Auto-saves completed lookups to `data/ip_tracker.db` with parameterized queries.
-
----
-
-## Real Data & Disclaimer Policy
-
-Every signal displayed by IP PULSE is derived from actual network lookups or explicit `Unknown` states. No fake, mock, or hardcoded demo values are presented as real.
-
-> [!IMPORTANT]
-> **Mandatory Analytical Disclaimer:**
-> IP geolocation coordinates, Website Security Intelligence signals, and IP Risk Scores are analytical and approximate indicators. They do not constitute definitive proof of physical location, website legitimacy, safety, or maliciousness.
-
----
-
-## Quick Start & Installation
-
-### 1. Prerequisites & Setup
-Clone the repository and activate your virtual environment:
-
-```powershell
-# Navigate to repository
-cd C:\Users\Pradeep\Documents\GitHub\ip-address-tracker
-
-# Activate virtual environment (Windows PowerShell)
-.\.venv\Scripts\Activate.ps1
-```
-
-### 2. Launch the Application
-
-#### Option A: One-Click Windows Launcher
-Double-click `start_ip_pulse.bat` or run:
-```cmd
-start_ip_pulse.bat
-```
-
-#### Option B: Python Command
-```powershell
-# Starts the server and automatically opens your default browser
-python app.py
-
-# Custom port
-python app.py --port 8080
-
-# Headless mode (server only, no browser auto-launch)
-python app.py --no-browser
-```
-
-Open your browser at: **`http://127.0.0.1:8000/`**
-
----
-
-## Running Automated Tests
-
-Run the full automated unit and integration test suite:
-
-```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py"
-```
-
-To run API server tests specifically:
-
-```powershell
-.\.venv\Scripts\python.exe -m unittest tests/test_api_server.py
+```text
+                                     IP PULSE PLATFORM
+                                             │
+                      ┌──────────────────────┴──────────────────────┐
+                      │                                             │
+               STITCH WEB UI                                 PYTHON BACKEND
+         (Obsidian Dark SPA Engine)                        (Core & Services)
+                      │                                             │
+      ┌───────────────┼───────────────┐                             │
+      │ 1. Home Dashboard             │                      IP Resolution & DNS
+      │ 2. Audit History              │                      Geolocation & Leaflet Map
+      │ 3. 50-Site Field Study        │                      Website Security Intelligence
+      │ 4. Research Dashboard         │                      IP Infrastructure Detection
+      │ 5. Investigation Workspace    │                      Dual Trust / Risk Engine
+      └───────────────┬───────────────┘                      6-Node Provenance Chain
+                      │                                      IP Personality Archetypes
+                      │                                      Explainable AI Layer
+                      │                                      7-Dimension Research Analytics
+                      │                                      Multi-Format Export Engine
+                      │                                      SQLite DB (data/ip_tracker.db)
+                      │                                             │
+                      └────────────── HTTP / REST API ──────────────┘
+                               (ThreadingHTTPServer / JSON)
 ```
 
 ---
 
-## Project Structure
+## 2. Technology Stack
+
+* **Runtime Environment:** Python 3.10+ (Standard Library `http.server.ThreadingHTTPServer`)
+* **Persistence Layer:** SQLite 3 (`data/ip_tracker.db`) with Write-Ahead Logging (WAL) and enforced Foreign Keys
+* **Frontend Interface:** Stitch Obsidian Dark Web Application (`frontend/index.html`, `frontend/assets/app.js`, `frontend/assets/style.css`)
+* **Styling & UI Components:** Tailwind CSS utility framework, Google Fonts (Space Grotesk, JetBrains Mono, Syne), Material Symbols
+* **Geospatial Visualization:** Leaflet JS + OpenStreetMap raster tiles
+* **Data Processing & Analytics:** Python standard library, Pandas, ReportLab PDF generation engine
+* **Quality Assurance & Testing:** Pytest, Unittest
+
+---
+
+## 3. Project Structure
 
 ```text
 ip-address-tracker/
@@ -136,41 +55,218 @@ ip-address-tracker/
 ├── frontend/                           # Stitch Obsidian Dark Web Application
 │   ├── index.html                      # Unified Single Page Application (SPA)
 │   └── assets/
-│       ├── app.js                      # State manager & async fetch client
+│       ├── app.js                      # UI state manager & async REST client
 │       ├── map.js                      # Leaflet interactive map controller
-│       └── style.css                   # Custom theme tokens & styles
+│       └── style.css                   # Custom theme tokens & glass styling
 ├── core/                               # Network & Security Intelligence Engines
+│   ├── ai_explainer.py                 # Evidence-based AI explanations & fallback
 │   ├── dns_resolver.py                 # DNS resolution & address normalization
 │   ├── geo_service.py                  # Geolocation multi-provider client
-│   ├── security_scanner.py             # Website Security Intelligence
-│   ├── ip_intel.py                     # IP Intelligence & Infrastructure Analysis
-│   ├── risk_engine.py                  # Trust & Risk scoring engine
 │   ├── intel_chain.py                  # Provenance chain & IP Personality
-│   ├── ai_explainer.py                 # Evidence-based AI explanations
+│   ├── ip_intel.py                     # IP Intelligence & Infrastructure Analysis
 │   ├── normalizer.py                   # Response normalization
-│   └── validator.py                    # Input validation
+│   ├── risk_engine.py                  # Trust & Risk scoring engine
+│   ├── security_scanner.py             # Website Security & TLS inspection
+│   └── validator.py                    # Input normalization & coordinate validation
 ├── services/                           # Business Logic & Orchestration
-│   ├── lookup_service.py               # Integrated lookup engine
-│   ├── risk_analysis_service.py        # Master intelligence audit service
-│   └── field_test_service.py           # Manual-first 50-site field study
+│   ├── analytics_service.py            # 7-dimension statistical aggregation engine
+│   ├── comparison_service.py           # Investigation workspace & comparison matrix
+│   ├── export_service.py               # Multi-format reports (CSV, JSON, MD, PDF)
+│   ├── field_test_service.py           # Standardized 50-site field study protocol
+│   ├── lookup_service.py               # Integrated lookup & normalization engine
+│   └── risk_analysis_service.py        # Master intelligence scan coordinator
 ├── database/                           # Persistence Layer
-│   ├── db.py                           # SQLite parameterized query interface
-│   └── models.py                       # Dataclass records
-├── analysis/                           # Statistical Computation & Visualizations
-│   ├── analyzer.py                     # Dataset validation & statistics
-│   ├── visualizer.py                   # Chart generation pipeline
-│   └── report_generator.py             # Analytical summary reports
-├── data/                               # Stored Datasets & Database
-│   ├── ip_tracker.db                   # Primary SQLite history database
-│   └── field_test/                     # Predefined 50 sites & results CSV
-├── stitch_ip_pulse_intelligence_platform/ # Original Stitch source designs
-├── tests/                              # 100+ Automated Unit & Integration Tests
-│   ├── test_api_server.py              # REST API route integration tests
-│   ├── test_security_scanner.py        # Website security scanner tests
-│   ├── test_ip_intel.py                # IP intelligence tests
-│   ├── test_risk_engine.py             # Risk engine tests
-│   └── ...                             # Core, DNS, Geo, DB, and Field tests
+│   ├── db.py                           # SQLite connection & parameterized queries
+│   └── models.py                       # Dataclass schemas (LookupRecord, FieldObservation)
+├── analysis/                           # Research Analytics & Historical Visualizations
+│   ├── analyzer.py                     # Dataset validation & statistical summary
+│   ├── visualizer.py                   # Chart generation routines
+│   ├── risk_analyzer.py                # Comparative risk computation
+│   └── report_generator.py             # Research summary reports
+├── data/                               # Stored Datasets & Databases
+│   ├── ip_tracker.db                   # Primary SQLite history & field study database
+│   ├── analysis/                       # Historical research CSV datasets
+│   ├── exports/                        # Generated field study exports & PDF reports
+│   └── field_test/                     # Standardized 50-site seeds & results
+├── docs/                               # Comprehensive Technical & Phase Documentation
+│   ├── phase_17_explainable_scoring.md
+│   ├── phase_18_ip_personality.md
+│   ├── phase_19_field_study.md
+│   ├── phase_20_analytics.md
+│   ├── phase_21_research_report_and_export.md
+│   ├── phase_22_ai_explainer.md
+│   ├── phase_23_investigation_workspace.md
+│   ├── phase_24_visualization_dashboard.md
+│   ├── technical_documentation.md
+│   └── viva_questions.md
+├── gui/                                # Optional Legacy Desktop GUI (Tkinter)
+│   ├── __init__.py
+│   ├── analytics_view.py
+│   ├── field_test_view.py
+│   ├── history_view.py
+│   ├── main_window.py
+│   ├── map_view.py
+│   └── results_view.py
+├── logs/                               # Application log directory (.gitkeep)
+├── tests/                              # Automated Unit & Integration Test Suites
+│   ├── test_ai_explainer.py
+│   ├── test_analytics_service.py
+│   ├── test_api_server.py
+│   ├── test_comparison_service.py
+│   ├── test_database.py
+│   ├── test_dns_resolver.py
+│   ├── test_explainable_scoring.py
+│   ├── test_export_service.py
+│   ├── test_field_test_service.py
+│   ├── test_geo_service.py
+│   ├── test_intel_chain.py
+│   ├── test_ip_intel.py
+│   ├── test_lookup_service.py
+│   ├── test_map_view.py
+│   ├── test_normalizer.py
+│   ├── test_risk_analysis_service.py
+│   ├── test_risk_analyzer.py
+│   ├── test_risk_engine.py
+│   ├── test_security_scanner.py
+│   ├── test_validator.py
+│   └── test_visualization_dashboard.py
+├── .env.example                        # Configuration template for local setup
+├── .gitignore                          # Git exclusion rules
 ├── app.py                              # Primary application entrypoint
+├── requirements.txt                    # Python dependencies
 ├── start_ip_pulse.bat                  # One-click Windows launcher
 └── README.md
 ```
+
+---
+
+## 4. Subsystems & Key Capabilities
+
+### A. Home Dashboard (`#view-home`)
+* **Input Omnibar:** Accepts domain names (`github.com`), IPv4 addresses (`8.8.8.8`), and IPv6 addresses. Automatically normalizes schemes, ports, and trailing slashes.
+* **4 Telemetry Badges:** Live Geolocation, IP Address & Reverse PTR, Autonomous System / ISP, and Infrastructure Type (`datacenter`, `cdn`, `residential`, `business`).
+* **Interactive Leaflet Map:** Dynamic tile centering, glowing pulse marker, coordinate precision, and metadata popups.
+* **Security & IP Intelligence:** TLS certificate validation, expiration countdown, HTTP security headers (HSTS, CSP, X-Frame-Options), VPN/Proxy/Tor exit node classification.
+* **Trust & Risk Scoring:** Mathematically bounded dual scores ($0–100$, where $\text{Trust} + \text{Risk} = 100$) with evidence coverage confidence.
+* **6-Node Provenance Chain & IP Personality:** Deterministic behavioral archetypes (`CLOUD_SENTINEL`, `RESIDENTIAL_PEER`, `PRIVACY_SHIELD`, etc.) and end-to-end evidence timeline.
+* **Explainable AI:** Evidence-grounded natural language synthesis with dual-mode operation: Google Gemini LLM when configured, or deterministic rule-based fallback when offline.
+
+### B. Audit History (`#view-history`)
+* Persistent SQLite audit ledger storing historical inquiries.
+* Search by domain, IP, or country, with pagination, single-record deletion, and full history purge.
+* Complete read/write isolation from Field Study data.
+
+### C. Standardized 50-Site Field Study (`#view-field-study`)
+* Standardized empirical research protocol tracking 50 representative global web targets.
+* Real-time progress quota tracking, observation validator (validating coordinates, ISO 8601 timestamps, score ranges, and unique tuples).
+* Optional manual-triggered background observation completion.
+
+### D. Research Dashboard (`#view-analytics`)
+* Interactive 7-dimension filtering: Country, Infrastructure Type, Trust Classification, Risk Classification, HTTPS Status, IP Version, and Observation Scope/Range.
+* Real-time statistical metrics: Mean, median, standard deviation, min, max, score distributions, and country frequencies.
+* Filter-aware Leaflet map plotting observation coordinates with interactive popups.
+
+### E. Investigation & Comparison Workspace (`#view-investigation`)
+* Side-by-side comparative analysis of 2 to 5 candidates selected from Field Study observations or History records.
+* Automatically rejects duplicate selections and enforces candidate boundary constraints.
+* Extreme score identification (Highest Trust, Highest Risk, Lowest Evidence Confidence).
+* Commonality matrix: Autonomous systems, countries, hosting providers, and infrastructure types.
+* Guaranteed strictly read-only execution.
+
+### F. Multi-Format Export Engine
+* **RFC 4180 CSV:** Standard tabular export formatted for spreadsheets and data pipelines.
+* **Structured JSON:** Comprehensive data structure with validation audit metadata and statistical metrics.
+* **12-Section Research Markdown:** Complete academic-style research report with tables and footnotes.
+* **ReportLab PDF:** Formatted executive report with tables, summary metrics, and distribution charts.
+
+---
+
+## 5. Configuration & Environment Variables
+
+Copy `.env.example` to `.env` to configure optional overrides:
+
+```powershell
+copy .env.example .env
+```
+
+| Variable | Default | Description |
+|---|---|---|
+| `GEO_PROVIDER_NAME` | `ipapi.co` | Primary IP geolocation provider |
+| `GEO_API_BASE_URL` | `https://ipapi.co` | Base URL for geolocation endpoint |
+| `GEO_API_KEY` | *(None)* | Optional API key for paid/high-volume plans |
+| `GEO_API_TIMEOUT` | `5.0` | Geolocation request timeout in seconds |
+| `AI_PROVIDER` | `rule_based` | AI engine: `rule_based` (default), `gemini`, or `ollama` |
+| `AI_API_KEY` | *(None)* | Google Gemini API key (or `GEMINI_API_KEY`) |
+| `AI_MODEL` | `gemini-2.5-flash` | Model identifier for Gemini API |
+| `AI_TIMEOUT` | `10.0` | AI explanation timeout in seconds |
+| `AI_ENABLED` | `true` | Toggle AI explanation generation |
+| `HOST` | `127.0.0.1` | Local server bind address |
+| `PORT` | `8000` | Local server port |
+
+---
+
+## 6. How to Run Locally
+
+### 1. Prerequisites
+Ensure Python 3.10 or newer is installed. Install required dependencies:
+
+```powershell
+pip install -r requirements.txt
+```
+
+### 2. Launch the Application
+
+#### Option A: One-Click Windows Launcher
+Double-click `start_ip_pulse.bat` or run:
+```powershell
+.\start_ip_pulse.bat
+```
+
+#### Option B: Standard Python Command
+```powershell
+python app.py
+```
+This automatically starts the server at `http://127.0.0.1:8000/` and opens your default web browser.
+
+#### Option C: Custom Port or Headless Mode
+```powershell
+# Custom port
+python app.py --port 8080
+
+# Headless server mode (no browser auto-launch)
+python app.py --no-browser
+```
+
+---
+
+## 7. Running Automated Tests
+
+Run the full automated test suite using `pytest`:
+
+```powershell
+python -m pytest
+```
+
+To run a specific test suite:
+
+```powershell
+# API server integration tests
+python -m pytest tests/test_api_server.py
+
+# Risk engine & scoring tests
+python -m pytest tests/test_explainable_scoring.py
+
+# Visualization dashboard tests
+python -m pytest tests/test_visualization_dashboard.py
+```
+
+---
+
+## 8. Data Neutrality & Mandatory Disclaimer
+
+Every signal displayed by IP PULSE is derived from observable network lookups or assigned an explicit `UNKNOWN` state. Missing data, unreachable hosts, or connection timeouts are never falsely classified as "malicious" or "insecure".
+
+> [!IMPORTANT]
+> **Mandatory Analytical Disclaimer:**  
+> IP geolocation coordinates, Website Security Intelligence signals, and IP Risk Scores are analytical, heuristic indicators based on observable technical telemetry. They do not constitute definitive proof of physical location, website legitimacy, safety, or maliciousness, and should not be used as sole determinants for security enforcement.
+

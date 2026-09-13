@@ -36,11 +36,13 @@ def get_db_path(custom_path: Optional[Union[str, Path]] = None) -> Path:
 def get_connection(
     db_path: Optional[Union[str, Path]] = None
 ) -> sqlite3.Connection:
-    """Open and return a SQLite database connection with row_factory enabled."""
+    """Open and return a SQLite database connection with row_factory enabled and foreign keys enforced."""
     target_path = get_db_path(db_path)
     conn = sqlite3.connect(target_path)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON;")
     return conn
+
 
 
 def init_db(db_path: Optional[Union[str, Path]] = None) -> None:

@@ -50,7 +50,7 @@ def main() -> None:
     if args.legacy:
         logger.info("Launching legacy Tkinter interface as requested by flag --legacy...")
         try:
-            from gui.legacy.main_window import MainWindow as LegacyWindow
+            from gui.main_window import MainWindow as LegacyWindow
             app = LegacyWindow()
             app.mainloop()
             return

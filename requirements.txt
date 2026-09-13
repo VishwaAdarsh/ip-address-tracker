@@ -1,12 +1,25 @@
-# IP Address Tracker & Geolocation Tool - Dependencies
+# ==============================================================================
+# IP PULSE — Platform Dependencies
+# ==============================================================================
 
-# GUI Framework (PySide6 + QFluentWidgets Modern GUI)
-PySide6>=6.5.0
-PySide6-Fluent-Widgets>=1.1.0
-
-# Map Visualization Component
-tkintermapview>=1.30.0
-
-# Data Analysis & Research Visualization
+# Core Data Analysis & Statistical Engine
 pandas>=2.0.0
+
+# PDF Research Report Generation (Phase 21)
+reportlab>=4.0.0
+
+# Advanced DNS Resolution & Record Inspection
+dnspython>=2.3.0
+
+# Automated Test Framework
+pytest>=8.0.0
+
+# ------------------------------------------------------------------------------
+# Optional Extensions
+# ------------------------------------------------------------------------------
+# Legacy Chart Generation (analysis/visualizer.py)
 matplotlib>=3.7.0
+
+# Optional External AI Providers (Ollama / Gemini REST fallback)
+requests>=2.28.0
+

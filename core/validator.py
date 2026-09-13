@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from enum import Enum
 import ipaddress
 import re
-from typing import Optional
+from typing import Any, Optional, Tuple
 
 # Regex pattern for validating individual domain labels (RFC 1035 / RFC 1123)
 # - Length: 1 to 63 characters
@@ -186,3 +186,44 @@ def validate_input(raw_input: str) -> ValidationResult:
         is_valid=False,
         error_message="Invalid domain or IP address",
     )
+
+
+def validate_coordinates(
+    lat: Any, lon: Any
+) -> Tuple[bool, Optional[float], Optional[float], Optional[str]]:
+    """
+    Validate latitude and longitude values.
+
+    Returns:
+        (is_valid, latitude_float, longitude_float, error_message)
+    Valid Ranges:
+        - Latitude: -90.0 to +90.0
+        - Longitude: -180.0 to +180.0
+    """
+    if lat is None or lon is None or lat == "" or lon == "":
+        return False, None, None, "Coordinates were not provided for this IP lookup"
+
+    try:
+        lat_float = float(lat)
+        lon_float = float(lon)
+    except (ValueError, TypeError):
+        return False, None, None, "Invalid non-numeric coordinate format"
+
+    if not (-90.0 <= lat_float <= 90.0):
+        return (
+            False,
+            None,
+            None,
+            f"Latitude '{lat_float}' out of valid range (-90 to +90)",
+        )
+
+    if not (-180.0 <= lon_float <= 180.0):
+        return (
+            False,
+            None,
+            None,
+            f"Longitude '{lon_float}' out of valid range (-180 to +180)",
+        )
+
+    return True, lat_float, lon_float, None
+

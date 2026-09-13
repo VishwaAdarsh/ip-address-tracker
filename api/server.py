@@ -65,6 +65,7 @@ from services.export_service import (
 logger = logging.getLogger(__name__)
 
 FRONTEND_DIR = BASE_DIR / "frontend"
+MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10 MB maximum request payload
 
 
 class IPPulseRequestHandler(BaseHTTPRequestHandler):
@@ -79,10 +80,17 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Accept, Authorization")
         self.send_header("Access-Control-Max-Age", "86400")
 
+    def _set_security_headers(self) -> None:
+        """Inject standard security hardening HTTP headers."""
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "SAMEORIGIN")
+        self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
+
     def do_OPTIONS(self) -> None:
         """Handle CORS pre-flight requests."""
         self.send_response(HTTPStatus.NO_CONTENT)
         self._set_cors_headers()
+        self._set_security_headers()
         self.end_headers()
 
     def _send_json(self, data: Any, status: int = 200) -> None:
@@ -90,10 +98,12 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
         encoded = json.dumps(data, indent=2, default=str).encode("utf-8")
         self.send_response(status)
         self._set_cors_headers()
+        self._set_security_headers()
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(encoded)))
         self.end_headers()
         self.wfile.write(encoded)
+
 
     def _send_error_json(self, message: str, status: int = 400, details: Optional[Any] = None) -> None:
         """Send structured error response."""
@@ -145,6 +155,10 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
         path = parsed_url.path.rstrip("/")
 
         content_length = int(self.headers.get("Content-Length", 0))
+        if content_length > MAX_CONTENT_LENGTH:
+            self._send_error_json("Payload too large (maximum allowable size is 10 MB)", status=413)
+            return
+
         body = self.rfile.read(content_length) if content_length > 0 else b"{}"
 
         try:
@@ -357,7 +371,7 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
 
     def _handle_api_analyze(self, payload: Dict[str, Any]) -> None:
         """Execute complete multi-layered IP Intelligence and Security scan."""
-        target = str(payload.get("target", "")).strip()
+        target = str(payload.get("target") or payload.get("query") or "").strip()
         if not target:
             self._send_error_json("Target domain or IP address is required.", status=400)
             return
@@ -768,6 +782,7 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
             content = target_file.read_bytes()
             self.send_response(HTTPStatus.OK)
             self._set_cors_headers()
+            self._set_security_headers()
             self.send_header("Content-Type", f"{mime_type}; charset=utf-8" if mime_type.startswith("text/") or mime_type in ["application/javascript", "application/json"] else mime_type)
             self.send_header("Content-Length", str(len(content)))
             self.end_headers()
