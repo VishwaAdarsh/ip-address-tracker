@@ -403,6 +403,38 @@ class TestAPIServer(unittest.TestCase):
             caps = status_data.get("capabilities", {})
             self.assertTrue(caps.get("visualization_dashboard"))
 
+    def test_25_api_analyze_with_searched_by_attribution(self):
+        """Verify POST /api/analyze automatically records searcher attribution into field study."""
+        # 1. Analyze target with investigator name
+        payload = {"target": "1.1.1.1", "searched_by": "Researcher Alice"}
+        body = json.dumps(payload).encode("utf-8")
+        req = Request(self._url("/api/analyze"), data=body, headers={"Content-Type": "application/json"})
+        with urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertTrue(data.get("success"))
+            self.assertEqual(data.get("searched_by"), "Researcher Alice")
+            self.assertTrue(data.get("field_study_recorded"))
+
+        # 2. Verify field study lists observation attributed to Researcher Alice
+        req_fs = Request(self._url("/api/field-study"))
+        with urlopen(req_fs) as resp_fs:
+            self.assertEqual(resp_fs.status, 200)
+            fs_data = json.loads(resp_fs.read().decode("utf-8"))
+            records = fs_data.get("records", [])
+            alice_recs = [r for r in records if r.get("searched_by") == "Researcher Alice"]
+            self.assertGreaterEqual(len(alice_recs), 1)
+            self.assertIn("1.1.1.1", [r.get("resolved_ip") or r.get("domain") for r in alice_recs])
+
+        # 3. Repeat search with new investigator Bob -> should update attribution
+        payload_bob = {"target": "1.1.1.1", "searched_by": "Analyst Bob"}
+        body_bob = json.dumps(payload_bob).encode("utf-8")
+        req_bob = Request(self._url("/api/analyze"), data=body_bob, headers={"Content-Type": "application/json"})
+        with urlopen(req_bob) as resp_bob:
+            self.assertEqual(resp_bob.status, 200)
+            data_bob = json.loads(resp_bob.read().decode("utf-8"))
+            self.assertEqual(data_bob.get("searched_by"), "Analyst Bob")
+
 
 if __name__ == "__main__":
     unittest.main()

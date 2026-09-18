@@ -69,6 +69,7 @@ FIELD_TEST_HEADERS = [
     "api_response_time_ms",
     "total_response_time_ms",
     "overall_status",
+    "searched_by",
     "observed_at",
     "error_message",
 ]
@@ -223,16 +224,18 @@ def add_field_observation(
     db_path: Optional[Union[str, Path]] = None,
     category: Optional[str] = None,
     lookup_res: Optional[LookupResult] = None,
+    searched_by: Optional[str] = "Anonymous",
+    update_if_exists: bool = False,
 ) -> Tuple[bool, str, Optional[FieldObservation]]:
     """
     Add an intentionally selected website observation to the 50-Site Field Study.
 
     Workflow:
     1. Normalize domain string.
-    2. Check duplicate policy: same normalized domain can count only once.
+    2. Check duplicate policy: same normalized domain can count only once (unless update_if_exists=True).
     3. Execute full intelligence analysis if lookup_res not provided.
     4. Validate observation data (meaningful IP, valid timestamp).
-    5. Construct FieldObservation model with 26 research attributes.
+    5. Construct FieldObservation model with 26 research attributes + searched_by.
     6. Persist to field_study_observations in SQLite database.
 
     Returns:
@@ -246,7 +249,7 @@ def add_field_observation(
 
     # 1. Duplicate Policy Check
     existing_obs = get_field_observation_by_domain(norm_dom, db_path=db_path)
-    if existing_obs:
+    if existing_obs and not update_if_exists:
         return (
             False,
             f"Domain '{norm_dom}' is already recorded in the 50-Site Field Study.",
@@ -298,9 +301,12 @@ def add_field_observation(
     if not is_valid:
         return False, reason, None
 
-    # 5. Determine next test_id
-    current_obs_list = get_field_observations(db_path=db_path)
-    next_test_id = len(current_obs_list) + 1
+    # 5. Determine test_id
+    if existing_obs and update_if_exists:
+        obs_test_id = existing_obs.test_id
+    else:
+        current_obs_list = get_field_observations(db_path=db_path)
+        obs_test_id = len(current_obs_list) + 1
 
     # 6. Assemble 26-attribute FieldObservation
     ip_val = base.selected_ip or "Unknown"
@@ -352,7 +358,7 @@ def add_field_observation(
         risk_class = "LOW RISK" if risk_score < 20 else ("MODERATE" if risk_score < 40 else "HIGH RISK")
 
     obs = FieldObservation(
-        test_id=next_test_id,
+        test_id=obs_test_id,
         domain=norm_dom,
         category=cat or "General Web",
         resolved_ip=ip_val,
@@ -379,6 +385,7 @@ def add_field_observation(
         ip_risk_classification=risk_class,
         score_confidence=score_conf,
         evidence_coverage=evidence_cov,
+        searched_by=searched_by or "Anonymous",
         observation_status="RECORDED",
         observed_at=base.timestamp,
         raw_history_id=None,
@@ -389,7 +396,7 @@ def add_field_observation(
         error_message=base.error_message,
     )
 
-    saved_id = save_field_observation(obs, db_path=db_path)
+    saved_id = save_field_observation(obs, db_path=db_path, update_if_exists=update_if_exists)
     if saved_id is None:
         return (
             False,
@@ -398,7 +405,7 @@ def add_field_observation(
         )
 
     obs.id = saved_id
-    msg = f"Added '{norm_dom}' to Field Study ({next_test_id} / 50)."
+    msg = f"Added '{norm_dom}' to Field Study ({obs_test_id} / 50)."
     return True, msg, obs
 
 
@@ -426,9 +433,6 @@ def get_field_project_status(
     - Dict with status, summary, unique_records, records
     """
     init_db(db_path)
-
-    # Automatically backfill from history if field_study_observations is completely empty
-    migrate_historical_to_field_study(db_path=db_path)
 
     records = get_field_observations(db_path=db_path)
     available_count = len(records)
@@ -569,6 +573,7 @@ def export_field_dataset_from_history(
                     rec.dns_response_time_ms + rec.api_response_time_ms, 2
                 ),
                 "overall_status": rec.observation_status or "RECORDED",
+                "searched_by": getattr(rec, "searched_by", "Anonymous") or "Anonymous",
                 "observed_at": rec.observed_at,
                 "error_message": rec.error_message or "",
             }

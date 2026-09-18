@@ -106,13 +106,19 @@ def init_db(db_path: Optional[Union[str, Path]] = None) -> None:
         raw_history_id INTEGER,
         dns_response_time_ms REAL DEFAULT 0.0,
         api_response_time_ms REAL DEFAULT 0.0,
-        error_message TEXT
+        error_message TEXT,
+        searched_by TEXT DEFAULT 'Anonymous'
     );
     """
     try:
         conn = get_connection(db_path)
         try:
             conn.executescript(schema_sql)
+            # Safe schema migration for searched_by column
+            try:
+                conn.execute("ALTER TABLE field_study_observations ADD COLUMN searched_by TEXT DEFAULT 'Anonymous';")
+            except sqlite3.OperationalError:
+                pass
             conn.commit()
         finally:
             conn.close()
@@ -299,16 +305,86 @@ def clear_history(db_path: Optional[Union[str, Path]] = None) -> bool:
 # =============================================================================
 
 def save_field_observation(
-    obs: FieldObservation, db_path: Optional[Union[str, Path]] = None
+    obs: FieldObservation,
+    db_path: Optional[Union[str, Path]] = None,
+    update_if_exists: bool = False,
 ) -> Optional[int]:
     """
     Save a structured 50-site field observation to field_study_observations table.
-    Enforces domain uniqueness.
+    Enforces domain uniqueness or updates existing record if update_if_exists=True.
 
     Returns:
-    - Inserted record ID on success, or None on duplicate/failure.
+    - Inserted or updated record ID on success, or None on duplicate/failure.
     """
     init_db(db_path)
+
+    if update_if_exists:
+        try:
+            conn = get_connection(db_path)
+            try:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT id FROM field_study_observations WHERE domain = ?;",
+                    (obs.domain.strip().lower(),),
+                )
+                existing_row = cursor.fetchone()
+                if existing_row:
+                    update_sql = """
+                    UPDATE field_study_observations SET
+                        category = ?, resolved_ip = ?, ip_version = ?,
+                        country = ?, region = ?, city = ?, latitude = ?, longitude = ?,
+                        geolocation_confidence = ?, asn = ?, organization = ?, isp = ?,
+                        network_type = ?, infrastructure_type = ?, https_status = ?, tls_status = ?,
+                        vpn_status = ?, proxy_status = ?, tor_status = ?,
+                        website_trust_score = ?, website_trust_classification = ?,
+                        ip_risk_score = ?, ip_risk_classification = ?, score_confidence = ?, evidence_coverage = ?,
+                        observation_status = ?, observed_at = ?, raw_history_id = ?,
+                        dns_response_time_ms = ?, api_response_time_ms = ?, error_message = ?,
+                        searched_by = ?
+                    WHERE id = ?;
+                    """
+                    update_params = (
+                        obs.category or "General Web",
+                        obs.resolved_ip or "",
+                        obs.ip_version or "IPv4",
+                        obs.country or "Unknown",
+                        obs.region or "Unknown",
+                        obs.city or "Unknown",
+                        obs.latitude,
+                        obs.longitude,
+                        obs.geolocation_confidence or "Unknown",
+                        obs.asn or "Unknown",
+                        obs.organization or "Unknown",
+                        obs.isp or "Unknown",
+                        obs.network_type or "Unknown",
+                        obs.infrastructure_type or "Unknown",
+                        obs.https_status or "Unknown",
+                        obs.tls_status or "Unknown",
+                        obs.vpn_status or "Unknown",
+                        obs.proxy_status or "Unknown",
+                        obs.tor_status or "Unknown",
+                        obs.website_trust_score,
+                        obs.website_trust_classification or "Unknown",
+                        obs.ip_risk_score,
+                        obs.ip_risk_classification or "Unknown",
+                        obs.score_confidence or "Unknown",
+                        obs.evidence_coverage,
+                        obs.observation_status or "RECORDED",
+                        obs.observed_at,
+                        obs.raw_history_id,
+                        obs.dns_response_time_ms or 0.0,
+                        obs.api_response_time_ms or 0.0,
+                        obs.error_message,
+                        getattr(obs, "searched_by", "Anonymous") or "Anonymous",
+                        existing_row["id"],
+                    )
+                    cursor.execute(update_sql, update_params)
+                    conn.commit()
+                    return existing_row["id"]
+            finally:
+                conn.close()
+        except Exception as e:
+            logger.error(f"Failed to update existing field observation: {e}")
 
     insert_sql = """
     INSERT INTO field_study_observations (
@@ -319,7 +395,7 @@ def save_field_observation(
         website_trust_score, website_trust_classification,
         ip_risk_score, ip_risk_classification, score_confidence, evidence_coverage,
         observation_status, observed_at, raw_history_id,
-        dns_response_time_ms, api_response_time_ms, error_message
+        dns_response_time_ms, api_response_time_ms, error_message, searched_by
     ) VALUES (
         ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?,
@@ -328,7 +404,7 @@ def save_field_observation(
         ?, ?,
         ?, ?, ?, ?,
         ?, ?, ?,
-        ?, ?, ?
+        ?, ?, ?, ?
     );
     """
 
@@ -366,6 +442,7 @@ def save_field_observation(
         obs.dns_response_time_ms or 0.0,
         obs.api_response_time_ms or 0.0,
         obs.error_message,
+        getattr(obs, "searched_by", "Anonymous") or "Anonymous",
     )
 
     try:
@@ -387,6 +464,13 @@ def save_field_observation(
 
 def _row_to_field_observation(row: sqlite3.Row) -> FieldObservation:
     """Helper to convert sqlite3.Row into FieldObservation dataclass."""
+    searched_by = "Anonymous"
+    try:
+        if "searched_by" in row.keys() and row["searched_by"]:
+            searched_by = row["searched_by"]
+    except Exception:
+        pass
+
     return FieldObservation(
         id=row["id"],
         test_id=row["test_id"] or 0,
@@ -416,6 +500,7 @@ def _row_to_field_observation(row: sqlite3.Row) -> FieldObservation:
         ip_risk_classification=row["ip_risk_classification"] or "Unknown",
         score_confidence=row["score_confidence"] or "Unknown",
         evidence_coverage=row["evidence_coverage"],
+        searched_by=searched_by,
         observation_status=row["observation_status"] or "RECORDED",
         observed_at=row["observed_at"] or "",
         raw_history_id=row["raw_history_id"],
@@ -543,13 +628,17 @@ def clear_field_study(db_path: Optional[Union[str, Path]] = None) -> bool:
 
 
 def migrate_historical_to_field_study(
-    db_path: Optional[Union[str, Path]] = None
+    db_path: Optional[Union[str, Path]] = None,
+    force: bool = False,
 ) -> int:
     """
     Backfill unique domain lookups from lookup_history into field_study_observations
-    if field_study_observations is currently empty.
-    Preserves historical observations made in previous phases without duplicating data.
+    ONLY if explicitly requested via force=True.
+    Default is disabled to preserve clean live user search state.
     """
+    if not force:
+        return 0
+
     init_db(db_path)
     existing_obs = get_field_observations(db_path=db_path)
     if existing_obs:

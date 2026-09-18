@@ -97,7 +97,25 @@ function navigateTo(viewName) {
 
 function initSearch() {
   const input = document.getElementById('ip-search-input');
+  const nameInput = document.getElementById('user-name-input');
   const btn = document.getElementById('analyze-btn');
+
+  // Restore stored analyst/user name from localStorage
+  if (nameInput) {
+    const savedName = localStorage.getItem('ippulse_user_name');
+    if (savedName) {
+      nameInput.value = savedName;
+    }
+    nameInput.addEventListener('input', () => {
+      localStorage.setItem('ippulse_user_name', nameInput.value.trim());
+    });
+    nameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const q = input ? input.value.trim() : '';
+        if (q) performAnalysis(q);
+      }
+    });
+  }
 
   if (btn && input) {
     btn.addEventListener('click', () => {
@@ -129,9 +147,12 @@ async function performAnalysis(query) {
   const errorEl = document.getElementById('analysis-error');
   const loadingMsg = document.getElementById('loading-message');
   const inputEl = document.getElementById('ip-search-input');
+  const nameInputEl = document.getElementById('user-name-input');
 
   if (inputEl) inputEl.value = query;
   currentTarget = query;
+
+  const searchedBy = (nameInputEl ? nameInputEl.value.trim() : '') || localStorage.getItem('ippulse_user_name') || 'Anonymous';
 
   if (errorEl) errorEl.classList.add('hidden');
   if (loadingEl) loadingEl.classList.remove('hidden');
@@ -153,7 +174,7 @@ async function performAnalysis(query) {
     const res = await fetch(`${API_BASE}/api/analyze`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ target: query }),
+      body: JSON.stringify({ target: query, searched_by: searchedBy }),
     });
 
     clearInterval(msgTimer);
@@ -323,12 +344,21 @@ function renderAnalysisResults(data) {
   }
   const addBtn = document.getElementById('btn-add-to-field-study');
   if (addBtn) {
-    addBtn.disabled = false;
-    addBtn.innerHTML = `
-      <span class="material-symbols-outlined text-[16px]">biotech</span>
-      <span>Add to Field Study</span>
-    `;
-    addBtn.className = 'px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high border border-surface-container text-xs font-mono text-on-surface flex items-center gap-1.5 transition-all cursor-pointer shadow-sm hover:border-primary/40';
+    if (data.field_study_recorded) {
+      addBtn.disabled = true;
+      addBtn.innerHTML = `
+        <span class="material-symbols-outlined text-[16px] text-emerald-400">check_circle</span>
+        <span class="text-emerald-400 font-semibold">Recorded in Field Study</span>
+      `;
+      addBtn.className = 'px-3 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-xs font-mono text-emerald-400 flex items-center gap-1.5 transition-all cursor-default';
+    } else {
+      addBtn.disabled = false;
+      addBtn.innerHTML = `
+        <span class="material-symbols-outlined text-[16px]">biotech</span>
+        <span>Add to Field Study</span>
+      `;
+      addBtn.className = 'px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high border border-surface-container text-xs font-mono text-on-surface flex items-center gap-1.5 transition-all cursor-pointer shadow-sm hover:border-primary/40';
+    }
   }
 }
 
@@ -728,6 +758,9 @@ window.addToFieldStudy = async function() {
     return;
   }
 
+  const nameInputEl = document.getElementById('user-name-input');
+  const searchedBy = (nameInputEl ? nameInputEl.value.trim() : '') || localStorage.getItem('ippulse_user_name') || 'Anonymous';
+
   const btn = document.getElementById('btn-add-to-field-study');
   if (btn) {
     btn.disabled = true;
@@ -741,7 +774,7 @@ window.addToFieldStudy = async function() {
     const res = await fetch(`${API_BASE}/api/field-study/add`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ target: target })
+      body: JSON.stringify({ target: target, searched_by: searchedBy })
     });
     const data = await res.json();
 
@@ -884,7 +917,7 @@ function renderFieldStudyTable(records) {
   if (!tableBody) return;
 
   if (!records || records.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="9" class="py-12 text-center text-outline font-mono">No field study observations recorded yet. Look up domains on Home and click "Add to Field Study" to curate observations.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="10" class="py-12 text-center text-outline font-mono">No field study observations recorded yet. Search domains or IP addresses on Home to automatically record and attribute observations.</td></tr>`;
     return;
   }
 
@@ -938,6 +971,12 @@ function renderFieldStudyTable(records) {
         </div>
       </td>
       <td class="py-3 px-4 font-mono text-primary truncate max-w-[140px]">${escapeHtml(r.resolved_ip || r.ip_address || 'Unknown')}</td>
+      <td class="py-3 px-4 font-mono text-xs text-primary/90 whitespace-nowrap">
+        <div class="flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-[15px] text-secondary">person</span>
+          <span class="truncate max-w-[120px] font-medium">${escapeHtml(r.searched_by || 'Anonymous')}</span>
+        </div>
+      </td>
       <td class="py-3 px-4 text-on-surface-variant truncate max-w-[110px]">${escapeHtml(r.country || 'Unknown')}</td>
       <td class="py-3 px-4 font-mono text-outline truncate max-w-[130px]">${escapeHtml(r.infrastructure_type || 'Unknown')}</td>
       <td class="py-3 px-3 text-center">
@@ -1005,6 +1044,13 @@ window.openFieldStudyDetail = function(obsId) {
         <div class="flex justify-between py-1 border-b border-surface-container/50">
           <span class="text-outline">Category:</span>
           <span class="text-on-surface">${escapeHtml(obs.category || 'General Web')}</span>
+        </div>
+        <div class="flex justify-between py-1 border-b border-surface-container/50">
+          <span class="text-outline">Searched By:</span>
+          <span class="text-primary font-semibold truncate flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px] text-secondary">person</span>
+            <span>${escapeHtml(obs.searched_by || 'Anonymous')}</span>
+          </span>
         </div>
         <div class="flex justify-between py-1">
           <span class="text-outline">Observation Status:</span>

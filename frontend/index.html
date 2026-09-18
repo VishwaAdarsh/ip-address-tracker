@@ -164,10 +164,14 @@
             Get IP details, geolocation, security intelligence, and infrastructure analysis — all in one unified console.
           </p>
 
-          <!-- 3. Website/IP Input Field (Glass Input Container) -->
-          <div class="w-full max-w-2xl md:max-w-3xl mb-5">
-            <div class="glass-input-box relative flex items-center rounded-xl px-4 py-3.5 transition-all">
-              <span class="material-symbols-outlined text-[22px] text-primary mr-3 select-none">language</span>
+          <!-- 3. Investigator & Website/IP Input Fields (Glass Input Container) -->
+          <div class="w-full max-w-2xl md:max-w-3xl mb-5 flex flex-col sm:flex-row gap-3">
+            <div class="glass-input-box relative flex items-center rounded-xl px-4 py-3.5 transition-all sm:w-1/3">
+              <span class="material-symbols-outlined text-[20px] text-secondary mr-2.5 select-none">person</span>
+              <input id="user-name-input" class="w-full bg-transparent text-sm font-sans text-on-surface placeholder:text-outline focus:outline-none" placeholder="Your Name / Analyst" type="text" autocomplete="name" title="Your investigator/analyst name"/>
+            </div>
+            <div class="glass-input-box relative flex items-center rounded-xl px-4 py-3.5 transition-all sm:w-2/3 flex-1">
+              <span class="material-symbols-outlined text-[20px] text-primary mr-2.5 select-none">language</span>
               <input id="ip-search-input" class="w-full bg-transparent text-sm md:text-base font-mono text-on-surface placeholder:text-outline focus:outline-none" placeholder="Enter a website or IP address (e.g. google.com or 8.8.8.8)" type="text" value="google.com"/>
             </div>
           </div>
@@ -891,6 +895,7 @@
                   <th class="py-3 px-3 font-medium text-center">#</th>
                   <th class="py-3 px-4 font-medium">Domain</th>
                   <th class="py-3 px-4 font-medium">IP Address</th>
+                  <th class="py-3 px-4 font-medium">Searched By</th>
                   <th class="py-3 px-4 font-medium">Country</th>
                   <th class="py-3 px-4 font-medium">Infrastructure</th>
                   <th class="py-3 px-3 font-medium text-center">HTTPS</th>
@@ -900,7 +905,7 @@
                 </tr>
               </thead>
               <tbody id="field-study-table-body" class="divide-y divide-surface-container/60 text-xs">
-                <tr><td colspan="9" class="py-8 text-center text-outline">Loading 50-site field study records...</td></tr>
+                <tr><td colspan="10" class="py-8 text-center text-outline">Loading 50-site field study records...</td></tr>
               </tbody>
             </table>
           </div>

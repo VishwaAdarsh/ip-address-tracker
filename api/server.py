@@ -372,6 +372,9 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
     def _handle_api_analyze(self, payload: Dict[str, Any]) -> None:
         """Execute complete multi-layered IP Intelligence and Security scan."""
         target = str(payload.get("target") or payload.get("query") or "").strip()
+        searched_by = str(payload.get("searched_by") or payload.get("investigator") or "Anonymous").strip() or "Anonymous"
+        save_to_field_study = payload.get("save_to_field_study", True)
+
         if not target:
             self._send_error_json("Target domain or IP address is required.", status=400)
             return
@@ -379,6 +382,23 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
         try:
             result = perform_full_intelligence_scan(target, save_to_db=True)
             base = result.base_lookup
+
+            # Automatically record observation in Field Study with searched_by attribution
+            field_study_recorded = False
+            field_obs_data = None
+            if save_to_field_study:
+                try:
+                    fs_ok, fs_msg, fs_obs = add_field_observation(
+                        target=target,
+                        lookup_res=result,
+                        searched_by=searched_by,
+                        update_if_exists=True,
+                    )
+                    if fs_ok and fs_obs:
+                        field_study_recorded = True
+                        field_obs_data = fs_obs.to_dict()
+                except Exception as fs_err:
+                    logger.warning(f"Could not auto-record field observation for {target}: {fs_err}")
             sec = result.security
             intel = result.ip_intel
             risk = result.risk
@@ -472,6 +492,9 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
                     "nodes": getattr(chain, "nodes", []),
                 },
                 "explanation": result.explanation,
+                "searched_by": searched_by,
+                "field_study_recorded": field_study_recorded,
+                "field_study_observation": field_obs_data,
                 "provenance": [
                     {"stage": "DNS Resolution", "source": "Core Resolver", "status": base.dns_status, "details": f"Resolved {base.selected_ip}"},
                     {"stage": "Geolocation", "source": "Multi-Provider Geo", "status": base.geolocation_status, "details": f"{base.city}, {base.country}"},
@@ -521,32 +544,22 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
                     "status": r.status,
                     "error_message": r.error_message,
                 })
-            self._send_json({
-                "success": True,
-                "total_count": len(serialized),
-                "records": serialized,
-            })
+            self._send_json({"success": True, "count": len(serialized), "records": serialized})
         except Exception as e:
-            logger.exception(f"Error fetching history: {e}")
+            logger.exception(f"Error retrieving history: {e}")
             self._send_error_json(f"Database error: {str(e)}", status=500)
 
     def _handle_api_field_study(self) -> None:
-        """Evaluate manual-first 50-website field study status."""
+        """Return 50-site field study status, metrics, and recorded observations."""
         try:
             status = get_field_project_status(target_count=50)
-            avail = status["available_count"]
-            target = status["target"]
-            rem = status["remaining"]
-            pct = status["progress_percentage"]
-
             self._send_json({
                 "success": True,
-                "available_count": avail,
-                "target": target,
-                "remaining": rem,
-                "progress_percentage": pct,
-                "protocol": "Manual-First Protocol Active",
                 "status": status["status"],
+                "target": status["target"],
+                "available_count": status["available_count"],
+                "remaining": status["remaining"],
+                "progress_percentage": status["progress_percentage"],
                 "summary": status["summary"],
                 "records": status["records"],
             })
@@ -558,12 +571,18 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
         """Add an intentionally curated website observation to the 50-site field study."""
         target = str(payload.get("target") or payload.get("domain") or "").strip()
         category = payload.get("category")
+        searched_by = str(payload.get("searched_by") or payload.get("investigator") or "Anonymous").strip() or "Anonymous"
         if not target:
             self._send_error_json("Target domain is required.", status=400)
             return
 
         try:
-            success, msg, obs = add_field_observation(target=target, category=category)
+            success, msg, obs = add_field_observation(
+                target=target,
+                category=category,
+                searched_by=searched_by,
+                update_if_exists=True,
+            )
             if not success:
                 if "already recorded" in msg.lower():
                     self._send_json({

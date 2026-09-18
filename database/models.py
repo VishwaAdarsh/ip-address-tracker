@@ -108,6 +108,7 @@ class FieldObservation:
     evidence_coverage: Optional[float] = None
 
     # Metadata
+    searched_by: str = "Anonymous"
     observation_status: str = "RECORDED"
     observed_at: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
@@ -174,6 +175,7 @@ class FieldObservation:
             "ip_risk_classification": self.ip_risk_classification,
             "score_confidence": self.score_confidence,
             "evidence_coverage": self.evidence_coverage,
+            "searched_by": self.searched_by,
             "observation_status": self.observation_status,
             "status": self.observation_status,
             "observed_at": self.observed_at,
