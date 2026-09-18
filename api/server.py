@@ -815,6 +815,11 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
         logger.debug("%s - - [%s] %s" % (self.client_address[0], self.log_date_time_string(), format % args))
 
 
+# Vercel's Python runtime requires a top-level entrypoint export.
+app = IPPulseRequestHandler
+handler = IPPulseRequestHandler
+
+
 def create_server(host: str = "127.0.0.1", port: int = 8000) -> ThreadingHTTPServer:
     """Create and return configured ThreadingHTTPServer instance."""
     server_address = (host, port)

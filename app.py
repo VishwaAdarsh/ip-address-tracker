@@ -21,8 +21,12 @@ import threading
 import time
 import webbrowser
 
-from api.server import create_server
+from api.server import IPPulseRequestHandler, create_server
 from database.db import init_db
+
+# Vercel detects Python functions by a top-level app/handler export.
+app = IPPulseRequestHandler
+handler = IPPulseRequestHandler
 
 logging.basicConfig(
     level=logging.INFO,
