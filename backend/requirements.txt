@@ -1,0 +1,21 @@
+# ==============================================================================
+# IP PULSE — Backend Dependencies
+# ==============================================================================
+
+# Core Data Analysis & Statistical Engine
+pandas>=2.0.0
+
+# PDF Research Report Generation
+reportlab>=4.0.0
+
+# Advanced DNS Resolution & Record Inspection
+dnspython>=2.3.0
+
+# Automated Test Framework
+pytest>=8.0.0
+
+# Legacy Chart Generation
+matplotlib>=3.7.0
+
+# External AI Providers (Gemini / REST fallback)
+requests>=2.28.0

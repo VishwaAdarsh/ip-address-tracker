@@ -32,6 +32,8 @@ Thumbs.db
 # Packaging & build artifacts
 build/
 dist/
+frontend/dist/
+node_modules/
 *.egg-info/
 
 # Backups

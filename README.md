@@ -49,41 +49,88 @@ A unified multi-layered cyber telemetry, IP geolocation, website security intell
 
 ```text
 ip-address-tracker/
-├── api/                                # REST API Layer
-│   ├── __init__.py
-│   └── server.py                       # ThreadingHTTPServer & REST routes
-├── frontend/                           # Stitch Obsidian Dark Web Application
+├── backend/
+│   ├── api/
+│   │   ├── __init__.py
+│   │   └── server.py                   # ThreadingHTTPServer & REST routes
+│   ├── services/                       # Business Logic & Orchestration
+│   │   ├── __init__.py
+│   │   ├── lookup_service.py           # Multi-provider DNS & IP normalization
+│   │   ├── risk_analysis_service.py    # Master intelligence scan coordinator
+│   │   ├── field_test_service.py       # Empirical 50-site field research protocol
+│   │   └── comparison_service.py       # Investigation comparison matrix
+│   ├── intelligence/                   # Autonomous Intelligence & Explanation
+│   │   ├── __init__.py
+│   │   ├── ai_explainer.py             # Dual deterministic & Gemini AI explainer
+│   │   ├── intel_chain.py              # Provenance chain & IP personality engine
+│   │   └── ip_intel.py                 # Autonomous infrastructure intelligence
+│   ├── security/                       # Security & Threat Evaluation
+│   │   ├── __init__.py
+│   │   ├── security_scanner.py         # Website SSL/TLS & security scanner
+│   │   └── risk_engine.py              # Mathematical risk & trust scoring
+│   ├── analytics/                      # Statistical Aggregation & Research
+│   │   ├── __init__.py
+│   │   ├── analytics_service.py        # 7-dimension statistical metrics
+│   │   ├── analyzer.py                 # Dataset validation & statistical summary
+│   │   └── risk_analyzer.py            # Comparative risk computation
+│   ├── providers/                      # Network & Geospatial Adapters
+│   │   ├── __init__.py
+│   │   ├── dns_resolver.py             # Public DNS resolution
+│   │   ├── geo_service.py              # Multi-provider geolocation service
+│   │   └── normalizer.py               # Response normalization
+│   ├── models/                         # Data Models & Schemas
+│   │   ├── __init__.py
+│   │   └── models.py                   # Dataclass schemas (LookupRecord, FieldObservation)
+│   ├── database/                       # Persistence Layer
+│   │   ├── __init__.py
+│   │   └── db.py                       # SQLite connection & transactions (WAL mode)
+│   ├── reports/                        # Visualizer & Document Exporters
+│   │   ├── __init__.py
+│   │   ├── export_service.py           # Multi-format reports (CSV, JSON, MD, PDF)
+│   │   ├── report_generator.py         # Research summary reports
+│   │   └── visualizer.py               # Chart generation routines
+│   ├── utils/                          # Utility & Validation Helper
+│   │   ├── __init__.py
+│   │   └── validator.py                # Input normalization & validation
+│   ├── config/                         # Configuration Management
+│   │   ├── __init__.py
+│   │   └── settings.py                 # Central settings & path resolution
+│   ├── tests/                          # Automated Pytest Suite (215+ tests)
+│   │   ├── test_ai_explainer.py
+│   │   ├── test_analytics_service.py
+│   │   ├── test_api_server.py
+│   │   ├── test_comparison_service.py
+│   │   ├── test_database.py
+│   │   ├── test_dns_resolver.py
+│   │   ├── test_explainable_scoring.py
+│   │   ├── test_export_service.py
+│   │   ├── test_field_test_service.py
+│   │   ├── test_geo_service.py
+│   │   ├── test_intel_chain.py
+│   │   ├── test_ip_intel.py
+│   │   ├── test_lookup_service.py
+│   │   ├── test_map_view.py
+│   │   ├── test_normalizer.py
+│   │   ├── test_risk_analysis_service.py
+│   │   ├── test_risk_analyzer.py
+│   │   ├── test_risk_engine.py
+│   │   ├── test_security_scanner.py
+│   │   ├── test_validator.py
+│   │   └── test_visualization_dashboard.py
+│   ├── app.py                          # Backend entrypoint (CLI & Web server)
+│   ├── main.py                         # Secondary backend entrypoint
+│   ├── requirements.txt                # Backend dependencies
+│   └── pyproject.toml                  # Backend package definition
+├── frontend/                           # Modern Vite-Ready Web Frontend
+│   ├── src/                            # Source Assets
+│   │   ├── app.js                      # SPA state manager & async REST client
+│   │   ├── map.js                      # Leaflet interactive map controller
+│   │   └── style.css                   # Custom theme tokens & obsidian styling
+│   ├── public/                         # Static assets
 │   ├── index.html                      # Unified Single Page Application (SPA)
-│   └── assets/
-│       ├── app.js                      # UI state manager & async REST client
-│       ├── map.js                      # Leaflet interactive map controller
-│       └── style.css                   # Custom theme tokens & glass styling
-├── core/                               # Network & Security Intelligence Engines
-│   ├── ai_explainer.py                 # Evidence-based AI explanations & fallback
-│   ├── dns_resolver.py                 # DNS resolution & address normalization
-│   ├── geo_service.py                  # Geolocation multi-provider client
-│   ├── intel_chain.py                  # Provenance chain & IP Personality
-│   ├── ip_intel.py                     # IP Intelligence & Infrastructure Analysis
-│   ├── normalizer.py                   # Response normalization
-│   ├── risk_engine.py                  # Trust & Risk scoring engine
-│   ├── security_scanner.py             # Website Security & TLS inspection
-│   └── validator.py                    # Input normalization & coordinate validation
-├── services/                           # Business Logic & Orchestration
-│   ├── analytics_service.py            # 7-dimension statistical aggregation engine
-│   ├── comparison_service.py           # Investigation workspace & comparison matrix
-│   ├── export_service.py               # Multi-format reports (CSV, JSON, MD, PDF)
-│   ├── field_test_service.py           # Standardized 50-site field study protocol
-│   ├── lookup_service.py               # Integrated lookup & normalization engine
-│   └── risk_analysis_service.py        # Master intelligence scan coordinator
-├── database/                           # Persistence Layer
-│   ├── db.py                           # SQLite connection & parameterized queries
-│   └── models.py                       # Dataclass schemas (LookupRecord, FieldObservation)
-├── analysis/                           # Research Analytics & Historical Visualizations
-│   ├── analyzer.py                     # Dataset validation & statistical summary
-│   ├── visualizer.py                   # Chart generation routines
-│   ├── risk_analyzer.py                # Comparative risk computation
-│   └── report_generator.py             # Research summary reports
-├── data/                               # Stored Datasets & Databases
+│   ├── package.json                    # Frontend package metadata
+│   └── vite.config.js                  # Frontend Vite configuration
+├── data/                               # Stored Datasets & Single Source SQLite DB
 │   ├── ip_tracker.db                   # Primary SQLite history & field study database
 │   ├── analysis/                       # Historical research CSV datasets
 │   ├── exports/                        # Generated field study exports & PDF reports
@@ -99,41 +146,9 @@ ip-address-tracker/
 │   ├── phase_24_visualization_dashboard.md
 │   ├── technical_documentation.md
 │   └── viva_questions.md
-├── gui/                                # Optional Legacy Desktop GUI (Tkinter)
-│   ├── __init__.py
-│   ├── analytics_view.py
-│   ├── field_test_view.py
-│   ├── history_view.py
-│   ├── main_window.py
-│   ├── map_view.py
-│   └── results_view.py
 ├── logs/                               # Application log directory (.gitkeep)
-├── tests/                              # Automated Unit & Integration Test Suites
-│   ├── test_ai_explainer.py
-│   ├── test_analytics_service.py
-│   ├── test_api_server.py
-│   ├── test_comparison_service.py
-│   ├── test_database.py
-│   ├── test_dns_resolver.py
-│   ├── test_explainable_scoring.py
-│   ├── test_export_service.py
-│   ├── test_field_test_service.py
-│   ├── test_geo_service.py
-│   ├── test_intel_chain.py
-│   ├── test_ip_intel.py
-│   ├── test_lookup_service.py
-│   ├── test_map_view.py
-│   ├── test_normalizer.py
-│   ├── test_risk_analysis_service.py
-│   ├── test_risk_analyzer.py
-│   ├── test_risk_engine.py
-│   ├── test_security_scanner.py
-│   ├── test_validator.py
-│   └── test_visualization_dashboard.py
-├── .env.example                        # Configuration template for local setup
-├── .gitignore                          # Git exclusion rules
-├── app.py                              # Primary application entrypoint
-├── requirements.txt                    # Python dependencies
+├── app.py                              # Repository root launcher (delegates to backend)
+├── requirements.txt                    # Project root dependencies
 ├── start_ip_pulse.bat                  # One-click Windows launcher
 └── README.md
 ```
