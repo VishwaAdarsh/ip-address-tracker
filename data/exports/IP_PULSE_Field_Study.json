@@ -2,14 +2,14 @@
   "project": "IP PULSE \u2014 IP Intelligence, Geolocation & Website Risk Analysis Platform",
   "study_phase": "Phase 21: Research Report & Data Export",
   "target_observations": 50,
-  "observations_collected": 8,
-  "remaining_to_target": 42,
+  "observations_collected": 1,
+  "remaining_to_target": 49,
   "dataset_status": "INCOMPLETE",
-  "generated_at": "2026-09-13T20:46:30.863140+00:00",
+  "generated_at": "2026-09-21T20:27:49.072001+00:00",
   "validation_summary": {
     "is_valid": true,
-    "total_records": 8,
-    "valid_records_count": 8,
+    "total_records": 1,
+    "valid_records_count": 1,
     "issues_count": 0,
     "warnings": [],
     "details": {
@@ -21,35 +21,30 @@
       "invalid_timestamp_count": 0,
       "classification_mismatch_count": 0
     },
-    "audited_at": "2026-09-13T20:46:30.861114+00:00"
+    "audited_at": "2026-09-21T20:27:49.067604+00:00"
   },
   "analytics": {
     "success": true,
     "insufficient_data": false,
     "is_filtered": false,
-    "unfiltered_total_count": 8,
-    "filtered_count": 8,
+    "unfiltered_total_count": 1,
+    "filtered_count": 1,
     "filter_summary": {},
     "available_filter_options": {
       "countries": [
-        "Australia",
-        "Canada",
-        "India",
-        "United States"
+        "Australia"
       ],
       "infrastructures": [
-        "Cloud Hosting"
+        "CDN / Edge Hub"
       ],
       "trust_classes": [
-        "GENERALLY SAFE",
-        "LIKELY SAFE"
+        "HIGH RISK"
       ],
       "risk_classes": [
         "LOW RISK"
       ],
       "ip_versions": [
-        "IPv4",
-        "IPv6"
+        "IPv4"
       ],
       "https_statuses": [
         "Enabled",
@@ -77,7 +72,7 @@
     },
     "map_points": [
       {
-        "id": 1,
+        "id": 25,
         "domain": "1.1.1.1",
         "ip": "1.1.1.1",
         "resolved_ip": "1.1.1.1",
@@ -87,127 +82,55 @@
         "city": "South Brisbane",
         "organization": "APNIC and Cloudflare DNS Resolver project",
         "asn": "AS13335 Cloudflare, Inc.",
-        "infrastructure": "Unknown",
-        "trust_score": 85.0,
-        "risk_score": 15.0,
-        "trust_classification": "GENERALLY SAFE",
+        "infrastructure": "CDN / Edge Hub",
+        "trust_score": 5.0,
+        "risk_score": 10.0,
+        "trust_classification": "HIGH RISK",
         "risk_classification": "LOW RISK",
-        "https_status": "Unknown"
-      },
-      {
-        "id": 2,
-        "domain": "cloudflare.com",
-        "ip": "104.16.132.229",
-        "resolved_ip": "104.16.132.229",
-        "latitude": 43.6532,
-        "longitude": -79.3832,
-        "country": "Canada",
-        "city": "Toronto",
-        "organization": "Cloudflare, Inc.",
-        "asn": "AS13335 Cloudflare, Inc.",
-        "infrastructure": "Unknown",
-        "trust_score": 85.0,
-        "risk_score": 15.0,
-        "trust_classification": "GENERALLY SAFE",
-        "risk_classification": "LOW RISK",
-        "https_status": "Unknown"
-      },
-      {
-        "id": 3,
-        "domain": "chatgpt.com",
-        "ip": "172.64.155.209",
-        "resolved_ip": "172.64.155.209",
-        "latitude": 43.6532,
-        "longitude": -79.3832,
-        "country": "Canada",
-        "city": "Toronto",
-        "organization": "Cloudflare, Inc.",
-        "asn": "AS13335 Cloudflare, Inc.",
-        "infrastructure": "Unknown",
-        "trust_score": 85.0,
-        "risk_score": 15.0,
-        "trust_classification": "GENERALLY SAFE",
-        "risk_classification": "LOW RISK",
-        "https_status": "Unknown"
-      },
-      {
-        "id": 4,
-        "domain": "google.com",
-        "ip": "142.250.182.238",
-        "resolved_ip": "142.250.182.238",
-        "latitude": 19.076,
-        "longitude": 72.8777,
-        "country": "India",
-        "city": "Mumbai",
-        "organization": "Google LLC",
-        "asn": "AS15169 Google LLC",
-        "infrastructure": "Unknown",
-        "trust_score": 85.0,
-        "risk_score": 15.0,
-        "trust_classification": "GENERALLY SAFE",
-        "risk_classification": "LOW RISK",
-        "https_status": "Unknown"
-      },
-      {
-        "id": 8,
-        "domain": "github.com",
-        "ip": "20.207.73.82",
-        "resolved_ip": "20.207.73.82",
-        "latitude": 18.5144,
-        "longitude": 73.864235,
-        "country": "India",
-        "city": "Pune",
-        "organization": "Microsoft Azure Cloud (centralindia)",
-        "asn": "AS8075 Microsoft Corporation",
-        "infrastructure": "Cloud Hosting",
-        "trust_score": 100.0,
-        "risk_score": 15.0,
-        "trust_classification": "LIKELY SAFE",
-        "risk_classification": "LOW RISK",
-        "https_status": "Enabled"
+        "https_status": "Disabled"
       }
     ],
-    "mapped_points_count": 5,
-    "missing_coordinates_count": 3,
+    "mapped_points_count": 1,
+    "missing_coordinates_count": 0,
     "overview": {
-      "total_observations": 8,
-      "valid_observations": 8,
+      "total_observations": 1,
+      "valid_observations": 1,
       "invalid_observations": 0,
       "failed_observations": 0,
       "target": 50,
       "sample_target": 50,
-      "remaining": 42,
-      "remaining_to_target": 42,
+      "remaining": 49,
+      "remaining_to_target": 49,
       "target_reached": false,
-      "progress_percentage": 16.0,
-      "collection_progress_pct": 16.0,
+      "progress_percentage": 2.0,
+      "collection_progress_pct": 2.0,
       "status": "INCOMPLETE",
       "study_status": "INCOMPLETE",
-      "https_adoption_pct": 12.5,
-      "ipv4_pct": 87.5,
-      "ipv6_pct": 12.5,
+      "https_adoption_pct": 0.0,
+      "ipv4_pct": 100.0,
+      "ipv6_pct": 0.0,
       "vpn_detections": 0,
       "proxy_detections": 0,
       "tor_detections": 0,
-      "cloud_datacenter_pct": 12.5,
-      "avg_trust_score": 86.9,
-      "mean_trust_score": 86.9,
-      "avg_risk_score": 15.0,
-      "mean_risk_score": 15.0
+      "cloud_datacenter_pct": 100.0,
+      "avg_trust_score": 5.0,
+      "mean_trust_score": 5.0,
+      "avg_risk_score": 10.0,
+      "mean_risk_score": 10.0
     },
     "trust_analysis": {
       "statistics": {
-        "mean": 86.9,
-        "min": 85.0,
-        "max": 100.0,
-        "std_dev": 5.0,
-        "count": 8
+        "mean": 5.0,
+        "min": 5.0,
+        "max": 5.0,
+        "std_dev": 0.0,
+        "count": 1
       },
       "distribution": [
         {
           "bracket": "0\u201320",
-          "count": 0,
-          "pct": 0.0,
+          "count": 1,
+          "pct": 100.0,
           "color": "#ff0055"
         },
         {
@@ -230,16 +153,16 @@
         },
         {
           "bracket": "81\u2013100",
-          "count": 8,
-          "pct": 100.0,
+          "count": 0,
+          "pct": 0.0,
           "color": "#00ff66"
         }
       ],
       "histogram": [
         {
           "bracket": "0\u201320",
-          "count": 0,
-          "pct": 0.0,
+          "count": 1,
+          "pct": 100.0,
           "color": "#ff0055"
         },
         {
@@ -262,41 +185,36 @@
         },
         {
           "bracket": "81\u2013100",
-          "count": 8,
-          "pct": 100.0,
+          "count": 0,
+          "pct": 0.0,
           "color": "#00ff66"
         }
       ],
       "classifications": [
         {
-          "classification": "GENERALLY SAFE",
-          "count": 7,
-          "pct": 87.5
-        },
-        {
-          "classification": "LIKELY SAFE",
+          "classification": "HIGH RISK",
           "count": 1,
-          "pct": 12.5
+          "pct": 100.0
         }
       ],
-      "min": 85.0,
-      "max": 100.0,
-      "mean": 86.9,
-      "std_dev": 5.0,
-      "count": 8
+      "min": 5.0,
+      "max": 5.0,
+      "mean": 5.0,
+      "std_dev": 0.0,
+      "count": 1
     },
     "risk_analysis": {
       "statistics": {
-        "mean": 15.0,
-        "min": 15.0,
-        "max": 15.0,
+        "mean": 10.0,
+        "min": 10.0,
+        "max": 10.0,
         "std_dev": 0.0,
-        "count": 8
+        "count": 1
       },
       "distribution": [
         {
           "bracket": "0\u201320",
-          "count": 8,
+          "count": 1,
           "pct": 100.0,
           "color": "#ff0055"
         },
@@ -328,7 +246,7 @@
       "histogram": [
         {
           "bracket": "0\u201320",
-          "count": 8,
+          "count": 1,
           "pct": 100.0,
           "color": "#ff0055"
         },
@@ -360,330 +278,157 @@
       "classifications": [
         {
           "classification": "LOW RISK",
-          "count": 8,
+          "count": 1,
           "pct": 100.0
         }
       ],
-      "min": 15.0,
-      "max": 15.0,
-      "mean": 15.0,
+      "min": 10.0,
+      "max": 10.0,
+      "mean": 10.0,
       "std_dev": 0.0,
-      "count": 8
+      "count": 1
     },
     "security_analysis": {
-      "https_enabled_count": 1,
-      "https_enabled_pct": 12.5,
-      "https_disabled_count": 0,
-      "https_disabled_pct": 0.0,
-      "https_unknown_count": 7,
-      "https_unknown_pct": 87.5,
-      "tls_valid_count": 1,
-      "tls_valid_pct": 12.5,
-      "tls_invalid_count": 0,
-      "tls_invalid_pct": 0.0,
-      "tls_unknown_count": 7,
-      "tls_unknown_pct": 87.5,
+      "https_enabled_count": 0,
+      "https_enabled_pct": 0.0,
+      "https_disabled_count": 1,
+      "https_disabled_pct": 100.0,
+      "https_unknown_count": 0,
+      "https_unknown_pct": 0.0,
+      "tls_valid_count": 0,
+      "tls_valid_pct": 0.0,
+      "tls_invalid_count": 1,
+      "tls_invalid_pct": 100.0,
+      "tls_unknown_count": 0,
+      "tls_unknown_pct": 0.0,
       "https_status": {
-        "enabled": 1,
-        "disabled": 0,
-        "unknown": 7,
-        "adoption_pct": 12.5
+        "enabled": 0,
+        "disabled": 1,
+        "unknown": 0,
+        "adoption_pct": 0.0
       },
       "tls_status": {
-        "valid": 1,
-        "invalid_or_expired": 0,
-        "unknown": 7,
-        "valid_pct": 12.5
+        "valid": 0,
+        "invalid_or_expired": 1,
+        "unknown": 0,
+        "valid_pct": 0.0
       }
     },
     "network_analysis": {
-      "ipv4_count": 7,
-      "ipv4_pct": 87.5,
-      "ipv6_count": 1,
-      "ipv6_pct": 12.5,
+      "ipv4_count": 1,
+      "ipv4_pct": 100.0,
+      "ipv6_count": 0,
+      "ipv6_pct": 0.0,
       "unknown_ip_count": 0,
       "network_types": [
         {
           "type": "Unknown",
-          "count": 8,
+          "count": 1,
           "pct": 100.0
         }
       ],
       "infrastructure_types": [
         {
-          "type": "Unknown",
-          "count": 7,
-          "pct": 87.5
-        },
-        {
-          "type": "Cloud Hosting",
+          "type": "CDN / Edge Hub",
           "count": 1,
-          "pct": 12.5
+          "pct": 100.0
         }
       ],
       "cloud_vs_traditional": {
         "cloud_datacenter_count": 1,
-        "cloud_datacenter_pct": 12.5,
+        "cloud_datacenter_pct": 100.0,
         "traditional_other_count": 0,
         "traditional_other_pct": 0.0,
-        "unknown_count": 7
+        "unknown_count": 0
       },
       "threat_detections": {
         "vpn_count": 0,
         "proxy_count": 0,
         "tor_count": 0,
-        "clean_count": 8
+        "clean_count": 1
       },
       "top_asns": [
         {
           "asn": "AS13335 Cloudflare, Inc.",
           "org": "APNIC and Cloudflare DNS Resolver project",
-          "count": 3,
-          "pct": 37.5
-        },
-        {
-          "asn": "Unknown ASN",
-          "org": "N/A",
-          "count": 3,
-          "pct": 37.5
-        },
-        {
-          "asn": "AS15169 Google LLC",
-          "org": "Google LLC",
           "count": 1,
-          "pct": 12.5
-        },
-        {
-          "asn": "AS8075 Microsoft Corporation",
-          "org": "Microsoft Azure Cloud (centralindia)",
-          "count": 1,
-          "pct": 12.5
+          "pct": 100.0
         }
       ],
       "top_organizations": [
         {
-          "organization": "Cloudflare, Inc.",
-          "count": 2,
-          "pct": 25.0
-        },
-        {
           "organization": "APNIC and Cloudflare DNS Resolver project",
           "count": 1,
-          "pct": 12.5
-        },
-        {
-          "organization": "Google LLC",
-          "count": 1,
-          "pct": 12.5
-        },
-        {
-          "organization": "Microsoft Azure Cloud (centralindia)",
-          "count": 1,
-          "pct": 12.5
+          "pct": 100.0
         }
       ],
       "top_countries": [
         {
-          "country": "United States",
-          "count": 3,
-          "pct": 37.5
-        },
-        {
-          "country": "Canada",
-          "count": 2,
-          "pct": 25.0
-        },
-        {
-          "country": "India",
-          "count": 2,
-          "pct": 25.0
-        },
-        {
           "country": "Australia",
           "count": 1,
-          "pct": 12.5
+          "pct": 100.0
         }
       ],
-      "mean_dns_latency_ms": 33.9,
-      "mean_api_latency_ms": 232.2,
+      "mean_dns_latency_ms": 0.0,
+      "mean_api_latency_ms": 267.6,
       "ip_versions": {
-        "ipv4": 7,
-        "ipv6": 1,
+        "ipv4": 1,
+        "ipv6": 0,
         "unknown": 0,
-        "ipv4_pct": 87.5,
-        "ipv6_pct": 12.5
+        "ipv4_pct": 100.0,
+        "ipv6_pct": 0.0
       },
       "infrastructure": {
         "cloud_datacenter": 1,
         "traditional_other": 0,
-        "unknown": 7,
-        "cloud_pct": 12.5
+        "unknown": 0,
+        "cloud_pct": 100.0
       },
       "threat_indicators": {
         "vpn": 0,
         "proxy": 0,
         "tor": 0,
-        "clean": 8,
+        "clean": 1,
         "any_threat_flag": 0
       },
       "query_latency": {
-        "mean_dns_ms": 33.9,
-        "mean_api_ms": 232.2
+        "mean_dns_ms": 0.0,
+        "mean_api_ms": 267.6
       }
     },
     "comparison_analytics": {
       "highest_trust_sites": [
-        {
-          "test_id": 8,
-          "domain": "github.com",
-          "category": "Technology",
-          "ip": "20.207.73.82",
-          "country": "India",
-          "infrastructure": "Cloud Hosting",
-          "https_status": "Enabled",
-          "score": 100.0,
-          "trust_score": 100.0,
-          "risk_score": 15.0,
-          "trust_level": "LIKELY SAFE",
-          "risk_level": "LOW RISK",
-          "classification": "LIKELY SAFE"
-        },
         {
           "test_id": 1,
           "domain": "1.1.1.1",
           "category": "General Web",
           "ip": "1.1.1.1",
           "country": "Australia",
-          "infrastructure": "Unknown",
-          "https_status": "Unknown",
-          "score": 85.0,
-          "trust_score": 85.0,
-          "risk_score": 15.0,
-          "trust_level": "GENERALLY SAFE",
+          "infrastructure": "CDN / Edge Hub",
+          "https_status": "Disabled",
+          "score": 5.0,
+          "trust_score": 5.0,
+          "risk_score": 10.0,
+          "trust_level": "HIGH RISK",
           "risk_level": "LOW RISK",
-          "classification": "GENERALLY SAFE"
-        },
-        {
-          "test_id": 2,
-          "domain": "cloudflare.com",
-          "category": "Cloud Services",
-          "ip": "104.16.132.229",
-          "country": "Canada",
-          "infrastructure": "Unknown",
-          "https_status": "Unknown",
-          "score": 85.0,
-          "trust_score": 85.0,
-          "risk_score": 15.0,
-          "trust_level": "GENERALLY SAFE",
-          "risk_level": "LOW RISK",
-          "classification": "GENERALLY SAFE"
-        },
-        {
-          "test_id": 3,
-          "domain": "chatgpt.com",
-          "category": "General Web",
-          "ip": "172.64.155.209",
-          "country": "Canada",
-          "infrastructure": "Unknown",
-          "https_status": "Unknown",
-          "score": 85.0,
-          "trust_score": 85.0,
-          "risk_score": 15.0,
-          "trust_level": "GENERALLY SAFE",
-          "risk_level": "LOW RISK",
-          "classification": "GENERALLY SAFE"
-        },
-        {
-          "test_id": 4,
-          "domain": "google.com",
-          "category": "Search",
-          "ip": "142.250.182.238",
-          "country": "India",
-          "infrastructure": "Unknown",
-          "https_status": "Unknown",
-          "score": 85.0,
-          "trust_score": 85.0,
-          "risk_score": 15.0,
-          "trust_level": "GENERALLY SAFE",
-          "risk_level": "LOW RISK",
-          "classification": "GENERALLY SAFE"
+          "classification": "HIGH RISK"
         }
       ],
       "lowest_trust_sites": [
         {
-          "test_id": 7,
-          "domain": "example.com",
+          "test_id": 1,
+          "domain": "1.1.1.1",
           "category": "General Web",
-          "ip": "93.184.216.34",
-          "country": "United States",
-          "infrastructure": "Unknown",
-          "https_status": "Unknown",
-          "score": 85.0,
-          "trust_score": 85.0,
-          "risk_score": 15.0,
-          "trust_level": "GENERALLY SAFE",
+          "ip": "1.1.1.1",
+          "country": "Australia",
+          "infrastructure": "CDN / Edge Hub",
+          "https_status": "Disabled",
+          "score": 5.0,
+          "trust_score": 5.0,
+          "risk_score": 10.0,
+          "trust_level": "HIGH RISK",
           "risk_level": "LOW RISK",
-          "classification": "GENERALLY SAFE"
-        },
-        {
-          "test_id": 6,
-          "domain": "2001:4860:4860::8888",
-          "category": "General Web",
-          "ip": "2001:4860:4860::8888",
-          "country": "United States",
-          "infrastructure": "Unknown",
-          "https_status": "Unknown",
-          "score": 85.0,
-          "trust_score": 85.0,
-          "risk_score": 15.0,
-          "trust_level": "GENERALLY SAFE",
-          "risk_level": "LOW RISK",
-          "classification": "GENERALLY SAFE"
-        },
-        {
-          "test_id": 5,
-          "domain": "8.8.8.8",
-          "category": "General Web",
-          "ip": "8.8.8.8",
-          "country": "United States",
-          "infrastructure": "Unknown",
-          "https_status": "Unknown",
-          "score": 85.0,
-          "trust_score": 85.0,
-          "risk_score": 15.0,
-          "trust_level": "GENERALLY SAFE",
-          "risk_level": "LOW RISK",
-          "classification": "GENERALLY SAFE"
-        },
-        {
-          "test_id": 4,
-          "domain": "google.com",
-          "category": "Search",
-          "ip": "142.250.182.238",
-          "country": "India",
-          "infrastructure": "Unknown",
-          "https_status": "Unknown",
-          "score": 85.0,
-          "trust_score": 85.0,
-          "risk_score": 15.0,
-          "trust_level": "GENERALLY SAFE",
-          "risk_level": "LOW RISK",
-          "classification": "GENERALLY SAFE"
-        },
-        {
-          "test_id": 3,
-          "domain": "chatgpt.com",
-          "category": "General Web",
-          "ip": "172.64.155.209",
-          "country": "Canada",
-          "infrastructure": "Unknown",
-          "https_status": "Unknown",
-          "score": 85.0,
-          "trust_score": 85.0,
-          "risk_score": 15.0,
-          "trust_level": "GENERALLY SAFE",
-          "risk_level": "LOW RISK",
-          "classification": "GENERALLY SAFE"
+          "classification": "HIGH RISK"
         }
       ],
       "highest_risk_sites": [
@@ -693,164 +438,44 @@
           "category": "General Web",
           "ip": "1.1.1.1",
           "country": "Australia",
-          "infrastructure": "Unknown",
-          "https_status": "Unknown",
-          "score": 15.0,
-          "trust_score": 85.0,
-          "risk_score": 15.0,
-          "trust_level": "GENERALLY SAFE",
-          "risk_level": "LOW RISK",
-          "classification": "LOW RISK"
-        },
-        {
-          "test_id": 2,
-          "domain": "cloudflare.com",
-          "category": "Cloud Services",
-          "ip": "104.16.132.229",
-          "country": "Canada",
-          "infrastructure": "Unknown",
-          "https_status": "Unknown",
-          "score": 15.0,
-          "trust_score": 85.0,
-          "risk_score": 15.0,
-          "trust_level": "GENERALLY SAFE",
-          "risk_level": "LOW RISK",
-          "classification": "LOW RISK"
-        },
-        {
-          "test_id": 3,
-          "domain": "chatgpt.com",
-          "category": "General Web",
-          "ip": "172.64.155.209",
-          "country": "Canada",
-          "infrastructure": "Unknown",
-          "https_status": "Unknown",
-          "score": 15.0,
-          "trust_score": 85.0,
-          "risk_score": 15.0,
-          "trust_level": "GENERALLY SAFE",
-          "risk_level": "LOW RISK",
-          "classification": "LOW RISK"
-        },
-        {
-          "test_id": 4,
-          "domain": "google.com",
-          "category": "Search",
-          "ip": "142.250.182.238",
-          "country": "India",
-          "infrastructure": "Unknown",
-          "https_status": "Unknown",
-          "score": 15.0,
-          "trust_score": 85.0,
-          "risk_score": 15.0,
-          "trust_level": "GENERALLY SAFE",
-          "risk_level": "LOW RISK",
-          "classification": "LOW RISK"
-        },
-        {
-          "test_id": 5,
-          "domain": "8.8.8.8",
-          "category": "General Web",
-          "ip": "8.8.8.8",
-          "country": "United States",
-          "infrastructure": "Unknown",
-          "https_status": "Unknown",
-          "score": 15.0,
-          "trust_score": 85.0,
-          "risk_score": 15.0,
-          "trust_level": "GENERALLY SAFE",
+          "infrastructure": "CDN / Edge Hub",
+          "https_status": "Disabled",
+          "score": 10.0,
+          "trust_score": 5.0,
+          "risk_score": 10.0,
+          "trust_level": "HIGH RISK",
           "risk_level": "LOW RISK",
           "classification": "LOW RISK"
         }
       ],
       "lowest_risk_sites": [
         {
-          "test_id": 8,
-          "domain": "github.com",
-          "category": "Technology",
-          "ip": "20.207.73.82",
-          "country": "India",
-          "infrastructure": "Cloud Hosting",
-          "https_status": "Enabled",
-          "score": 15.0,
-          "trust_score": 100.0,
-          "risk_score": 15.0,
-          "trust_level": "LIKELY SAFE",
-          "risk_level": "LOW RISK",
-          "classification": "LOW RISK"
-        },
-        {
-          "test_id": 7,
-          "domain": "example.com",
+          "test_id": 1,
+          "domain": "1.1.1.1",
           "category": "General Web",
-          "ip": "93.184.216.34",
-          "country": "United States",
-          "infrastructure": "Unknown",
-          "https_status": "Unknown",
-          "score": 15.0,
-          "trust_score": 85.0,
-          "risk_score": 15.0,
-          "trust_level": "GENERALLY SAFE",
-          "risk_level": "LOW RISK",
-          "classification": "LOW RISK"
-        },
-        {
-          "test_id": 6,
-          "domain": "2001:4860:4860::8888",
-          "category": "General Web",
-          "ip": "2001:4860:4860::8888",
-          "country": "United States",
-          "infrastructure": "Unknown",
-          "https_status": "Unknown",
-          "score": 15.0,
-          "trust_score": 85.0,
-          "risk_score": 15.0,
-          "trust_level": "GENERALLY SAFE",
-          "risk_level": "LOW RISK",
-          "classification": "LOW RISK"
-        },
-        {
-          "test_id": 5,
-          "domain": "8.8.8.8",
-          "category": "General Web",
-          "ip": "8.8.8.8",
-          "country": "United States",
-          "infrastructure": "Unknown",
-          "https_status": "Unknown",
-          "score": 15.0,
-          "trust_score": 85.0,
-          "risk_score": 15.0,
-          "trust_level": "GENERALLY SAFE",
-          "risk_level": "LOW RISK",
-          "classification": "LOW RISK"
-        },
-        {
-          "test_id": 4,
-          "domain": "google.com",
-          "category": "Search",
-          "ip": "142.250.182.238",
-          "country": "India",
-          "infrastructure": "Unknown",
-          "https_status": "Unknown",
-          "score": 15.0,
-          "trust_score": 85.0,
-          "risk_score": 15.0,
-          "trust_level": "GENERALLY SAFE",
+          "ip": "1.1.1.1",
+          "country": "Australia",
+          "infrastructure": "CDN / Edge Hub",
+          "https_status": "Disabled",
+          "score": 10.0,
+          "trust_score": 5.0,
+          "risk_score": 10.0,
+          "trust_level": "HIGH RISK",
           "risk_level": "LOW RISK",
           "classification": "LOW RISK"
         }
       ],
       "https_vs_non_https": {
-        "https_sample_count": 1,
-        "https_avg_trust": 100.0,
-        "non_https_sample_count": 7,
-        "non_https_avg_trust": 85.0
+        "https_sample_count": 0,
+        "https_avg_trust": null,
+        "non_https_sample_count": 1,
+        "non_https_avg_trust": 5.0
       },
       "cloud_vs_other_infrastructure": {
         "cloud_sample_count": 1,
-        "cloud_avg_risk": 15.0,
-        "other_sample_count": 7,
-        "other_avg_risk": 15.0
+        "cloud_avg_risk": 10.0,
+        "other_sample_count": 0,
+        "other_avg_risk": null
       },
       "flagged_threat_entities": []
     },
@@ -859,36 +484,36 @@
         "id": "insight-quota",
         "category": "reputation",
         "title": "Sample Quota Progress",
-        "finding": "Field study in progress: 8 of 50 target observations recorded (42 remaining to fulfill quota).",
-        "text": "Field study in progress: 8 of 50 target observations recorded (42 remaining to fulfill quota).",
-        "metric": "8 / 50 (16.0%)",
+        "finding": "Field study in progress: 1 of 50 target observations recorded (49 remaining to fulfill quota).",
+        "text": "Field study in progress: 1 of 50 target observations recorded (49 remaining to fulfill quota).",
+        "metric": "1 / 50 (2.0%)",
         "type": "info"
       },
       {
         "id": "insight-security",
         "category": "security",
         "title": "Transport Layer HTTPS Adoption",
-        "finding": "1 of 8 valid observed websites (12.5%) operate with active HTTPS transport encryption.",
-        "text": "1 of 8 valid observed websites (12.5%) operate with active HTTPS transport encryption.",
-        "metric": "12.5% Encrypted",
+        "finding": "0 of 1 valid observed websites (0.0%) operate with active HTTPS transport encryption.",
+        "text": "0 of 1 valid observed websites (0.0%) operate with active HTTPS transport encryption.",
+        "metric": "0.0% Encrypted",
         "type": "warning"
       },
       {
         "id": "insight-infrastructure",
         "category": "infrastructure",
         "title": "Cloud & Datacenter Concentration",
-        "finding": "1 of 8 observations (12.5%) were classified as large-scale Cloud or Datacenter infrastructure.",
-        "text": "1 of 8 observations (12.5%) were classified as large-scale Cloud or Datacenter infrastructure.",
-        "metric": "12.5% Cloud / DC",
+        "finding": "1 of 1 observations (100.0%) were classified as large-scale Cloud or Datacenter infrastructure.",
+        "text": "1 of 1 observations (100.0%) were classified as large-scale Cloud or Datacenter infrastructure.",
+        "metric": "100.0% Cloud / DC",
         "type": "info"
       },
       {
         "id": "insight-scoring",
         "category": "reputation",
         "title": "Cohort Mean Scores",
-        "finding": "Cohort mean Website Trust Score is 86.9/100, paired with an average IP Risk Score of 15.0/100.",
-        "text": "Cohort mean Website Trust Score is 86.9/100, paired with an average IP Risk Score of 15.0/100.",
-        "metric": "Trust 86.9/100 | Risk 15.0/100",
+        "finding": "Cohort mean Website Trust Score is 5.0/100, paired with an average IP Risk Score of 10.0/100.",
+        "text": "Cohort mean Website Trust Score is 5.0/100, paired with an average IP Risk Score of 10.0/100.",
+        "metric": "Trust 5.0/100 | Risk 10.0/100",
         "type": "info"
       },
       {
@@ -904,9 +529,9 @@
         "id": "insight-asn",
         "category": "network",
         "title": "Leading Autonomous System",
-        "finding": "Network routing was led by AS13335 Cloudflare, Inc. (APNIC and Cloudflare DNS Resolver project), routing 3 endpoints (37.5% of cohort).",
-        "text": "Network routing was led by AS13335 Cloudflare, Inc. (APNIC and Cloudflare DNS Resolver project), routing 3 endpoints (37.5% of cohort).",
-        "metric": "AS13335 Cloudflare, Inc. (37.5%)",
+        "finding": "Network routing was led by AS13335 Cloudflare, Inc. (APNIC and Cloudflare DNS Resolver project), routing 1 endpoints (100.0% of cohort).",
+        "text": "Network routing was led by AS13335 Cloudflare, Inc. (APNIC and Cloudflare DNS Resolver project), routing 1 endpoints (100.0% of cohort).",
+        "metric": "AS13335 Cloudflare, Inc. (100.0%)",
         "type": "info"
       }
     ],
@@ -914,8 +539,8 @@
       "trust_histogram": [
         {
           "bracket": "0\u201320",
-          "count": 0,
-          "pct": 0.0,
+          "count": 1,
+          "pct": 100.0,
           "color": "#ff0055"
         },
         {
@@ -938,15 +563,15 @@
         },
         {
           "bracket": "81\u2013100",
-          "count": 8,
-          "pct": 100.0,
+          "count": 0,
+          "pct": 0.0,
           "color": "#00ff66"
         }
       ],
       "risk_histogram": [
         {
           "bracket": "0\u201320",
-          "count": 8,
+          "count": 1,
           "pct": 100.0,
           "color": "#ff0055"
         },
@@ -978,104 +603,66 @@
       "security_breakdown": [
         {
           "label": "HTTPS Enabled",
-          "count": 1,
-          "pct": 12.5,
+          "count": 0,
+          "pct": 0.0,
           "color": "#00f0ff"
         },
         {
           "label": "HTTPS Disabled",
-          "count": 0,
-          "pct": 0.0,
+          "count": 1,
+          "pct": 100.0,
           "color": "#ff0055"
         },
         {
           "label": "Unknown / N/A",
-          "count": 7,
-          "pct": 87.5,
+          "count": 0,
+          "pct": 0.0,
           "color": "#8892b0"
         }
       ],
       "protocol_breakdown": [
         {
           "label": "IPv4",
-          "count": 7,
-          "pct": 87.5,
+          "count": 1,
+          "pct": 100.0,
           "color": "#00f0ff"
         },
         {
           "label": "IPv6",
-          "count": 1,
-          "pct": 12.5,
+          "count": 0,
+          "pct": 0.0,
           "color": "#7928ca"
         }
       ],
       "infrastructure_breakdown": [
         {
-          "type": "Unknown",
-          "count": 7,
-          "pct": 87.5
-        },
-        {
-          "type": "Cloud Hosting",
+          "type": "CDN / Edge Hub",
           "count": 1,
-          "pct": 12.5
+          "pct": 100.0
         }
       ],
       "top_countries": [
         {
-          "country": "United States",
-          "count": 3,
-          "pct": 37.5
-        },
-        {
-          "country": "Canada",
-          "count": 2,
-          "pct": 25.0
-        },
-        {
-          "country": "India",
-          "count": 2,
-          "pct": 25.0
-        },
-        {
           "country": "Australia",
           "count": 1,
-          "pct": 12.5
+          "pct": 100.0
         }
       ],
       "top_asns": [
         {
           "asn": "AS13335 Cloudflare, Inc.",
           "org": "APNIC and Cloudflare DNS Resolver project",
-          "count": 3,
-          "pct": 37.5
-        },
-        {
-          "asn": "Unknown ASN",
-          "org": "N/A",
-          "count": 3,
-          "pct": 37.5
-        },
-        {
-          "asn": "AS15169 Google LLC",
-          "org": "Google LLC",
           "count": 1,
-          "pct": 12.5
-        },
-        {
-          "asn": "AS8075 Microsoft Corporation",
-          "org": "Microsoft Azure Cloud (centralindia)",
-          "count": 1,
-          "pct": 12.5
+          "pct": 100.0
         }
       ]
     },
     "export_summary": {
-      "sample_size": 8,
+      "sample_size": 1,
       "target_quota": 50,
       "status": "INCOMPLETE",
-      "completeness_pct": 16.0,
-      "timestamp": "2026-09-13T20:43:28.074409+00:00"
+      "completeness_pct": 2.0,
+      "timestamp": "2026-09-21T20:27:48.798906+00:00"
     }
   },
   "observations": [
@@ -1093,19 +680,19 @@
         "city": "South Brisbane",
         "latitude": -27.4766,
         "longitude": 153.0166,
-        "confidence": "MEDIUM"
+        "confidence": "HIGH"
       },
       "network": {
         "asn": "AS13335 Cloudflare, Inc.",
         "organization": "APNIC and Cloudflare DNS Resolver project",
         "isp": "Cloudflare, Inc",
         "network_type": "Unknown",
-        "infrastructure_type": "Unknown"
+        "infrastructure_type": "CDN / Edge Hub"
       },
       "security": {
-        "https_status": "Unknown",
+        "https_status": "Disabled",
         "http_to_https_redirect": "UNKNOWN",
-        "tls_status": "Unknown",
+        "tls_status": "Invalid",
         "tls_issuer": "UNKNOWN",
         "tls_subject": "UNKNOWN",
         "tls_valid_from": "UNKNOWN",
@@ -1116,445 +703,25 @@
         "tor_status": "Unknown"
       },
       "scoring": {
-        "website_trust_score": 85.0,
-        "website_trust_classification": "GENERALLY SAFE",
-        "ip_risk_score": 15.0,
-        "ip_risk_classification": "LOW RISK",
-        "score_confidence": "MEDIUM",
-        "evidence_coverage": 0.5
-      },
-      "intelligence_chain": {
-        "ip_personality": "Public Network Node (1.1.1.1) operated by APNIC and Cloudflare DNS Resolver project in South Brisbane, Australia",
-        "provenance_chain": "1.1.1.1 -> 1.1.1.1 -> AS13335 Cloudflare, Inc. -> APNIC and Cloudflare DNS Resolver project -> Unknown -> Australia"
-      },
-      "telemetry": {
-        "dns_response_time_ms": 0.0,
-        "api_response_time_ms": 613.08,
-        "total_latency_ms": 613.08
-      },
-      "metadata": {
-        "observation_status": "RECORDED",
-        "observed_at": "2026-09-12T21:13:04.855003+00:00",
-        "raw_history_id": 469,
-        "error_message": null
-      }
-    },
-    {
-      "observation_id": 2,
-      "domain": "cloudflare.com",
-      "normalized_domain": "cloudflare.com",
-      "resolved_ip": "104.16.132.229",
-      "ip_version": "IPv4",
-      "ipv4": "104.16.132.229",
-      "ipv6": "UNKNOWN",
-      "geolocation": {
-        "country": "Canada",
-        "region": "Ontario",
-        "city": "Toronto",
-        "latitude": 43.6532,
-        "longitude": -79.3832,
-        "confidence": "MEDIUM"
-      },
-      "network": {
-        "asn": "AS13335 Cloudflare, Inc.",
-        "organization": "Cloudflare, Inc.",
-        "isp": "Cloudflare, Inc.",
-        "network_type": "Unknown",
-        "infrastructure_type": "Unknown"
-      },
-      "security": {
-        "https_status": "Unknown",
-        "http_to_https_redirect": "UNKNOWN",
-        "tls_status": "Unknown",
-        "tls_issuer": "UNKNOWN",
-        "tls_subject": "UNKNOWN",
-        "tls_valid_from": "UNKNOWN",
-        "tls_valid_until": "UNKNOWN",
-        "tls_days_remaining": "UNKNOWN",
-        "vpn_status": "Unknown",
-        "proxy_status": "Unknown",
-        "tor_status": "Unknown"
-      },
-      "scoring": {
-        "website_trust_score": 85.0,
-        "website_trust_classification": "GENERALLY SAFE",
-        "ip_risk_score": 15.0,
-        "ip_risk_classification": "LOW RISK",
-        "score_confidence": "MEDIUM",
-        "evidence_coverage": 0.5
-      },
-      "intelligence_chain": {
-        "ip_personality": "Public Network Node (104.16.132.229) operated by Cloudflare, Inc. in Toronto, Canada",
-        "provenance_chain": "cloudflare.com -> 104.16.132.229 -> AS13335 Cloudflare, Inc. -> Cloudflare, Inc. -> Unknown -> Canada"
-      },
-      "telemetry": {
-        "dns_response_time_ms": 71.02,
-        "api_response_time_ms": 381.39,
-        "total_latency_ms": 452.41
-      },
-      "metadata": {
-        "observation_status": "RECORDED",
-        "observed_at": "2026-09-12T21:13:11.172379+00:00",
-        "raw_history_id": 470,
-        "error_message": null
-      }
-    },
-    {
-      "observation_id": 3,
-      "domain": "chatgpt.com",
-      "normalized_domain": "chatgpt.com",
-      "resolved_ip": "172.64.155.209",
-      "ip_version": "IPv4",
-      "ipv4": "172.64.155.209",
-      "ipv6": "UNKNOWN",
-      "geolocation": {
-        "country": "Canada",
-        "region": "Ontario",
-        "city": "Toronto",
-        "latitude": 43.6532,
-        "longitude": -79.3832,
-        "confidence": "MEDIUM"
-      },
-      "network": {
-        "asn": "AS13335 Cloudflare, Inc.",
-        "organization": "Cloudflare, Inc.",
-        "isp": "Cloudflare, Inc.",
-        "network_type": "Unknown",
-        "infrastructure_type": "Unknown"
-      },
-      "security": {
-        "https_status": "Unknown",
-        "http_to_https_redirect": "UNKNOWN",
-        "tls_status": "Unknown",
-        "tls_issuer": "UNKNOWN",
-        "tls_subject": "UNKNOWN",
-        "tls_valid_from": "UNKNOWN",
-        "tls_valid_until": "UNKNOWN",
-        "tls_days_remaining": "UNKNOWN",
-        "vpn_status": "Unknown",
-        "proxy_status": "Unknown",
-        "tor_status": "Unknown"
-      },
-      "scoring": {
-        "website_trust_score": 85.0,
-        "website_trust_classification": "GENERALLY SAFE",
-        "ip_risk_score": 15.0,
-        "ip_risk_classification": "LOW RISK",
-        "score_confidence": "MEDIUM",
-        "evidence_coverage": 0.5
-      },
-      "intelligence_chain": {
-        "ip_personality": "Public Network Node (172.64.155.209) operated by Cloudflare, Inc. in Toronto, Canada",
-        "provenance_chain": "chatgpt.com -> 172.64.155.209 -> AS13335 Cloudflare, Inc. -> Cloudflare, Inc. -> Unknown -> Canada"
-      },
-      "telemetry": {
-        "dns_response_time_ms": 14.72,
-        "api_response_time_ms": 264.34,
-        "total_latency_ms": 279.06
-      },
-      "metadata": {
-        "observation_status": "RECORDED",
-        "observed_at": "2026-09-12T21:13:50.232157+00:00",
-        "raw_history_id": 471,
-        "error_message": null
-      }
-    },
-    {
-      "observation_id": 4,
-      "domain": "google.com",
-      "normalized_domain": "google.com",
-      "resolved_ip": "142.250.182.238",
-      "ip_version": "IPv4",
-      "ipv4": "142.250.182.238",
-      "ipv6": "UNKNOWN",
-      "geolocation": {
-        "country": "India",
-        "region": "Maharashtra",
-        "city": "Mumbai",
-        "latitude": 19.076,
-        "longitude": 72.8777,
-        "confidence": "MEDIUM"
-      },
-      "network": {
-        "asn": "AS15169 Google LLC",
-        "organization": "Google LLC",
-        "isp": "Google LLC",
-        "network_type": "Unknown",
-        "infrastructure_type": "Unknown"
-      },
-      "security": {
-        "https_status": "Unknown",
-        "http_to_https_redirect": "UNKNOWN",
-        "tls_status": "Unknown",
-        "tls_issuer": "UNKNOWN",
-        "tls_subject": "UNKNOWN",
-        "tls_valid_from": "UNKNOWN",
-        "tls_valid_until": "UNKNOWN",
-        "tls_days_remaining": "UNKNOWN",
-        "vpn_status": "Unknown",
-        "proxy_status": "Unknown",
-        "tor_status": "Unknown"
-      },
-      "scoring": {
-        "website_trust_score": 85.0,
-        "website_trust_classification": "GENERALLY SAFE",
-        "ip_risk_score": 15.0,
-        "ip_risk_classification": "LOW RISK",
-        "score_confidence": "MEDIUM",
-        "evidence_coverage": 0.5
-      },
-      "intelligence_chain": {
-        "ip_personality": "Public Network Node (142.250.182.238) operated by Google LLC in Mumbai, India",
-        "provenance_chain": "google.com -> 142.250.182.238 -> AS15169 Google LLC -> Google LLC -> Unknown -> India"
-      },
-      "telemetry": {
-        "dns_response_time_ms": 40.5,
-        "api_response_time_ms": 350.85,
-        "total_latency_ms": 391.35
-      },
-      "metadata": {
-        "observation_status": "RECORDED",
-        "observed_at": "2026-09-12T21:21:39.178629+00:00",
-        "raw_history_id": 473,
-        "error_message": null
-      }
-    },
-    {
-      "observation_id": 5,
-      "domain": "8.8.8.8",
-      "normalized_domain": "8.8.8.8",
-      "resolved_ip": "8.8.8.8",
-      "ip_version": "IPv4",
-      "ipv4": "8.8.8.8",
-      "ipv6": "UNKNOWN",
-      "geolocation": {
-        "country": "United States",
-        "region": "N/A",
-        "city": "Mountain View",
-        "latitude": null,
-        "longitude": null,
-        "confidence": "MEDIUM"
-      },
-      "network": {
-        "asn": "N/A",
-        "organization": "N/A",
-        "isp": "N/A",
-        "network_type": "Unknown",
-        "infrastructure_type": "Unknown"
-      },
-      "security": {
-        "https_status": "Unknown",
-        "http_to_https_redirect": "UNKNOWN",
-        "tls_status": "Unknown",
-        "tls_issuer": "UNKNOWN",
-        "tls_subject": "UNKNOWN",
-        "tls_valid_from": "UNKNOWN",
-        "tls_valid_until": "UNKNOWN",
-        "tls_days_remaining": "UNKNOWN",
-        "vpn_status": "Unknown",
-        "proxy_status": "Unknown",
-        "tor_status": "Unknown"
-      },
-      "scoring": {
-        "website_trust_score": 85.0,
-        "website_trust_classification": "GENERALLY SAFE",
-        "ip_risk_score": 15.0,
-        "ip_risk_classification": "LOW RISK",
-        "score_confidence": "MEDIUM",
-        "evidence_coverage": 0.5
-      },
-      "intelligence_chain": {
-        "ip_personality": "Public Network Node (8.8.8.8) operated by N/A in Mountain View, United States",
-        "provenance_chain": "8.8.8.8 -> 8.8.8.8 -> N/A -> N/A -> Unknown -> United States"
-      },
-      "telemetry": {
-        "dns_response_time_ms": 0.0,
-        "api_response_time_ms": 0.04,
-        "total_latency_ms": 0.04
-      },
-      "metadata": {
-        "observation_status": "RECORDED",
-        "observed_at": "2026-09-12T21:30:49.738490+00:00",
-        "raw_history_id": 477,
-        "error_message": null
-      }
-    },
-    {
-      "observation_id": 6,
-      "domain": "2001:4860:4860::8888",
-      "normalized_domain": "2001",
-      "resolved_ip": "2001:4860:4860::8888",
-      "ip_version": "IPv6",
-      "ipv4": "UNKNOWN",
-      "ipv6": "2001:4860:4860::8888",
-      "geolocation": {
-        "country": "United States",
-        "region": "N/A",
-        "city": "N/A",
-        "latitude": null,
-        "longitude": null,
-        "confidence": "MEDIUM"
-      },
-      "network": {
-        "asn": "N/A",
-        "organization": "N/A",
-        "isp": "N/A",
-        "network_type": "Unknown",
-        "infrastructure_type": "Unknown"
-      },
-      "security": {
-        "https_status": "Unknown",
-        "http_to_https_redirect": "UNKNOWN",
-        "tls_status": "Unknown",
-        "tls_issuer": "UNKNOWN",
-        "tls_subject": "UNKNOWN",
-        "tls_valid_from": "UNKNOWN",
-        "tls_valid_until": "UNKNOWN",
-        "tls_days_remaining": "UNKNOWN",
-        "vpn_status": "Unknown",
-        "proxy_status": "Unknown",
-        "tor_status": "Unknown"
-      },
-      "scoring": {
-        "website_trust_score": 85.0,
-        "website_trust_classification": "GENERALLY SAFE",
-        "ip_risk_score": 15.0,
-        "ip_risk_classification": "LOW RISK",
-        "score_confidence": "MEDIUM",
-        "evidence_coverage": 0.5
-      },
-      "intelligence_chain": {
-        "ip_personality": "Public Network Node (2001:4860:4860::8888) operated by N/A in N/A, United States",
-        "provenance_chain": "2001:4860:4860::8888 -> 2001:4860:4860::8888 -> N/A -> N/A -> Unknown -> United States"
-      },
-      "telemetry": {
-        "dns_response_time_ms": 0.0,
-        "api_response_time_ms": 0.05,
-        "total_latency_ms": 0.05
-      },
-      "metadata": {
-        "observation_status": "RECORDED",
-        "observed_at": "2026-09-12T21:30:49.749140+00:00",
-        "raw_history_id": 478,
-        "error_message": null
-      }
-    },
-    {
-      "observation_id": 7,
-      "domain": "example.com",
-      "normalized_domain": "example.com",
-      "resolved_ip": "93.184.216.34",
-      "ip_version": "IPv4",
-      "ipv4": "93.184.216.34",
-      "ipv6": "UNKNOWN",
-      "geolocation": {
-        "country": "United States",
-        "region": "N/A",
-        "city": "Los Angeles",
-        "latitude": null,
-        "longitude": null,
-        "confidence": "MEDIUM"
-      },
-      "network": {
-        "asn": "N/A",
-        "organization": "N/A",
-        "isp": "N/A",
-        "network_type": "Unknown",
-        "infrastructure_type": "Unknown"
-      },
-      "security": {
-        "https_status": "Unknown",
-        "http_to_https_redirect": "UNKNOWN",
-        "tls_status": "Unknown",
-        "tls_issuer": "UNKNOWN",
-        "tls_subject": "UNKNOWN",
-        "tls_valid_from": "UNKNOWN",
-        "tls_valid_until": "UNKNOWN",
-        "tls_days_remaining": "UNKNOWN",
-        "vpn_status": "Unknown",
-        "proxy_status": "Unknown",
-        "tor_status": "Unknown"
-      },
-      "scoring": {
-        "website_trust_score": 85.0,
-        "website_trust_classification": "GENERALLY SAFE",
-        "ip_risk_score": 15.0,
-        "ip_risk_classification": "LOW RISK",
-        "score_confidence": "MEDIUM",
-        "evidence_coverage": 0.5
-      },
-      "intelligence_chain": {
-        "ip_personality": "Public Network Node (93.184.216.34) operated by N/A in Los Angeles, United States",
-        "provenance_chain": "example.com -> 93.184.216.34 -> N/A -> N/A -> Unknown -> United States"
-      },
-      "telemetry": {
-        "dns_response_time_ms": 15.5,
-        "api_response_time_ms": 0.03,
-        "total_latency_ms": 15.53
-      },
-      "metadata": {
-        "observation_status": "RECORDED",
-        "observed_at": "2026-09-12T21:30:49.777917+00:00",
-        "raw_history_id": 480,
-        "error_message": null
-      }
-    },
-    {
-      "observation_id": 8,
-      "domain": "github.com",
-      "normalized_domain": "github.com",
-      "resolved_ip": "20.207.73.82",
-      "ip_version": "IPv4",
-      "ipv4": "20.207.73.82",
-      "ipv6": "UNKNOWN",
-      "geolocation": {
-        "country": "India",
-        "region": "Maharashtra",
-        "city": "Pune",
-        "latitude": 18.5144,
-        "longitude": 73.864235,
-        "confidence": "HIGH"
-      },
-      "network": {
-        "asn": "AS8075 Microsoft Corporation",
-        "organization": "Microsoft Azure Cloud (centralindia)",
-        "isp": "Microsoft Corporation",
-        "network_type": "Unknown",
-        "infrastructure_type": "Cloud Hosting"
-      },
-      "security": {
-        "https_status": "Enabled",
-        "http_to_https_redirect": "UNKNOWN",
-        "tls_status": "Valid",
-        "tls_issuer": "UNKNOWN",
-        "tls_subject": "UNKNOWN",
-        "tls_valid_from": "UNKNOWN",
-        "tls_valid_until": "UNKNOWN",
-        "tls_days_remaining": "UNKNOWN",
-        "vpn_status": "Unknown",
-        "proxy_status": "Unknown",
-        "tor_status": "Unknown"
-      },
-      "scoring": {
-        "website_trust_score": 100.0,
-        "website_trust_classification": "LIKELY SAFE",
-        "ip_risk_score": 15.0,
+        "website_trust_score": 5.0,
+        "website_trust_classification": "HIGH RISK",
+        "ip_risk_score": 10.0,
         "ip_risk_classification": "LOW RISK",
         "score_confidence": "HIGH",
         "evidence_coverage": 1.0
       },
       "intelligence_chain": {
-        "ip_personality": "Cloud Hosting Node (Microsoft Azure Cloud (centralindia)) in Pune, India",
-        "provenance_chain": "github.com -> 20.207.73.82 -> AS8075 Microsoft Corporation -> Microsoft Azure Cloud (centralindia) -> Cloud Hosting -> India"
+        "ip_personality": "APNIC and Cloudflare DNS Resolver project Edge Hub serving 1.1.1.1 in South Brisbane, Australia",
+        "provenance_chain": "1.1.1.1 -> 1.1.1.1 -> AS13335 Cloudflare, Inc. -> APNIC and Cloudflare DNS Resolver project -> CDN / Edge Hub -> Australia"
       },
       "telemetry": {
-        "dns_response_time_ms": 27.91,
-        "api_response_time_ms": 248.12,
-        "total_latency_ms": 276.03
+        "dns_response_time_ms": 0.0,
+        "api_response_time_ms": 267.59,
+        "total_latency_ms": 267.59
       },
       "metadata": {
         "observation_status": "RECORDED",
-        "observed_at": "2026-09-13T20:43:28.074409+00:00",
+        "observed_at": "2026-09-21T20:27:48.798906+00:00",
         "raw_history_id": null,
         "error_message": null
       }
