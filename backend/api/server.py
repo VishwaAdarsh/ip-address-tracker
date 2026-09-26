@@ -75,7 +75,12 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
 
     def _set_cors_headers(self) -> None:
         """Inject CORS headers allowing secure browser API access."""
-        self.send_header("Access-Control-Allow-Origin", "*")
+        origin = self.headers.get("Origin", "")
+        if origin and (origin.endswith(".vercel.app") or "localhost" in origin or "127.0.0.1" in origin):
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Access-Control-Allow-Credentials", "true")
+        else:
+            self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Accept, Authorization")
         self.send_header("Access-Control-Max-Age", "86400")

@@ -22,6 +22,8 @@ from backend.config.settings import (
     AI_ENABLED,
     AI_MODEL,
     AI_PROVIDER,
+    ALLOW_ORIGIN_REGEX,
+    ALLOWED_ORIGINS,
     BASE_DIR,
 )
 from backend.intelligence.ai_explainer import explain_intelligence
@@ -77,9 +79,12 @@ def create_fastapi_app() -> FastAPI:
 
     # 1. Security & CORS Middlewares
     app.add_middleware(SecurityHeadersMiddleware)
+    cors_origins = ALLOWED_ORIGINS if ALLOWED_ORIGINS != ["*"] else ["*"]
+    cors_regex = None if ALLOWED_ORIGINS == ["*"] else ALLOW_ORIGIN_REGEX
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=cors_origins,
+        allow_origin_regex=cors_regex,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

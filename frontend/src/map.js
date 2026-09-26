@@ -114,3 +114,8 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+// Global exports for Leaflet map integration
+window.initMap = initMap;
+window.updateMapLocation = updateMapLocation;
+window.resizeMap = resizeMap;

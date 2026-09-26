@@ -3,7 +3,12 @@
  * Manages view routing, asynchronous lookup requests, real-time polling, and UI rendering.
  */
 
-const API_BASE = ''; // Same-origin REST API
+// Centralized API configuration: Reads VITE_API_BASE_URL (configured on Vercel), falls back to window override or same-origin
+const API_BASE = (
+  (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL) ||
+  (typeof window !== 'undefined' && window.__API_BASE_URL__) ||
+  ''
+).replace(/\/+$/, '');
 
 let currentTarget = null;
 let fieldStudyPollingInterval = null;

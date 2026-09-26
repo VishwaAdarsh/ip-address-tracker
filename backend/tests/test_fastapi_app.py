@@ -65,3 +65,33 @@ def test_frontend_root_delivery(client):
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
     assert "IP PULSE" in response.text
+
+
+def test_cors_vercel_origin(client):
+    """Verify CORS headers correctly allow Vercel domains."""
+    response = client.get("/api/status", headers={"Origin": "https://ip-pulse-vishwa.vercel.app"})
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == "https://ip-pulse-vishwa.vercel.app"
+    assert response.headers.get("access-control-allow-credentials") == "true"
+
+
+def test_cors_localhost_origin(client):
+    """Verify CORS headers correctly allow local Vite dev origin."""
+    response = client.get("/api/status", headers={"Origin": "http://localhost:5173"})
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == "http://localhost:5173"
+
+
+def test_cors_options_preflight(client):
+    """Verify CORS preflight OPTIONS requests are handled successfully."""
+    response = client.options(
+        "/api/status",
+        headers={
+            "Origin": "https://ip-pulse-vishwa.vercel.app",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "Content-Type",
+        },
+    )
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == "https://ip-pulse-vishwa.vercel.app"
+    assert "POST" in response.headers.get("access-control-allow-methods", "")

@@ -54,3 +54,20 @@ AI_ENABLED = os.environ.get("AI_ENABLED", "true").lower() in ("true", "1", "yes"
 # Server Network Configuration
 HOST = os.environ.get("HOST", "127.0.0.1")
 PORT = int(os.environ.get("PORT", "8000"))
+
+# CORS Configuration
+DEFAULT_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+env_origins = os.environ.get("ALLOWED_ORIGINS", "")
+if env_origins:
+    ALLOWED_ORIGINS = [o.strip() for o in env_origins.split(",") if o.strip()]
+else:
+    ALLOWED_ORIGINS = DEFAULT_ALLOWED_ORIGINS
+
+ALLOW_ORIGIN_REGEX = os.environ.get("ALLOW_ORIGIN_REGEX", r"^https:\/\/.*\.vercel\.app$")
