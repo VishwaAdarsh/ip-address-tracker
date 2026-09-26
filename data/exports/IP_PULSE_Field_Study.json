@@ -2,14 +2,14 @@
   "project": "IP PULSE \u2014 IP Intelligence, Geolocation & Website Risk Analysis Platform",
   "study_phase": "Phase 21: Research Report & Data Export",
   "target_observations": 50,
-  "observations_collected": 1,
-  "remaining_to_target": 49,
+  "observations_collected": 2,
+  "remaining_to_target": 48,
   "dataset_status": "INCOMPLETE",
-  "generated_at": "2026-09-21T20:27:49.072001+00:00",
+  "generated_at": "2026-09-26T13:50:22.074928+00:00",
   "validation_summary": {
     "is_valid": true,
-    "total_records": 1,
-    "valid_records_count": 1,
+    "total_records": 2,
+    "valid_records_count": 2,
     "issues_count": 0,
     "warnings": [],
     "details": {
@@ -21,24 +21,27 @@
       "invalid_timestamp_count": 0,
       "classification_mismatch_count": 0
     },
-    "audited_at": "2026-09-21T20:27:49.067604+00:00"
+    "audited_at": "2026-09-26T13:50:22.070887+00:00"
   },
   "analytics": {
     "success": true,
     "insufficient_data": false,
     "is_filtered": false,
-    "unfiltered_total_count": 1,
-    "filtered_count": 1,
+    "unfiltered_total_count": 2,
+    "filtered_count": 2,
     "filter_summary": {},
     "available_filter_options": {
       "countries": [
-        "Australia"
+        "Australia",
+        "United States"
       ],
       "infrastructures": [
-        "CDN / Edge Hub"
+        "CDN / Edge Hub",
+        "Cloud Hosting"
       ],
       "trust_classes": [
-        "HIGH RISK"
+        "HIGH RISK",
+        "LIKELY SAFE"
       ],
       "risk_classes": [
         "LOW RISK"
@@ -72,7 +75,25 @@
     },
     "map_points": [
       {
-        "id": 25,
+        "id": 26,
+        "domain": "google.com",
+        "ip": "192.178.177.139",
+        "resolved_ip": "192.178.177.139",
+        "latitude": 37.4225,
+        "longitude": -122.085,
+        "country": "United States",
+        "city": "Mountain View",
+        "organization": "Google LLC",
+        "asn": "AS15169 Google LLC",
+        "infrastructure": "Cloud Hosting",
+        "trust_score": 95.0,
+        "risk_score": 15.0,
+        "trust_classification": "LIKELY SAFE",
+        "risk_classification": "LOW RISK",
+        "https_status": "Enabled"
+      },
+      {
+        "id": 27,
         "domain": "1.1.1.1",
         "ip": "1.1.1.1",
         "resolved_ip": "1.1.1.1",
@@ -90,47 +111,47 @@
         "https_status": "Disabled"
       }
     ],
-    "mapped_points_count": 1,
+    "mapped_points_count": 2,
     "missing_coordinates_count": 0,
     "overview": {
-      "total_observations": 1,
-      "valid_observations": 1,
+      "total_observations": 2,
+      "valid_observations": 2,
       "invalid_observations": 0,
       "failed_observations": 0,
       "target": 50,
       "sample_target": 50,
-      "remaining": 49,
-      "remaining_to_target": 49,
+      "remaining": 48,
+      "remaining_to_target": 48,
       "target_reached": false,
-      "progress_percentage": 2.0,
-      "collection_progress_pct": 2.0,
+      "progress_percentage": 4.0,
+      "collection_progress_pct": 4.0,
       "status": "INCOMPLETE",
       "study_status": "INCOMPLETE",
-      "https_adoption_pct": 0.0,
+      "https_adoption_pct": 50.0,
       "ipv4_pct": 100.0,
       "ipv6_pct": 0.0,
       "vpn_detections": 0,
       "proxy_detections": 0,
       "tor_detections": 0,
       "cloud_datacenter_pct": 100.0,
-      "avg_trust_score": 5.0,
-      "mean_trust_score": 5.0,
-      "avg_risk_score": 10.0,
-      "mean_risk_score": 10.0
+      "avg_trust_score": 50.0,
+      "mean_trust_score": 50.0,
+      "avg_risk_score": 12.5,
+      "mean_risk_score": 12.5
     },
     "trust_analysis": {
       "statistics": {
-        "mean": 5.0,
+        "mean": 50.0,
         "min": 5.0,
-        "max": 5.0,
-        "std_dev": 0.0,
-        "count": 1
+        "max": 95.0,
+        "std_dev": 45.0,
+        "count": 2
       },
       "distribution": [
         {
           "bracket": "0\u201320",
           "count": 1,
-          "pct": 100.0,
+          "pct": 50.0,
           "color": "#ff0055"
         },
         {
@@ -153,8 +174,8 @@
         },
         {
           "bracket": "81\u2013100",
-          "count": 0,
-          "pct": 0.0,
+          "count": 1,
+          "pct": 50.0,
           "color": "#00ff66"
         }
       ],
@@ -162,7 +183,7 @@
         {
           "bracket": "0\u201320",
           "count": 1,
-          "pct": 100.0,
+          "pct": 50.0,
           "color": "#ff0055"
         },
         {
@@ -185,36 +206,41 @@
         },
         {
           "bracket": "81\u2013100",
-          "count": 0,
-          "pct": 0.0,
+          "count": 1,
+          "pct": 50.0,
           "color": "#00ff66"
         }
       ],
       "classifications": [
         {
+          "classification": "LIKELY SAFE",
+          "count": 1,
+          "pct": 50.0
+        },
+        {
           "classification": "HIGH RISK",
           "count": 1,
-          "pct": 100.0
+          "pct": 50.0
         }
       ],
       "min": 5.0,
-      "max": 5.0,
-      "mean": 5.0,
-      "std_dev": 0.0,
-      "count": 1
+      "max": 95.0,
+      "mean": 50.0,
+      "std_dev": 45.0,
+      "count": 2
     },
     "risk_analysis": {
       "statistics": {
-        "mean": 10.0,
+        "mean": 12.5,
         "min": 10.0,
-        "max": 10.0,
-        "std_dev": 0.0,
-        "count": 1
+        "max": 15.0,
+        "std_dev": 2.5,
+        "count": 2
       },
       "distribution": [
         {
           "bracket": "0\u201320",
-          "count": 1,
+          "count": 2,
           "pct": 100.0,
           "color": "#ff0055"
         },
@@ -246,7 +272,7 @@
       "histogram": [
         {
           "bracket": "0\u201320",
-          "count": 1,
+          "count": 2,
           "pct": 100.0,
           "color": "#ff0055"
         },
@@ -278,44 +304,44 @@
       "classifications": [
         {
           "classification": "LOW RISK",
-          "count": 1,
+          "count": 2,
           "pct": 100.0
         }
       ],
       "min": 10.0,
-      "max": 10.0,
-      "mean": 10.0,
-      "std_dev": 0.0,
-      "count": 1
+      "max": 15.0,
+      "mean": 12.5,
+      "std_dev": 2.5,
+      "count": 2
     },
     "security_analysis": {
-      "https_enabled_count": 0,
-      "https_enabled_pct": 0.0,
+      "https_enabled_count": 1,
+      "https_enabled_pct": 50.0,
       "https_disabled_count": 1,
-      "https_disabled_pct": 100.0,
+      "https_disabled_pct": 50.0,
       "https_unknown_count": 0,
       "https_unknown_pct": 0.0,
-      "tls_valid_count": 0,
-      "tls_valid_pct": 0.0,
+      "tls_valid_count": 1,
+      "tls_valid_pct": 50.0,
       "tls_invalid_count": 1,
-      "tls_invalid_pct": 100.0,
+      "tls_invalid_pct": 50.0,
       "tls_unknown_count": 0,
       "tls_unknown_pct": 0.0,
       "https_status": {
-        "enabled": 0,
+        "enabled": 1,
         "disabled": 1,
         "unknown": 0,
-        "adoption_pct": 0.0
+        "adoption_pct": 50.0
       },
       "tls_status": {
-        "valid": 0,
+        "valid": 1,
         "invalid_or_expired": 1,
         "unknown": 0,
-        "valid_pct": 0.0
+        "valid_pct": 50.0
       }
     },
     "network_analysis": {
-      "ipv4_count": 1,
+      "ipv4_count": 2,
       "ipv4_pct": 100.0,
       "ipv6_count": 0,
       "ipv6_pct": 0.0,
@@ -323,19 +349,24 @@
       "network_types": [
         {
           "type": "Unknown",
-          "count": 1,
+          "count": 2,
           "pct": 100.0
         }
       ],
       "infrastructure_types": [
         {
+          "type": "Cloud Hosting",
+          "count": 1,
+          "pct": 50.0
+        },
+        {
           "type": "CDN / Edge Hub",
           "count": 1,
-          "pct": 100.0
+          "pct": 50.0
         }
       ],
       "cloud_vs_traditional": {
-        "cloud_datacenter_count": 1,
+        "cloud_datacenter_count": 2,
         "cloud_datacenter_pct": 100.0,
         "traditional_other_count": 0,
         "traditional_other_pct": 0.0,
@@ -345,41 +376,57 @@
         "vpn_count": 0,
         "proxy_count": 0,
         "tor_count": 0,
-        "clean_count": 1
+        "clean_count": 2
       },
       "top_asns": [
+        {
+          "asn": "AS15169 Google LLC",
+          "org": "Google LLC",
+          "count": 1,
+          "pct": 50.0
+        },
         {
           "asn": "AS13335 Cloudflare, Inc.",
           "org": "APNIC and Cloudflare DNS Resolver project",
           "count": 1,
-          "pct": 100.0
+          "pct": 50.0
         }
       ],
       "top_organizations": [
         {
+          "organization": "Google LLC",
+          "count": 1,
+          "pct": 50.0
+        },
+        {
           "organization": "APNIC and Cloudflare DNS Resolver project",
           "count": 1,
-          "pct": 100.0
+          "pct": 50.0
         }
       ],
       "top_countries": [
         {
+          "country": "United States",
+          "count": 1,
+          "pct": 50.0
+        },
+        {
           "country": "Australia",
           "count": 1,
-          "pct": 100.0
+          "pct": 50.0
         }
       ],
-      "mean_dns_latency_ms": 0.0,
-      "mean_api_latency_ms": 267.6,
+      "mean_dns_latency_ms": 23.6,
+      "mean_api_latency_ms": 494.6,
       "ip_versions": {
-        "ipv4": 1,
+        "ipv4": 2,
         "ipv6": 0,
         "unknown": 0,
         "ipv4_pct": 100.0,
         "ipv6_pct": 0.0
       },
       "infrastructure": {
-        "cloud_datacenter": 1,
+        "cloud_datacenter": 2,
         "traditional_other": 0,
         "unknown": 0,
         "cloud_pct": 100.0
@@ -388,18 +435,33 @@
         "vpn": 0,
         "proxy": 0,
         "tor": 0,
-        "clean": 1,
+        "clean": 2,
         "any_threat_flag": 0
       },
       "query_latency": {
-        "mean_dns_ms": 0.0,
-        "mean_api_ms": 267.6
+        "mean_dns_ms": 23.6,
+        "mean_api_ms": 494.6
       }
     },
     "comparison_analytics": {
       "highest_trust_sites": [
         {
           "test_id": 1,
+          "domain": "google.com",
+          "category": "Search",
+          "ip": "192.178.177.139",
+          "country": "United States",
+          "infrastructure": "Cloud Hosting",
+          "https_status": "Enabled",
+          "score": 95.0,
+          "trust_score": 95.0,
+          "risk_score": 15.0,
+          "trust_level": "LIKELY SAFE",
+          "risk_level": "LOW RISK",
+          "classification": "LIKELY SAFE"
+        },
+        {
+          "test_id": 2,
           "domain": "1.1.1.1",
           "category": "General Web",
           "ip": "1.1.1.1",
@@ -416,7 +478,7 @@
       ],
       "lowest_trust_sites": [
         {
-          "test_id": 1,
+          "test_id": 2,
           "domain": "1.1.1.1",
           "category": "General Web",
           "ip": "1.1.1.1",
@@ -429,11 +491,41 @@
           "trust_level": "HIGH RISK",
           "risk_level": "LOW RISK",
           "classification": "HIGH RISK"
+        },
+        {
+          "test_id": 1,
+          "domain": "google.com",
+          "category": "Search",
+          "ip": "192.178.177.139",
+          "country": "United States",
+          "infrastructure": "Cloud Hosting",
+          "https_status": "Enabled",
+          "score": 95.0,
+          "trust_score": 95.0,
+          "risk_score": 15.0,
+          "trust_level": "LIKELY SAFE",
+          "risk_level": "LOW RISK",
+          "classification": "LIKELY SAFE"
         }
       ],
       "highest_risk_sites": [
         {
           "test_id": 1,
+          "domain": "google.com",
+          "category": "Search",
+          "ip": "192.178.177.139",
+          "country": "United States",
+          "infrastructure": "Cloud Hosting",
+          "https_status": "Enabled",
+          "score": 15.0,
+          "trust_score": 95.0,
+          "risk_score": 15.0,
+          "trust_level": "LIKELY SAFE",
+          "risk_level": "LOW RISK",
+          "classification": "LOW RISK"
+        },
+        {
+          "test_id": 2,
           "domain": "1.1.1.1",
           "category": "General Web",
           "ip": "1.1.1.1",
@@ -450,7 +542,7 @@
       ],
       "lowest_risk_sites": [
         {
-          "test_id": 1,
+          "test_id": 2,
           "domain": "1.1.1.1",
           "category": "General Web",
           "ip": "1.1.1.1",
@@ -463,17 +555,32 @@
           "trust_level": "HIGH RISK",
           "risk_level": "LOW RISK",
           "classification": "LOW RISK"
+        },
+        {
+          "test_id": 1,
+          "domain": "google.com",
+          "category": "Search",
+          "ip": "192.178.177.139",
+          "country": "United States",
+          "infrastructure": "Cloud Hosting",
+          "https_status": "Enabled",
+          "score": 15.0,
+          "trust_score": 95.0,
+          "risk_score": 15.0,
+          "trust_level": "LIKELY SAFE",
+          "risk_level": "LOW RISK",
+          "classification": "LOW RISK"
         }
       ],
       "https_vs_non_https": {
-        "https_sample_count": 0,
-        "https_avg_trust": null,
+        "https_sample_count": 1,
+        "https_avg_trust": 95.0,
         "non_https_sample_count": 1,
         "non_https_avg_trust": 5.0
       },
       "cloud_vs_other_infrastructure": {
-        "cloud_sample_count": 1,
-        "cloud_avg_risk": 10.0,
+        "cloud_sample_count": 2,
+        "cloud_avg_risk": 12.5,
         "other_sample_count": 0,
         "other_avg_risk": null
       },
@@ -484,26 +591,26 @@
         "id": "insight-quota",
         "category": "reputation",
         "title": "Sample Quota Progress",
-        "finding": "Field study in progress: 1 of 50 target observations recorded (49 remaining to fulfill quota).",
-        "text": "Field study in progress: 1 of 50 target observations recorded (49 remaining to fulfill quota).",
-        "metric": "1 / 50 (2.0%)",
+        "finding": "Field study in progress: 2 of 50 target observations recorded (48 remaining to fulfill quota).",
+        "text": "Field study in progress: 2 of 50 target observations recorded (48 remaining to fulfill quota).",
+        "metric": "2 / 50 (4.0%)",
         "type": "info"
       },
       {
         "id": "insight-security",
         "category": "security",
         "title": "Transport Layer HTTPS Adoption",
-        "finding": "0 of 1 valid observed websites (0.0%) operate with active HTTPS transport encryption.",
-        "text": "0 of 1 valid observed websites (0.0%) operate with active HTTPS transport encryption.",
-        "metric": "0.0% Encrypted",
+        "finding": "1 of 2 valid observed websites (50.0%) operate with active HTTPS transport encryption.",
+        "text": "1 of 2 valid observed websites (50.0%) operate with active HTTPS transport encryption.",
+        "metric": "50.0% Encrypted",
         "type": "warning"
       },
       {
         "id": "insight-infrastructure",
         "category": "infrastructure",
         "title": "Cloud & Datacenter Concentration",
-        "finding": "1 of 1 observations (100.0%) were classified as large-scale Cloud or Datacenter infrastructure.",
-        "text": "1 of 1 observations (100.0%) were classified as large-scale Cloud or Datacenter infrastructure.",
+        "finding": "2 of 2 observations (100.0%) were classified as large-scale Cloud or Datacenter infrastructure.",
+        "text": "2 of 2 observations (100.0%) were classified as large-scale Cloud or Datacenter infrastructure.",
         "metric": "100.0% Cloud / DC",
         "type": "info"
       },
@@ -511,9 +618,9 @@
         "id": "insight-scoring",
         "category": "reputation",
         "title": "Cohort Mean Scores",
-        "finding": "Cohort mean Website Trust Score is 5.0/100, paired with an average IP Risk Score of 10.0/100.",
-        "text": "Cohort mean Website Trust Score is 5.0/100, paired with an average IP Risk Score of 10.0/100.",
-        "metric": "Trust 5.0/100 | Risk 10.0/100",
+        "finding": "Cohort mean Website Trust Score is 50.0/100, paired with an average IP Risk Score of 12.5/100.",
+        "text": "Cohort mean Website Trust Score is 50.0/100, paired with an average IP Risk Score of 12.5/100.",
+        "metric": "Trust 50.0/100 | Risk 12.5/100",
         "type": "info"
       },
       {
@@ -529,9 +636,9 @@
         "id": "insight-asn",
         "category": "network",
         "title": "Leading Autonomous System",
-        "finding": "Network routing was led by AS13335 Cloudflare, Inc. (APNIC and Cloudflare DNS Resolver project), routing 1 endpoints (100.0% of cohort).",
-        "text": "Network routing was led by AS13335 Cloudflare, Inc. (APNIC and Cloudflare DNS Resolver project), routing 1 endpoints (100.0% of cohort).",
-        "metric": "AS13335 Cloudflare, Inc. (100.0%)",
+        "finding": "Network routing was led by AS15169 Google LLC (Google LLC), routing 1 endpoints (50.0% of cohort).",
+        "text": "Network routing was led by AS15169 Google LLC (Google LLC), routing 1 endpoints (50.0% of cohort).",
+        "metric": "AS15169 Google LLC (50.0%)",
         "type": "info"
       }
     ],
@@ -540,7 +647,7 @@
         {
           "bracket": "0\u201320",
           "count": 1,
-          "pct": 100.0,
+          "pct": 50.0,
           "color": "#ff0055"
         },
         {
@@ -563,15 +670,15 @@
         },
         {
           "bracket": "81\u2013100",
-          "count": 0,
-          "pct": 0.0,
+          "count": 1,
+          "pct": 50.0,
           "color": "#00ff66"
         }
       ],
       "risk_histogram": [
         {
           "bracket": "0\u201320",
-          "count": 1,
+          "count": 2,
           "pct": 100.0,
           "color": "#ff0055"
         },
@@ -603,14 +710,14 @@
       "security_breakdown": [
         {
           "label": "HTTPS Enabled",
-          "count": 0,
-          "pct": 0.0,
+          "count": 1,
+          "pct": 50.0,
           "color": "#00f0ff"
         },
         {
           "label": "HTTPS Disabled",
           "count": 1,
-          "pct": 100.0,
+          "pct": 50.0,
           "color": "#ff0055"
         },
         {
@@ -623,7 +730,7 @@
       "protocol_breakdown": [
         {
           "label": "IPv4",
-          "count": 1,
+          "count": 2,
           "pct": 100.0,
           "color": "#00f0ff"
         },
@@ -636,38 +743,114 @@
       ],
       "infrastructure_breakdown": [
         {
+          "type": "Cloud Hosting",
+          "count": 1,
+          "pct": 50.0
+        },
+        {
           "type": "CDN / Edge Hub",
           "count": 1,
-          "pct": 100.0
+          "pct": 50.0
         }
       ],
       "top_countries": [
         {
+          "country": "United States",
+          "count": 1,
+          "pct": 50.0
+        },
+        {
           "country": "Australia",
           "count": 1,
-          "pct": 100.0
+          "pct": 50.0
         }
       ],
       "top_asns": [
         {
+          "asn": "AS15169 Google LLC",
+          "org": "Google LLC",
+          "count": 1,
+          "pct": 50.0
+        },
+        {
           "asn": "AS13335 Cloudflare, Inc.",
           "org": "APNIC and Cloudflare DNS Resolver project",
           "count": 1,
-          "pct": 100.0
+          "pct": 50.0
         }
       ]
     },
     "export_summary": {
-      "sample_size": 1,
+      "sample_size": 2,
       "target_quota": 50,
       "status": "INCOMPLETE",
-      "completeness_pct": 2.0,
-      "timestamp": "2026-09-21T20:27:48.798906+00:00"
+      "completeness_pct": 4.0,
+      "timestamp": "2026-09-26T13:50:21.788446+00:00"
     }
   },
   "observations": [
     {
       "observation_id": 1,
+      "domain": "google.com",
+      "normalized_domain": "google.com",
+      "resolved_ip": "192.178.177.139",
+      "ip_version": "IPv4",
+      "ipv4": "192.178.177.139",
+      "ipv6": "UNKNOWN",
+      "geolocation": {
+        "country": "United States",
+        "region": "California",
+        "city": "Mountain View",
+        "latitude": 37.4225,
+        "longitude": -122.085,
+        "confidence": "HIGH"
+      },
+      "network": {
+        "asn": "AS15169 Google LLC",
+        "organization": "Google LLC",
+        "isp": "Google LLC",
+        "network_type": "Unknown",
+        "infrastructure_type": "Cloud Hosting"
+      },
+      "security": {
+        "https_status": "Enabled",
+        "http_to_https_redirect": "UNKNOWN",
+        "tls_status": "Valid",
+        "tls_issuer": "UNKNOWN",
+        "tls_subject": "UNKNOWN",
+        "tls_valid_from": "UNKNOWN",
+        "tls_valid_until": "UNKNOWN",
+        "tls_days_remaining": "UNKNOWN",
+        "vpn_status": "Unknown",
+        "proxy_status": "Unknown",
+        "tor_status": "Unknown"
+      },
+      "scoring": {
+        "website_trust_score": 95.0,
+        "website_trust_classification": "LIKELY SAFE",
+        "ip_risk_score": 15.0,
+        "ip_risk_classification": "LOW RISK",
+        "score_confidence": "HIGH",
+        "evidence_coverage": 1.0
+      },
+      "intelligence_chain": {
+        "ip_personality": "Cloud Hosting Node (Google LLC) in Mountain View, United States",
+        "provenance_chain": "google.com -> 192.178.177.139 -> AS15169 Google LLC -> Google LLC -> Cloud Hosting -> United States"
+      },
+      "telemetry": {
+        "dns_response_time_ms": 23.57,
+        "api_response_time_ms": 375.51,
+        "total_latency_ms": 399.08
+      },
+      "metadata": {
+        "observation_status": "RECORDED",
+        "observed_at": "2026-09-26T13:24:46.317414+00:00",
+        "raw_history_id": null,
+        "error_message": null
+      }
+    },
+    {
+      "observation_id": 2,
       "domain": "1.1.1.1",
       "normalized_domain": "1.1.1.1",
       "resolved_ip": "1.1.1.1",
@@ -716,12 +899,12 @@
       },
       "telemetry": {
         "dns_response_time_ms": 0.0,
-        "api_response_time_ms": 267.59,
-        "total_latency_ms": 267.59
+        "api_response_time_ms": 613.64,
+        "total_latency_ms": 613.64
       },
       "metadata": {
         "observation_status": "RECORDED",
-        "observed_at": "2026-09-21T20:27:48.798906+00:00",
+        "observed_at": "2026-09-26T13:50:21.788446+00:00",
         "raw_history_id": null,
         "error_message": null
       }
