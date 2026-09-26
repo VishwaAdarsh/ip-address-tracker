@@ -37,8 +37,70 @@ if (document.readyState === 'loading') {
 }
 
 // ----------------------------------------------------------------------------
-// Navigation & View Routing
+// Mobile Responsive Off-Canvas Navigation
 // ----------------------------------------------------------------------------
+
+function openMobileSidebar() {
+  const sidebar = document.querySelector('aside');
+  const backdrop = document.getElementById('mobile-backdrop');
+  if (sidebar) {
+    sidebar.classList.remove('-translate-x-full');
+    sidebar.classList.add('translate-x-0', 'sidebar-open');
+  }
+  if (backdrop) {
+    backdrop.classList.remove('hidden');
+    void backdrop.offsetWidth;
+    backdrop.classList.remove('opacity-0');
+    backdrop.classList.add('opacity-100');
+  }
+  document.body.classList.add('mobile-nav-active');
+}
+
+function closeMobileSidebar() {
+  const sidebar = document.querySelector('aside');
+  const backdrop = document.getElementById('mobile-backdrop');
+  if (sidebar) {
+    sidebar.classList.add('-translate-x-full');
+    sidebar.classList.remove('translate-x-0', 'sidebar-open');
+  }
+  if (backdrop) {
+    backdrop.classList.remove('opacity-100');
+    backdrop.classList.add('opacity-0');
+    setTimeout(() => {
+      backdrop.classList.add('hidden');
+    }, 280);
+  }
+  document.body.classList.remove('mobile-nav-active');
+}
+
+window.openMobileSidebar = openMobileSidebar;
+window.closeMobileSidebar = closeMobileSidebar;
+
+// Global resize and keyboard dismiss listeners
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeMobileSidebar();
+    if (typeof closeScoreExplanationModal === 'function') closeScoreExplanationModal();
+    if (typeof closeAutoCompleteModal === 'function') closeAutoCompleteModal();
+    if (typeof closeFieldStudyDetail === 'function') closeFieldStudyDetail();
+    if (typeof closeCandidateModal === 'function') closeCandidateModal();
+  }
+});
+
+window.addEventListener('resize', () => {
+  if (window.innerWidth >= 1024) {
+    closeMobileSidebar();
+  }
+  if (typeof resizeMap === 'function') {
+    resizeMap();
+  }
+  if (window.analyticsMapInstance) {
+    window.analyticsMapInstance.invalidateSize();
+  }
+  if (window.comparisonMapInstance) {
+    window.comparisonMapInstance.invalidateSize();
+  }
+});
 
 function initNavigation() {
   const navLinks = document.querySelectorAll('aside nav a[data-path]');
@@ -85,6 +147,9 @@ function navigateTo(viewName) {
       link.removeAttribute('aria-current');
     }
   });
+
+  // Close mobile drawer upon selection
+  closeMobileSidebar();
 
   // Action on tab switch
   if (viewName === 'home') {
