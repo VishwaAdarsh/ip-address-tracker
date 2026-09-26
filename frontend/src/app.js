@@ -3,6 +3,9 @@
  * Manages view routing, asynchronous lookup requests, real-time polling, and UI rendering.
  */
 
+import { escapeHtml } from './utils.js';
+import { initMap, updateMapLocation, resizeMap } from './map.js';
+
 // Centralized API configuration: Reads VITE_API_BASE_URL (configured on Vercel), falls back to window override or same-origin
 const API_BASE = (
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL) ||
@@ -13,8 +16,8 @@ const API_BASE = (
 let currentTarget = null;
 let fieldStudyPollingInterval = null;
 
-// Initialize on DOM ready
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize application with readyState fallback
+function initApp() {
   initNavigation();
   initHomeTabs();
   initSearch();
@@ -25,7 +28,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Run initial lookup for google.com if requested
   performAnalysis('google.com');
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
 
 // ----------------------------------------------------------------------------
 // Navigation & View Routing
@@ -112,11 +121,11 @@ function initSearch() {
       nameInput.value = savedName;
     }
     nameInput.addEventListener('input', () => {
-      localStorage.setItem('ippulse_user_name', nameInput.value.trim());
+      localStorage.setItem('ippulse_user_name', (nameInput.value || '').trim());
     });
     nameInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        const q = input ? input.value.trim() : '';
+        const q = input ? (input.value || '').trim() : '';
         if (q) performAnalysis(q);
       }
     });
@@ -124,26 +133,28 @@ function initSearch() {
 
   if (btn && input) {
     btn.addEventListener('click', () => {
-      const q = input.value.trim();
+      const q = (input.value || '').trim();
       if (q) performAnalysis(q);
     });
 
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        const q = input.value.trim();
+        const q = (input.value || '').trim();
         if (q) performAnalysis(q);
       }
     });
   }
-
-  // Quick inquiry chips
-  window.setQuery = function(q) {
-    if (input) {
-      input.value = q;
-      performAnalysis(q);
-    }
-  };
 }
+
+// Quick inquiry chips - accessible immediately
+function setQuery(q) {
+  const input = document.getElementById('ip-search-input');
+  if (input) {
+    input.value = q;
+  }
+  performAnalysis(q);
+}
+window.setQuery = setQuery;
 
 async function performAnalysis(query) {
   if (!query) return;
@@ -157,7 +168,7 @@ async function performAnalysis(query) {
   if (inputEl) inputEl.value = query;
   currentTarget = query;
 
-  const searchedBy = (nameInputEl ? nameInputEl.value.trim() : '') || localStorage.getItem('ippulse_user_name') || 'Anonymous';
+  const searchedBy = (nameInputEl && nameInputEl.value ? nameInputEl.value.trim() : '') || localStorage.getItem('ippulse_user_name') || 'Anonymous';
 
   if (errorEl) errorEl.classList.add('hidden');
   if (loadingEl) loadingEl.classList.remove('hidden');
@@ -599,34 +610,36 @@ function setStatusBadge(elementId, status) {
 // Home Sub-Tabs (Network / Security / IP Intel / AI Report)
 // ----------------------------------------------------------------------------
 
-function initHomeTabs() {
+function switchHomeTab(tabName) {
   const tabs = ['network', 'security', 'ipintel', 'aireport'];
+  tabs.forEach(t => {
+    const content = document.getElementById(`tab-content-${t}`);
+    const btn = document.getElementById(`tab-btn-${t}`);
 
-  window.switchHomeTab = function(tabName) {
-    tabs.forEach(t => {
-      const content = document.getElementById(`tab-content-${t}`);
-      const btn = document.getElementById(`tab-btn-${t}`);
-
-      if (t === tabName) {
-        if (content) {
-          content.classList.remove('hidden');
-          content.classList.remove('page-view-section');
-          void content.offsetWidth;
-          content.classList.add('page-view-section');
-        }
-        if (btn) {
-          btn.classList.add('text-on-surface', 'intel-tab-btn-active');
-          btn.classList.remove('text-on-surface-variant');
-        }
-      } else {
-        if (content) content.classList.add('hidden');
-        if (btn) {
-          btn.classList.remove('text-on-surface', 'intel-tab-btn-active');
-          btn.classList.add('text-on-surface-variant');
-        }
+    if (t === tabName) {
+      if (content) {
+        content.classList.remove('hidden');
+        content.classList.remove('page-view-section');
+        void content.offsetWidth;
+        content.classList.add('page-view-section');
       }
-    });
-  };
+      if (btn) {
+        btn.classList.add('text-on-surface', 'intel-tab-btn-active');
+        btn.classList.remove('text-on-surface-variant');
+      }
+    } else {
+      if (content) content.classList.add('hidden');
+      if (btn) {
+        btn.classList.remove('text-on-surface', 'intel-tab-btn-active');
+        btn.classList.add('text-on-surface-variant');
+      }
+    }
+  });
+}
+window.switchHomeTab = switchHomeTab;
+
+function initHomeTabs() {
+  switchHomeTab('network');
 }
 
 // ----------------------------------------------------------------------------
@@ -764,7 +777,7 @@ window.addToFieldStudy = async function() {
   }
 
   const nameInputEl = document.getElementById('user-name-input');
-  const searchedBy = (nameInputEl ? nameInputEl.value.trim() : '') || localStorage.getItem('ippulse_user_name') || 'Anonymous';
+  const searchedBy = (nameInputEl && nameInputEl.value ? nameInputEl.value.trim() : '') || localStorage.getItem('ippulse_user_name') || 'Anonymous';
 
   const btn = document.getElementById('btn-add-to-field-study');
   if (btn) {

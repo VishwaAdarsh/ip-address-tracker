@@ -3,6 +3,8 @@
  * Provides dynamic coordinate centering, custom glowing marker, and popup telemetry.
  */
 
+import { escapeHtml } from './utils.js';
+
 let mapInstance = null;
 let currentMarker = null;
 
@@ -105,17 +107,9 @@ function resizeMap() {
   }
 }
 
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-// Global exports for Leaflet map integration
+// Global & ES Module exports for Leaflet map integration
 window.initMap = initMap;
 window.updateMapLocation = updateMapLocation;
 window.resizeMap = resizeMap;
+
+export { initMap, updateMapLocation, resizeMap };
