@@ -1415,12 +1415,13 @@ function renderAnalyticsMap(mapPoints, missingCount = 0) {
   if (!window.analyticsMapInstance) {
     window.analyticsMapInstance = L.map('analytics-map', {
       zoomControl: true,
-      attributionControl: false,
+      attributionControl: true,
     }).setView([20.0, 0.0], 2);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      subdomains: 'abcd',
+      subdomains: ['a', 'b', 'c'],
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
     }).addTo(window.analyticsMapInstance);
 
     window.analyticsMarkersLayer = L.featureGroup().addTo(window.analyticsMapInstance);
@@ -3129,13 +3130,14 @@ function renderComparisonMap(mapPoints) {
   if (!window.compMapInstance) {
     window.compMapInstance = L.map('comp-map', {
       zoomControl: true,
-      attributionControl: false,
+      attributionControl: true,
       scrollWheelZoom: false,
     }).setView([20.0, 0.0], 2);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      subdomains: 'abcd',
+      subdomains: ['a', 'b', 'c'],
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
     }).addTo(window.compMapInstance);
 
     window.compMarkersLayer = L.featureGroup().addTo(window.compMapInstance);

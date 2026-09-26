@@ -22,7 +22,7 @@ function initMap(containerId = 'map', defaultLat = 37.4225, defaultLng = -122.08
     center: [defaultLat, defaultLng],
     zoom: defaultZoom,
     zoomControl: true,
-    attributionControl: false,
+    attributionControl: true,
     scrollWheelZoom: false,
   });
 
@@ -30,6 +30,7 @@ function initMap(containerId = 'map', defaultLat = 37.4225, defaultLng = -122.08
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     subdomains: ['a', 'b', 'c'],
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
   }).addTo(mapInstance);
 
   // Add initial marker
