@@ -5,7 +5,7 @@
   "observations_collected": 2,
   "remaining_to_target": 48,
   "dataset_status": "INCOMPLETE",
-  "generated_at": "2026-09-26T13:50:22.074928+00:00",
+  "generated_at": "2026-09-26T15:14:29.432969+00:00",
   "validation_summary": {
     "is_valid": true,
     "total_records": 2,
@@ -21,7 +21,7 @@
       "invalid_timestamp_count": 0,
       "classification_mismatch_count": 0
     },
-    "audited_at": "2026-09-26T13:50:22.070887+00:00"
+    "audited_at": "2026-09-26T15:14:29.430274+00:00"
   },
   "analytics": {
     "success": true,
@@ -417,7 +417,7 @@
         }
       ],
       "mean_dns_latency_ms": 23.6,
-      "mean_api_latency_ms": 494.6,
+      "mean_api_latency_ms": 323.4,
       "ip_versions": {
         "ipv4": 2,
         "ipv6": 0,
@@ -440,7 +440,7 @@
       },
       "query_latency": {
         "mean_dns_ms": 23.6,
-        "mean_api_ms": 494.6
+        "mean_api_ms": 323.4
       }
     },
     "comparison_analytics": {
@@ -785,7 +785,7 @@
       "target_quota": 50,
       "status": "INCOMPLETE",
       "completeness_pct": 4.0,
-      "timestamp": "2026-09-26T13:50:21.788446+00:00"
+      "timestamp": "2026-09-26T15:14:29.152012+00:00"
     }
   },
   "observations": [
@@ -899,12 +899,12 @@
       },
       "telemetry": {
         "dns_response_time_ms": 0.0,
-        "api_response_time_ms": 613.64,
-        "total_latency_ms": 613.64
+        "api_response_time_ms": 271.32,
+        "total_latency_ms": 271.32
       },
       "metadata": {
         "observation_status": "RECORDED",
-        "observed_at": "2026-09-26T13:50:21.788446+00:00",
+        "observed_at": "2026-09-26T15:14:29.152012+00:00",
         "raw_history_id": null,
         "error_message": null
       }

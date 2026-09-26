@@ -13,12 +13,7 @@ if str(BACKEND_DIR) not in sys.path:
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(1, str(ROOT_DIR))
 
-from backend.api.server import IPPulseRequestHandler
-from backend.app import main
-
-# Vercel detects Python functions by a top-level app/handler export.
-app = IPPulseRequestHandler
-handler = IPPulseRequestHandler
+from backend.app import app, handler, main
 
 if __name__ == "__main__":
     main()

@@ -2,6 +2,10 @@
 # IP PULSE — Backend Dependencies
 # ==============================================================================
 
+# Web Application & ASGI Server
+fastapi>=0.100.0
+uvicorn>=0.20.0
+
 # Core Data Analysis & Statistical Engine
 pandas>=2.0.0
 

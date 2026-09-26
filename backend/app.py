@@ -20,15 +20,17 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(1, str(PROJECT_ROOT))
 
 try:
+    from backend.api.fastapi_app import create_fastapi_app
     from backend.api.server import IPPulseRequestHandler, create_server
     from backend.database.db import init_db
 except ImportError:
-    from backend.api.server import IPPulseRequestHandler, create_server
-    from backend.database.db import init_db
+    from api.fastapi_app import create_fastapi_app
+    from api.server import IPPulseRequestHandler, create_server
+    from database.db import init_db
 
-# Top-level serverless and WSGI/handler entrypoint export
-app = IPPulseRequestHandler
-handler = IPPulseRequestHandler
+# Production ASGI FastAPI Application (for Uvicorn / Render)
+app = create_fastapi_app()
+handler = app
 
 logging.basicConfig(
     level=logging.INFO,
@@ -68,13 +70,6 @@ def main() -> None:
 """
     print(banner, flush=True)
 
-    try:
-        server = create_server(host=args.host, port=args.port)
-    except OSError as e:
-        logger.error(f"Could not bind to {args.host}:{args.port}: {e}")
-        logger.info("Try specifying an alternate port using: python backend/app.py --port 8080")
-        sys.exit(1)
-
     is_headless = args.no_browser or "RENDER" in os.environ or "PORT" in os.environ
     if not is_headless:
         def open_browser():
@@ -88,12 +83,17 @@ def main() -> None:
         browser_thread.start()
 
     try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        print("\n[*] Gracefully shutting down IP PULSE Platform...", flush=True)
-    finally:
-        server.server_close()
-        logger.info("Server terminated cleanly.")
+        import uvicorn
+        uvicorn.run(app, host=args.host, port=args.port, log_level="info")
+    except ImportError:
+        try:
+            server = create_server(host=args.host, port=args.port)
+            server.serve_forever()
+        except KeyboardInterrupt:
+            print("\n[*] Gracefully shutting down IP PULSE Platform...", flush=True)
+        finally:
+            server.server_close()
+            logger.info("Server terminated cleanly.")
 
 
 if __name__ == "__main__":
