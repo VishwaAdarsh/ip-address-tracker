@@ -4,6 +4,7 @@ Backend Application Entry Point
 """
 import argparse
 import logging
+import os
 import sys
 import threading
 import time
@@ -19,11 +20,15 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(1, str(PROJECT_ROOT))
 
 try:
-    from backend.api.server import create_server
+    from backend.api.server import IPPulseRequestHandler, create_server
     from backend.database.db import init_db
 except ImportError:
-    from backend.api.server import create_server
+    from backend.api.server import IPPulseRequestHandler, create_server
     from backend.database.db import init_db
+
+# Top-level serverless and WSGI/handler entrypoint export
+app = IPPulseRequestHandler
+handler = IPPulseRequestHandler
 
 logging.basicConfig(
     level=logging.INFO,
@@ -34,11 +39,14 @@ logger = logging.getLogger("IPPulse")
 
 
 def main() -> None:
+    default_host = os.environ.get("HOST", "127.0.0.1")
+    default_port = int(os.environ.get("PORT", "8000"))
+
     parser = argparse.ArgumentParser(
-        description="IP PULSE — IP Intelligence, Geolocation & Website Risk Analysis Platform"
+        description="IP PULSE - IP Intelligence, Geolocation & Website Risk Analysis Platform"
     )
-    parser.add_argument("--host", default="127.0.0.1", help="Host interface to bind (default: 127.0.0.1)")
-    parser.add_argument("--port", type=int, default=8000, help="Port to listen on (default: 8000)")
+    parser.add_argument("--host", default=default_host, help=f"Host interface to bind (default: {default_host})")
+    parser.add_argument("--port", type=int, default=default_port, help=f"Port to listen on (default: {default_port})")
     parser.add_argument("--no-browser", action="store_true", help="Do not automatically launch web browser")
     args = parser.parse_args()
 
@@ -47,7 +55,7 @@ def main() -> None:
     url = f"http://{args.host}:{args.port}/"
     banner = f"""
 ================================================================================
-   IP PULSE — IP Intelligence, Geolocation & Website Risk Analysis Platform
+   IP PULSE - IP Intelligence, Geolocation & Website Risk Analysis Platform
    Stitch Web Interface & Multi-Threaded Python REST API Engine
 ================================================================================
    * Web Application:  {url}
@@ -67,7 +75,8 @@ def main() -> None:
         logger.info("Try specifying an alternate port using: python backend/app.py --port 8080")
         sys.exit(1)
 
-    if not args.no_browser:
+    is_headless = args.no_browser or "RENDER" in os.environ or "PORT" in os.environ
+    if not is_headless:
         def open_browser():
             time.sleep(0.6)
             try:

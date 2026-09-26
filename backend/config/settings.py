@@ -50,3 +50,7 @@ AI_API_KEY = os.environ.get("AI_API_KEY", os.environ.get("GEMINI_API_KEY", ""))
 AI_MODEL = os.environ.get("AI_MODEL", "gemini-2.5-flash")
 AI_TIMEOUT = float(os.environ.get("AI_TIMEOUT", "10.0"))
 AI_ENABLED = os.environ.get("AI_ENABLED", "true").lower() in ("true", "1", "yes")
+
+# Server Network Configuration
+HOST = os.environ.get("HOST", "127.0.0.1")
+PORT = int(os.environ.get("PORT", "8000"))
