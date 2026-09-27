@@ -2,7 +2,7 @@
 **Platform:** IP PULSE Intelligence Platform  
 **Study Target:** Standardized 50-Website Field Study  
 **Dataset Status:** `INCOMPLETE (2/50)`  
-**Generated:** 2026-09-26 15:14:29 UTC  
+**Generated:** 2026-09-27 07:35:31 UTC  
 **Data Integrity Audit:** `PASSED (Clean Dataset)`  
 
 ## 1. Executive Summary
@@ -40,7 +40,7 @@ Analysis of the cohort reveals an HTTPS adoption rate of **50.0%** (1 of 2 endpo
 | TLS State Unknown | 0 | 0.0% | Certificate Not Present |
 
 ## 6. IP Intelligence & Protocol Analysis
-Dual-stack IP protocol evaluation indicates IPv4 continues to predominate observed endpoints at **100.0%** (2 hosts), with IPv6 utilized by **0.0%** (0 hosts). Mean DNS lookup latency was **23.6 ms**, while API lookup averaged **323.4 ms**.
+Dual-stack IP protocol evaluation indicates IPv4 continues to predominate observed endpoints at **100.0%** (2 hosts), with IPv6 utilized by **0.0%** (0 hosts). Mean DNS lookup latency was **23.6 ms**, while API lookup averaged **390.3 ms**.
 
 | Egress / Anonymization Flag | Detected Endpoints | Empirical Finding |
 |:---|:---:|:---|

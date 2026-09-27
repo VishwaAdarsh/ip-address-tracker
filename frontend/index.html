@@ -199,7 +199,7 @@
             </div>
             <div class="glass-input-box relative flex items-center rounded-xl px-3.5 py-2.5 transition-all w-full sm:w-2/3 flex-1 min-h-[48px] h-12">
               <span class="material-symbols-outlined text-[20px] text-primary mr-2.5 select-none shrink-0">language</span>
-              <input id="ip-search-input" class="w-full bg-transparent text-sm md:text-base font-mono text-on-surface placeholder:text-outline focus:outline-none" placeholder="Enter a website or IP (e.g. google.com or 8.8.8.8)" type="text" value="google.com"/>
+              <input id="ip-search-input" class="w-full bg-transparent text-sm md:text-base font-mono text-on-surface placeholder:text-outline focus:outline-none" placeholder="Enter a website or IP (e.g. google.com or 8.8.8.8)" type="text"/>
             </div>
           </div>
 
@@ -235,6 +235,17 @@
           <span id="error-message-text" class="text-xs sm:text-sm text-error">Failed to analyze target.</span>
         </div>
 
+        <!-- Clean Initial Home State (When no target has been analyzed yet) -->
+        <div id="home-empty-prompt" class="p-8 sm:p-12 rounded-2xl glass-panel border border-surface-container flex flex-col items-center justify-center text-center max-w-xl mx-auto my-4 shadow-xl">
+          <div class="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-3">
+            <span class="material-symbols-outlined text-[26px]">radar</span>
+          </div>
+          <h3 class="font-headline text-base sm:text-lg font-bold text-on-surface">Ready for Target Inspection</h3>
+          <p class="text-xs sm:text-sm text-outline mt-1.5 max-w-md leading-relaxed">Enter any domain or IP address above or select a quick example to perform real-time DNS resolution, geolocation, security auditing, and infrastructure classification.</p>
+        </div>
+
+        <!-- Analysis Results Container (Hidden until user performs real analysis) -->
+        <div id="home-results-area" class="hidden flex flex-col gap-4">
         <!-- Analysis Results Action Bar & Intentional Field Study Addition -->
         <div id="results-action-bar" class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-3.5 rounded-xl glass-panel border border-surface-container/60 shadow-lg">
           <div class="flex flex-wrap items-center gap-2">
@@ -711,6 +722,7 @@
             </div>
           </div>
         </div>
+        </div>
       </section>
 
       <!-- ================================================================= -->
@@ -738,6 +750,20 @@
           </div>
         </div>
 
+        <!-- History Batch Deletion Toolbar -->
+        <div id="history-batch-toolbar" class="hidden items-center justify-between p-3 rounded-xl bg-primary/10 border border-primary/30 text-xs font-mono shadow-md">
+          <div class="flex items-center gap-2 text-primary font-medium">
+            <span class="material-symbols-outlined text-[18px]">checklist</span>
+            <span><span id="history-selected-count" class="font-bold">0</span> records selected</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="deleteSelectedHistory()" class="px-3 py-1.5 rounded-lg bg-error/20 hover:bg-error/30 text-error border border-error/40 font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95">
+              <span class="material-symbols-outlined text-[16px]">delete</span>
+              <span>Delete Selected</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Filter Omnibar -->
         <div class="w-full max-w-md relative">
           <input id="history-search-input" class="w-full bg-surface-container-lowest/80 text-xs font-mono text-on-surface placeholder:text-outline pl-9 pr-4 py-2.5 rounded-xl border border-surface-container focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/40 transition-all shadow-inner" placeholder="Filter history by domain, IP, or country..."/>
@@ -750,6 +776,9 @@
             <table class="w-full text-left border-collapse min-w-[680px]">
               <thead>
                 <tr class="bg-surface-container-lowest/90 text-outline text-xs font-mono uppercase tracking-wider border-b border-surface-container">
+                  <th class="py-3 px-3 font-medium w-10 text-center">
+                    <input type="checkbox" id="history-select-all" onchange="toggleSelectAllHistory(this.checked)" class="rounded border-outline cursor-pointer accent-primary" title="Select all history"/>
+                  </th>
                   <th class="py-3 px-3 sm:px-space-lg font-medium">Timestamp</th>
                   <th class="py-3 px-3 sm:px-space-lg font-medium">Domain Entity</th>
                   <th class="py-3 px-3 sm:px-space-lg font-medium">Resolved IP</th>
@@ -760,7 +789,7 @@
                 </tr>
               </thead>
               <tbody id="history-table-body" class="divide-y divide-surface-container/60 text-xs">
-                <tr><td colspan="7" class="py-8 text-center text-outline">Loading audit ledger from database...</td></tr>
+                <tr><td colspan="8" class="py-8 text-center text-outline">Loading audit ledger from database...</td></tr>
               </tbody>
             </table>
           </div>
@@ -913,12 +942,29 @@
           </div>
         </div>
 
-        <!-- Field Study Observations Table (10 Columns, Phase 19) -->
+        <!-- Field Study Batch Deletion Toolbar -->
+        <div id="fs-batch-toolbar" class="hidden items-center justify-between p-3 rounded-xl bg-primary/10 border border-primary/30 text-xs font-mono shadow-md">
+          <div class="flex items-center gap-2 text-primary font-medium">
+            <span class="material-symbols-outlined text-[18px]">checklist</span>
+            <span><span id="fs-selected-count" class="font-bold">0</span> observations selected</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="deleteSelectedFieldStudy()" class="px-3 py-1.5 rounded-lg bg-error/20 hover:bg-error/30 text-error border border-error/40 font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95">
+              <span class="material-symbols-outlined text-[16px]">delete</span>
+              <span>Delete Selected</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Field Study Observations Table (12 Columns with Multi-Select & Actions) -->
         <div class="w-full glass-panel border border-surface-container rounded-xl overflow-hidden shadow-2xl">
           <div class="table-responsive-container">
-            <table class="w-full text-left border-collapse min-w-[840px]">
+            <table class="w-full text-left border-collapse min-w-[920px]">
               <thead>
                 <tr class="bg-surface-container-lowest/90 text-outline text-xs font-mono uppercase tracking-wider border-b border-surface-container">
+                  <th class="py-3 px-3 font-medium w-10 text-center">
+                    <input type="checkbox" id="fs-select-all" onchange="toggleSelectAllFieldStudy(this.checked)" class="rounded border-outline cursor-pointer accent-primary" title="Select all observations"/>
+                  </th>
                   <th class="py-3 px-3 font-medium text-center">#</th>
                   <th class="py-3 px-4 font-medium">Domain</th>
                   <th class="py-3 px-4 font-medium">IP Address</th>
@@ -929,13 +975,15 @@
                   <th class="py-3 px-3 font-medium text-center">Trust</th>
                   <th class="py-3 px-3 font-medium text-center">Risk</th>
                   <th class="py-3 px-4 font-medium text-right">Observed</th>
+                  <th class="py-3 px-4 font-medium text-right">Actions</th>
                 </tr>
               </thead>
               <tbody id="field-study-table-body" class="divide-y divide-surface-container/60 text-xs">
-                <tr><td colspan="10" class="py-8 text-center text-outline">Loading 50-site field study records...</td></tr>
+                <tr><td colspan="12" class="py-8 text-center text-outline">Loading 50-site field study records...</td></tr>
               </tbody>
             </table>
           </div>
+        </div>
       </section>
 
       <!-- ================================================================= -->
@@ -1880,7 +1928,11 @@
       </div>
 
       <!-- Modal Actions -->
-      <div class="flex items-center justify-end pt-2 border-t border-surface-container/60">
+      <div class="flex items-center justify-between pt-2 border-t border-surface-container/60">
+        <button class="px-3.5 py-2 rounded-xl bg-error/15 hover:bg-error/25 text-xs font-medium text-error transition-colors cursor-pointer border border-error/30 flex items-center gap-1.5 active:scale-95" onclick="deleteCurrentModalObservation()">
+          <span class="material-symbols-outlined text-[16px]">delete</span>
+          <span>Delete Observation</span>
+        </button>
         <button class="px-4 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-xs font-medium text-on-surface transition-colors cursor-pointer border border-surface-container active:scale-95" onclick="closeFieldStudyDetail()">
           Close
         </button>

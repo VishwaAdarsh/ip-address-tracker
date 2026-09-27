@@ -36,6 +36,20 @@ class LookupRecord:
     status: str = ""
     error_message: Optional[str] = None
 
+    # Rich Security, IP Intel & Scoring Attributes
+    infrastructure: str = "Unknown"
+    vpn_status: str = "Unknown"
+    proxy_status: str = "Unknown"
+    tor_status: str = "Unknown"
+    https_status: str = "Unknown"
+    tls_status: str = "Unknown"
+    trust_score: Optional[float] = None
+    trust_classification: str = "Unknown"
+    risk_score: Optional[float] = None
+    risk_classification: str = "Unknown"
+    confidence: str = "Unknown"
+    evidence_coverage: Optional[float] = None
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert record to a dictionary format."""
         return {
@@ -60,6 +74,18 @@ class LookupRecord:
             "api_response_time_ms": self.api_response_time_ms,
             "status": self.status,
             "error_message": self.error_message,
+            "infrastructure": self.infrastructure,
+            "vpn_status": self.vpn_status,
+            "proxy_status": self.proxy_status,
+            "tor_status": self.tor_status,
+            "https_status": self.https_status,
+            "tls_status": self.tls_status,
+            "trust_score": self.trust_score,
+            "trust_classification": self.trust_classification,
+            "risk_score": self.risk_score,
+            "risk_classification": self.risk_classification,
+            "confidence": self.confidence,
+            "evidence_coverage": self.evidence_coverage,
         }
 
 

@@ -71,3 +71,17 @@ else:
     ALLOWED_ORIGINS = DEFAULT_ALLOWED_ORIGINS
 
 ALLOW_ORIGIN_REGEX = os.environ.get("ALLOW_ORIGIN_REGEX", r"^https:\/\/.*\.vercel\.app$")
+
+# Database Configuration
+# Supports local SQLite and persistent PostgreSQL (Render / Supabase / Neon)
+DATABASE_URL = os.environ.get(
+    "DATABASE_URL",
+    os.environ.get("POSTGRES_URL", os.environ.get("SUPABASE_DB_URL", "")),
+).strip()
+SQLITE_DB_PATH = Path(os.environ.get("SQLITE_DB_PATH", BASE_DIR / "data" / "ip_tracker.db"))
+IS_POSTGRES = bool(
+    DATABASE_URL
+    and (DATABASE_URL.startswith("postgres://") or DATABASE_URL.startswith("postgresql://"))
+)
+DB_TYPE = "postgres" if IS_POSTGRES else "sqlite"
+MIGRATE_ON_STARTUP = os.environ.get("MIGRATE_ON_STARTUP", "false").lower() in ("true", "1", "yes")

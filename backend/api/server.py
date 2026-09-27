@@ -36,7 +36,17 @@ from backend.config.settings import (
     AI_PROVIDER,
 )
 from backend.intelligence.ai_explainer import explain_intelligence
-from backend.database.db import clear_history, delete_lookup, get_lookup_history
+from backend.database.db import (
+    clear_field_study,
+    clear_history,
+    delete_field_observation,
+    delete_field_observations_batch,
+    delete_lookup,
+    delete_lookups_batch,
+    get_db_status,
+    get_lookup_history,
+    save_lookup,
+)
 from backend.models.models import FieldObservation, LookupRecord
 from backend.intelligence.intel_chain import generate_ip_personality_profile
 from backend.intelligence.ip_intel import analyze_ip_intelligence
@@ -184,24 +194,49 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
             self._handle_api_compare_export_post(payload)
         elif path == "/api/analytics":
             self._handle_api_analytics(payload=payload)
+        elif path == "/api/history":
+            rec_id = save_lookup(payload)
+            if rec_id is not None:
+                self._send_json({"success": True, "id": rec_id, "message": "Record saved successfully."})
+            else:
+                self._send_error_json("Failed to save lookup record", status=400)
+        elif path == "/api/history/delete-batch":
+            ids = payload.get("ids", [])
+            cnt = delete_lookups_batch([int(i) for i in ids])
+            self._send_json({"success": True, "deleted_count": cnt, "message": f"{cnt} records deleted."})
         elif path == "/api/field-study/add":
             self._handle_api_field_study_add(payload)
+        elif path == "/api/field-study/delete-batch":
+            ids = payload.get("ids", [])
+            cnt = delete_field_observations_batch([int(i) for i in ids])
+            self._send_json({"success": True, "deleted_count": cnt, "message": f"{cnt} observations deleted."})
         elif path == "/api/field-study/complete-remaining":
             self._handle_api_field_study_complete()
         else:
             self._send_error_json(f"Unknown POST endpoint: {path}", status=404)
 
     def do_DELETE(self) -> None:
-        """Route DELETE requests for history management."""
+        """Route DELETE requests for history and field study management."""
         parsed_url = urlparse(self.path)
         path = parsed_url.path.rstrip("/")
 
+        content_length = int(self.headers.get("Content-Length", 0))
+        body_payload = {}
+        if content_length > 0:
+            try:
+                body_payload = json.loads(self.rfile.read(content_length).decode("utf-8"))
+            except Exception:
+                pass
+
         if path == "/api/history":
-            # Clear all history
-            cleared = clear_history()
-            self._send_json({"success": cleared, "message": "History cleared successfully." if cleared else "Failed to clear history."})
+            ids = body_payload.get("ids") if isinstance(body_payload, dict) else None
+            if ids and isinstance(ids, list):
+                cnt = delete_lookups_batch([int(i) for i in ids])
+                self._send_json({"success": True, "deleted_count": cnt, "message": f"{cnt} records deleted."})
+            else:
+                cleared = clear_history()
+                self._send_json({"success": cleared, "message": "History cleared successfully." if cleared else "Failed to clear history."})
         elif path.startswith("/api/history/"):
-            # Delete single record by ID
             try:
                 rec_id = int(path.split("/")[-1])
                 deleted = delete_lookup(rec_id)
@@ -211,6 +246,24 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
                     self._send_error_json(f"Record {rec_id} not found or could not be deleted.", status=404)
             except ValueError:
                 self._send_error_json("Invalid record ID", status=400)
+        elif path == "/api/field-study":
+            ids = body_payload.get("ids") if isinstance(body_payload, dict) else None
+            if ids and isinstance(ids, list):
+                cnt = delete_field_observations_batch([int(i) for i in ids])
+                self._send_json({"success": True, "deleted_count": cnt, "message": f"{cnt} observations deleted."})
+            else:
+                cleared = clear_field_study()
+                self._send_json({"success": cleared, "message": "Field study cleared successfully." if cleared else "Failed to clear field study."})
+        elif path.startswith("/api/field-study/"):
+            try:
+                obs_id = int(path.split("/")[-1])
+                deleted = delete_field_observation(obs_id)
+                if deleted:
+                    self._send_json({"success": True, "message": f"Observation #{obs_id} deleted."})
+                else:
+                    self._send_error_json(f"Observation #{obs_id} not found or could not be deleted.", status=404)
+            except ValueError:
+                self._send_error_json("Invalid observation ID", status=400)
         else:
             self._send_error_json(f"Unknown DELETE endpoint: {path}", status=404)
 
@@ -223,6 +276,7 @@ class IPPulseRequestHandler(BaseHTTPRequestHandler):
         self._send_json({
             "status": "operational",
             "version": "2.0.0",
+            "database": get_db_status(),
             "service": "IP PULSE Multi-Layered Intelligence Console",
             "capabilities": {
                 "dns_resolution": True,

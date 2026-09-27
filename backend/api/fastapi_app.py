@@ -27,7 +27,18 @@ from backend.config.settings import (
     BASE_DIR,
 )
 from backend.intelligence.ai_explainer import explain_intelligence
-from backend.database.db import clear_history, delete_lookup, get_lookup_history, init_db
+from backend.database.db import (
+    clear_field_study,
+    clear_history,
+    delete_field_observation,
+    delete_field_observations_batch,
+    delete_lookup,
+    delete_lookups_batch,
+    get_db_status,
+    get_lookup_history,
+    init_db,
+    save_lookup,
+)
 from backend.models.models import FieldObservation, LookupRecord
 from backend.services.field_test_service import (
     add_field_observation,
@@ -102,6 +113,7 @@ def create_fastapi_app() -> FastAPI:
             "status": "operational",
             "version": "2.0.0",
             "service": "IP PULSE Multi-Layered Intelligence Console",
+            "database": get_db_status(),
             "capabilities": {
                 "dns_resolution": True,
                 "geolocation": True,
@@ -121,7 +133,7 @@ def create_fastapi_app() -> FastAPI:
         limit: Optional[int] = Query(None, description="Max records to return"),
         offset: int = Query(0, description="Record offset"),
     ) -> Dict[str, Any]:
-        """Retrieve stored lookup records from SQLite database."""
+        """Retrieve stored lookup records from database."""
         records: List[LookupRecord] = get_lookup_history(limit=limit, offset=offset)
         serialized = []
         for r in records:
@@ -147,25 +159,88 @@ def create_fastapi_app() -> FastAPI:
                 "api_response_time_ms": r.api_response_time_ms,
                 "status": r.status,
                 "error_message": r.error_message,
+                "infrastructure": r.infrastructure,
+                "vpn_status": r.vpn_status,
+                "proxy_status": r.proxy_status,
+                "tor_status": r.tor_status,
+                "https_status": r.https_status,
+                "tls_status": r.tls_status,
+                "trust_score": r.trust_score,
+                "trust_classification": r.trust_classification,
+                "risk_score": r.risk_score,
+                "risk_classification": r.risk_classification,
+                "confidence": r.confidence,
+                "evidence_coverage": r.evidence_coverage,
             })
         return {"success": True, "count": len(serialized), "records": serialized}
 
+    @app.post("/api/history")
+    def post_history(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+        """Directly insert a lookup record into persistent database."""
+        rec_id = save_lookup(payload)
+        if rec_id is None:
+            raise HTTPException(status_code=400, detail="Failed to save lookup record.")
+        return {"success": True, "id": rec_id, "message": "Record saved successfully."}
+
     @app.delete("/api/history")
-    def delete_all_history() -> Dict[str, Any]:
-        """Clear all historical lookup records."""
+    def delete_all_history(payload: Optional[Dict[str, Any]] = Body(None)) -> Dict[str, Any]:
+        """Clear all historical lookup records or batch delete specified record IDs."""
+        ids = payload.get("ids") if payload and isinstance(payload, dict) else None
+        if ids and isinstance(ids, list):
+            deleted_count = delete_lookups_batch([int(i) for i in ids])
+            return {"success": True, "deleted_count": deleted_count, "message": f"{deleted_count} records deleted."}
         cleared = clear_history()
         return {
             "success": cleared,
             "message": "History cleared successfully." if cleared else "Failed to clear history.",
         }
 
+    @app.post("/api/history/delete-batch")
+    def post_history_delete_batch(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+        """Batch delete historical lookup records by ID array."""
+        ids = payload.get("ids", [])
+        if not ids or not isinstance(ids, list):
+            raise HTTPException(status_code=400, detail="Array of record IDs is required.")
+        deleted_count = delete_lookups_batch([int(i) for i in ids])
+        return {"success": True, "deleted_count": deleted_count, "message": f"{deleted_count} records deleted."}
+
     @app.delete("/api/history/{rec_id}")
     def delete_single_history(rec_id: int) -> Dict[str, Any]:
-        """Delete single lookup record by ID."""
+        """Delete single lookup record by stable ID."""
         deleted = delete_lookup(rec_id)
         if not deleted:
             raise HTTPException(status_code=404, detail=f"Record {rec_id} not found or could not be deleted.")
         return {"success": True, "message": f"Record {rec_id} deleted."}
+
+    @app.delete("/api/field-study/{obs_id}")
+    def delete_single_field_study(obs_id: int) -> Dict[str, Any]:
+        """Delete a single field study observation by its stable primary key ID."""
+        deleted = delete_field_observation(obs_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail=f"Observation #{obs_id} not found or could not be deleted.")
+        return {"success": True, "message": f"Observation #{obs_id} deleted."}
+
+    @app.delete("/api/field-study")
+    def delete_all_field_study(payload: Optional[Dict[str, Any]] = Body(None)) -> Dict[str, Any]:
+        """Clear all field study observations or batch delete specified observation IDs."""
+        ids = payload.get("ids") if payload and isinstance(payload, dict) else None
+        if ids and isinstance(ids, list):
+            deleted_count = delete_field_observations_batch([int(i) for i in ids])
+            return {"success": True, "deleted_count": deleted_count, "message": f"{deleted_count} observations deleted."}
+        cleared = clear_field_study()
+        return {
+            "success": cleared,
+            "message": "Field study cleared successfully." if cleared else "Failed to clear field study.",
+        }
+
+    @app.post("/api/field-study/delete-batch")
+    def post_field_study_delete_batch(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+        """Batch delete field study observations by ID array."""
+        ids = payload.get("ids", [])
+        if not ids or not isinstance(ids, list):
+            raise HTTPException(status_code=400, detail="Array of observation IDs is required.")
+        deleted_count = delete_field_observations_batch([int(i) for i in ids])
+        return {"success": True, "deleted_count": deleted_count, "message": f"{deleted_count} observations deleted."}
 
     @app.get("/api/field-study")
     def get_field_study() -> Dict[str, Any]:

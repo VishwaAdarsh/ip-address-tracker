@@ -25,9 +25,6 @@ function initApp() {
 
   // Check initial system status
   fetchSystemStatus();
-
-  // Run initial lookup for google.com if requested
-  performAnalysis('google.com');
 }
 
 if (document.readyState === 'loading') {
@@ -284,6 +281,11 @@ function showError(msg) {
 }
 
 function renderAnalysisResults(data) {
+  const emptyPrompt = document.getElementById('home-empty-prompt');
+  const resultsArea = document.getElementById('home-results-area');
+  if (emptyPrompt) emptyPrompt.classList.add('hidden');
+  if (resultsArea) resultsArea.classList.remove('hidden');
+
   const b = data.base || {};
   const sec = data.security || {};
   const intel = data.ip_intel || {};
@@ -711,13 +713,81 @@ function initHomeTabs() {
 // History View Management
 // ----------------------------------------------------------------------------
 
+let selectedHistoryIds = new Set();
+
+function updateHistoryBatchToolbar() {
+  const toolbar = document.getElementById('history-batch-toolbar');
+  const countEl = document.getElementById('history-selected-count');
+  if (!toolbar || !countEl) return;
+  countEl.textContent = selectedHistoryIds.size;
+  if (selectedHistoryIds.size > 0) {
+    toolbar.classList.remove('hidden');
+    toolbar.classList.add('flex');
+  } else {
+    toolbar.classList.add('hidden');
+    toolbar.classList.remove('flex');
+  }
+}
+
+window.toggleSelectAllHistory = function(checked) {
+  selectedHistoryIds.clear();
+  const checkboxes = document.querySelectorAll('.history-row-checkbox');
+  checkboxes.forEach(cb => {
+    cb.checked = checked;
+    const id = parseInt(cb.dataset.id, 10);
+    if (checked && !isNaN(id)) selectedHistoryIds.add(id);
+  });
+  updateHistoryBatchToolbar();
+};
+
+window.toggleHistoryRowSelect = function(id, checked) {
+  if (checked) {
+    selectedHistoryIds.add(id);
+  } else {
+    selectedHistoryIds.delete(id);
+  }
+  const allCb = document.getElementById('history-select-all');
+  const checkboxes = document.querySelectorAll('.history-row-checkbox');
+  if (allCb && checkboxes.length > 0) {
+    allCb.checked = selectedHistoryIds.size === checkboxes.length;
+  }
+  updateHistoryBatchToolbar();
+};
+
+window.deleteSelectedHistory = async function() {
+  if (selectedHistoryIds.size === 0) return;
+  const ids = Array.from(selectedHistoryIds);
+  if (!confirm(`Are you sure you want to delete ${ids.length} selected history record(s)?`)) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/history/delete-batch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: ids })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      selectedHistoryIds.clear();
+      updateHistoryBatchToolbar();
+      const allCb = document.getElementById('history-select-all');
+      if (allCb) allCb.checked = false;
+      await loadHistory();
+      if (typeof loadInvestigationWorkspace === 'function') loadInvestigationWorkspace();
+    } else {
+      alert(`Could not delete selected records: ${data.error || 'Server error'}`);
+    }
+  } catch (err) {
+    alert(`Could not delete selected records: ${err.message}`);
+  }
+};
+
 async function loadHistory() {
   const tableBody = document.getElementById('history-table-body');
   const totalCountEl = document.getElementById('history-total-count');
   const searchInput = document.getElementById('history-search-input');
 
   if (tableBody) {
-    tableBody.innerHTML = `<tr><td colspan="7" class="py-space-lg text-center text-outline">Loading audit ledger from database...</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="8" class="py-space-lg text-center text-outline">Loading audit ledger from database...</td></tr>`;
   }
 
   try {
@@ -725,7 +795,7 @@ async function loadHistory() {
     const data = await res.json();
 
     if (!res.ok || !data.success) {
-      if (tableBody) tableBody.innerHTML = `<tr><td colspan="7" class="py-space-lg text-center text-error">Failed to load history: ${data.error}</td></tr>`;
+      if (tableBody) tableBody.innerHTML = `<tr><td colspan="8" class="py-space-lg text-center text-error">Failed to load history: ${data.error}</td></tr>`;
       return;
     }
 
@@ -747,7 +817,7 @@ async function loadHistory() {
       };
     }
   } catch (err) {
-    if (tableBody) tableBody.innerHTML = `<tr><td colspan="7" class="py-space-lg text-center text-error">Connection error: ${err.message}</td></tr>`;
+    if (tableBody) tableBody.innerHTML = `<tr><td colspan="8" class="py-space-lg text-center text-error">Connection error: ${err.message}</td></tr>`;
   }
 }
 
@@ -756,9 +826,16 @@ function renderHistoryTable(records) {
   if (!tableBody) return;
 
   if (records.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="7" class="py-space-xl text-center text-outline">No stored observations in database.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="8" class="py-space-xl text-center text-outline">No stored observations in database.</td></tr>`;
     return;
   }
+
+  // Count occurrences for duplicate / repeated scan identification
+  const domainCounts = {};
+  records.forEach(r => {
+    const key = (r.domain || r.input_value || '').toLowerCase().trim();
+    if (key) domainCounts[key] = (domainCounts[key] || 0) + 1;
+  });
 
   tableBody.innerHTML = '';
   records.forEach(r => {
@@ -779,9 +856,25 @@ function renderHistoryTable(records) {
       ? `<span class="px-2 py-0.5 rounded text-[11px] font-label-data-md bg-tertiary/15 text-tertiary border border-tertiary/30">SUCCESS</span>`
       : `<span class="px-2 py-0.5 rounded text-[11px] font-label-data-md bg-error/15 text-error border border-error/30">${escapeHtml(r.status || 'FAILED')}</span>`;
 
+    const domainKey = (r.domain || r.input_value || '').toLowerCase().trim();
+    const occurrenceCount = domainCounts[domainKey] || 1;
+    const repeatedBadge = occurrenceCount > 1
+      ? `<span class="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-500/15 text-amber-400 border border-amber-500/30 font-medium whitespace-nowrap" title="Target scanned ${occurrenceCount} times">Repeated (${occurrenceCount}x)</span>`
+      : '';
+
+    const isChecked = selectedHistoryIds.has(r.id);
+
     tr.innerHTML = `
+      <td class="py-space-md px-3 text-center w-10">
+        <input type="checkbox" class="history-row-checkbox rounded border-outline cursor-pointer accent-primary" data-id="${r.id}" onchange="toggleHistoryRowSelect(${r.id}, this.checked)" ${isChecked ? 'checked' : ''}/>
+      </td>
       <td class="py-space-md px-space-lg font-label-data-md text-outline text-[12px]">${escapeHtml(formattedDate)}</td>
-      <td class="py-space-md px-space-lg font-medium text-on-surface">${escapeHtml(r.domain || r.input_value || 'Unknown')}</td>
+      <td class="py-space-md px-space-lg font-medium text-on-surface">
+        <div class="flex items-center gap-1.5">
+          <span class="truncate max-w-[160px]">${escapeHtml(r.domain || r.input_value || 'Unknown')}</span>
+          ${repeatedBadge}
+        </div>
+      </td>
       <td class="py-space-md px-space-lg font-label-data-md text-primary">${escapeHtml(r.ip_address || 'Unavailable')}</td>
       <td class="py-space-md px-space-lg text-[13px] text-on-surface-variant">${escapeHtml(`${r.city || ''}, ${r.country || ''}`.trim().replace(/^,\s*|,\s*$/g, '') || 'Unknown')}</td>
       <td class="py-space-md px-space-lg text-[12px] text-outline truncate max-w-[150px]">${escapeHtml(r.organization || r.isp || 'N/A')}</td>
@@ -791,7 +884,7 @@ function renderHistoryTable(records) {
           <button class="px-2.5 py-1 rounded bg-surface-container hover:bg-surface-container-high text-primary hover:text-white text-[12px] font-label-data-md transition-all cursor-pointer" onclick="inspectFromHistory('${escapeHtml(r.domain || r.input_value)}')">
             Inspect
           </button>
-          <button class="p-1 rounded text-outline hover:text-error hover:bg-surface-container-high transition-colors" onclick="deleteHistoryItem(${r.id})" title="Delete record">
+          <button class="p-1 rounded text-outline hover:text-error hover:bg-surface-container-high transition-colors cursor-pointer" onclick="deleteHistoryItem(${r.id})" title="Delete record">
             <span class="material-symbols-outlined text-[16px]">delete</span>
           </button>
         </div>
@@ -811,7 +904,10 @@ window.deleteHistoryItem = async function(id) {
   try {
     const res = await fetch(`${API_BASE}/api/history/${id}`, { method: 'DELETE' });
     if (res.ok) {
-      loadHistory();
+      selectedHistoryIds.delete(id);
+      updateHistoryBatchToolbar();
+      await loadHistory();
+      if (typeof loadInvestigationWorkspace === 'function') loadInvestigationWorkspace();
     }
   } catch (err) {
     alert(`Could not delete record: ${err.message}`);
@@ -823,7 +919,10 @@ window.clearAllHistory = async function() {
   try {
     const res = await fetch(`${API_BASE}/api/history`, { method: 'DELETE' });
     if (res.ok) {
-      loadHistory();
+      selectedHistoryIds.clear();
+      updateHistoryBatchToolbar();
+      await loadHistory();
+      if (typeof loadInvestigationWorkspace === 'function') loadInvestigationWorkspace();
     }
   } catch (err) {
     alert(`Could not clear history: ${err.message}`);
@@ -869,6 +968,9 @@ window.addToFieldStudy = async function() {
         `;
         btn.className = 'px-3 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-xs font-mono text-emerald-400 flex items-center gap-1.5 transition-all cursor-default';
       }
+      loadFieldStudy();
+      if (typeof loadAnalytics === 'function') loadAnalytics();
+      if (typeof loadInvestigationWorkspace === 'function') loadInvestigationWorkspace();
     } else if (res.status === 409 || data.duplicate) {
       if (btn) {
         btn.innerHTML = `
@@ -995,12 +1097,112 @@ function renderFieldStudySummary(summary, avail, target) {
   setText('fs-summary-tor', summary.tor_detections || 0);
 }
 
+let selectedFsIds = new Set();
+
+function updateFsBatchToolbar() {
+  const toolbar = document.getElementById('fs-batch-toolbar');
+  const countEl = document.getElementById('fs-selected-count');
+  if (!toolbar || !countEl) return;
+  countEl.textContent = selectedFsIds.size;
+  if (selectedFsIds.size > 0) {
+    toolbar.classList.remove('hidden');
+    toolbar.classList.add('flex');
+  } else {
+    toolbar.classList.add('hidden');
+    toolbar.classList.remove('flex');
+  }
+}
+
+window.toggleSelectAllFieldStudy = function(checked) {
+  selectedFsIds.clear();
+  const checkboxes = document.querySelectorAll('.fs-row-checkbox');
+  checkboxes.forEach(cb => {
+    cb.checked = checked;
+    const id = parseInt(cb.dataset.id, 10);
+    if (checked && !isNaN(id)) selectedFsIds.add(id);
+  });
+  updateFsBatchToolbar();
+};
+
+window.toggleFsRowSelect = function(id, checked) {
+  if (checked) {
+    selectedFsIds.add(id);
+  } else {
+    selectedFsIds.delete(id);
+  }
+  const allCb = document.getElementById('fs-select-all');
+  const checkboxes = document.querySelectorAll('.fs-row-checkbox');
+  if (allCb && checkboxes.length > 0) {
+    allCb.checked = selectedFsIds.size === checkboxes.length;
+  }
+  updateFsBatchToolbar();
+};
+
+window.deleteFieldStudyItem = async function(id) {
+  if (!confirm(`Delete Field Study observation #${id}? This will remove it from research datasets and update analytics.`)) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/field-study/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      selectedFsIds.delete(id);
+      updateFsBatchToolbar();
+      await loadFieldStudy();
+      if (typeof loadAnalytics === 'function') loadAnalytics();
+      if (typeof loadInvestigationWorkspace === 'function') loadInvestigationWorkspace();
+    } else {
+      alert(`Could not delete observation: ${data.error || 'Server error'}`);
+    }
+  } catch (err) {
+    alert(`Could not delete observation: ${err.message}`);
+  }
+};
+
+window.deleteSelectedFieldStudy = async function() {
+  if (selectedFsIds.size === 0) return;
+  const ids = Array.from(selectedFsIds);
+  if (!confirm(`Are you sure you want to delete ${ids.length} selected Field Study observation(s)? This will update research analytics.`)) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/field-study/delete-batch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: ids })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      selectedFsIds.clear();
+      updateFsBatchToolbar();
+      const allCb = document.getElementById('fs-select-all');
+      if (allCb) allCb.checked = false;
+      await loadFieldStudy();
+      if (typeof loadAnalytics === 'function') loadAnalytics();
+      if (typeof loadInvestigationWorkspace === 'function') loadInvestigationWorkspace();
+    } else {
+      alert(`Could not delete selected observations: ${data.error || 'Server error'}`);
+    }
+  } catch (err) {
+    alert(`Could not delete selected observations: ${err.message}`);
+  }
+};
+
+window.inspectFromFieldStudy = function(target) {
+  navigateTo('home');
+  performAnalysis(target);
+};
+
+window.deleteCurrentModalObservation = async function() {
+  if (!window.currentModalObsId) return;
+  const id = window.currentModalObsId;
+  closeFieldStudyDetail();
+  await window.deleteFieldStudyItem(id);
+};
+
 function renderFieldStudyTable(records) {
   const tableBody = document.getElementById('field-study-table-body');
   if (!tableBody) return;
 
   if (!records || records.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="10" class="py-12 text-center text-outline font-mono">No field study observations recorded yet. Search domains or IP addresses on Home to automatically record and attribute observations.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="12" class="py-12 text-center text-outline font-mono">No field study observations recorded yet. Search domains or IP addresses on Home to automatically record and attribute observations.</td></tr>`;
     return;
   }
 
@@ -1045,7 +1247,13 @@ function renderFieldStudyTable(records) {
       }
     }
 
+    const recId = r.id || r.test_id;
+    const isChecked = selectedFsIds.has(recId);
+
     tr.innerHTML = `
+      <td class="py-3 px-3 text-center w-10" onclick="event.stopPropagation()">
+        <input type="checkbox" class="fs-row-checkbox rounded border-outline cursor-pointer accent-primary" data-id="${recId}" onchange="toggleFsRowSelect(${recId}, this.checked)" ${isChecked ? 'checked' : ''}/>
+      </td>
       <td class="py-3 px-3 text-center font-mono text-outline">${r.test_id || (idx + 1)}</td>
       <td class="py-3 px-4 font-mono font-medium text-on-surface group-hover:text-primary transition-colors">
         <div class="flex items-center gap-1.5">
@@ -1080,6 +1288,16 @@ function renderFieldStudyTable(records) {
       <td class="py-3 px-4 text-right font-mono text-[11px] text-outline whitespace-nowrap">
         ${formattedDate}
       </td>
+      <td class="py-3 px-4 text-right" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-end gap-1.5">
+          <button class="px-2.5 py-1 rounded bg-surface-container hover:bg-surface-container-high text-primary hover:text-white text-[11px] font-mono transition-all cursor-pointer" onclick="inspectFromFieldStudy('${escapeHtml(r.domain)}')" title="Inspect Domain">
+            Inspect
+          </button>
+          <button class="p-1 rounded text-outline hover:text-error hover:bg-surface-container-high transition-colors cursor-pointer" onclick="deleteFieldStudyItem(${recId})" title="Delete Observation">
+            <span class="material-symbols-outlined text-[16px]">delete</span>
+          </button>
+        </div>
+      </td>
     `;
     tableBody.appendChild(tr);
   });
@@ -1092,6 +1310,9 @@ window.openFieldStudyDetail = function(obsId) {
     console.warn(`Observation #${obsId} not found in current cache.`);
     return;
   }
+
+  // Store active observation ID for modal deletion
+  window.currentModalObsId = obs.id || obs.test_id || obsId;
 
   // Header
   setText('modal-obs-test-id', `#${obs.test_id || 1}`);
