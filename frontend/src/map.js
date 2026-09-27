@@ -100,11 +100,16 @@ function updateMapLocation(lat, lng, title = '', subtitle = '') {
   currentMarker.bindPopup(popupContent).openPopup();
 }
 
+let resizeTimer = null;
 function resizeMap() {
   if (mapInstance) {
-    setTimeout(() => {
-      mapInstance.invalidateSize();
-    }, 200);
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      resizeTimer = null;
+      if (mapInstance) {
+        mapInstance.invalidateSize();
+      }
+    }, 100);
   }
 }
 

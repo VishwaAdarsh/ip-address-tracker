@@ -3,7 +3,7 @@
  * Manages view routing, asynchronous lookup requests, real-time polling, and UI rendering.
  */
 
-import { escapeHtml } from './utils.js';
+import { escapeHtml, debounce, throttle } from './utils.js';
 import { initMap, updateMapLocation, resizeMap } from './map.js';
 
 // Centralized API configuration: Reads VITE_API_BASE_URL (configured on Vercel), falls back to window override or same-origin
@@ -84,7 +84,7 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-window.addEventListener('resize', () => {
+const handleWindowResize = debounce(() => {
   if (window.innerWidth >= 1024) {
     closeMobileSidebar();
   }
@@ -97,7 +97,9 @@ window.addEventListener('resize', () => {
   if (window.comparisonMapInstance) {
     window.comparisonMapInstance.invalidateSize();
   }
-});
+}, 100);
+
+window.addEventListener('resize', handleWindowResize);
 
 function initNavigation() {
   const navLinks = document.querySelectorAll('aside nav a[data-path]');
@@ -148,6 +150,14 @@ function navigateTo(viewName) {
   // Close mobile drawer upon selection
   closeMobileSidebar();
 
+  // Clean up background field study polling if navigated away
+  if (viewName !== 'field-study' && fieldStudyPollingInterval) {
+    clearInterval(fieldStudyPollingInterval);
+    fieldStudyPollingInterval = null;
+    const banner = document.getElementById('field-study-running-banner');
+    if (banner) banner.classList.add('hidden');
+  }
+
   // Action on tab switch
   if (viewName === 'home') {
     resizeMap();
@@ -161,7 +171,7 @@ function navigateTo(viewName) {
       if (window.analyticsMapInstance) {
         window.analyticsMapInstance.invalidateSize();
       }
-    }, 200);
+    }, 150);
   } else if (viewName === 'investigation') {
     loadInvestigationWorkspace();
   }
@@ -248,6 +258,7 @@ async function performAnalysis(query) {
     if (loadingMsg) loadingMsg.textContent = messages[msgIdx];
   }, 700);
 
+  let data;
   try {
     const res = await fetch(`${API_BASE}/api/analyze`, {
       method: 'POST',
@@ -258,18 +269,25 @@ async function performAnalysis(query) {
     clearInterval(msgTimer);
     if (loadingEl) loadingEl.classList.add('hidden');
 
-    const data = await res.json();
+    data = await res.json();
 
     if (!res.ok || !data.success) {
-      showError(data.error || 'Failed to analyze target domain/IP.');
+      showError(data?.error || 'Failed to analyze target domain/IP.');
       return;
     }
-
-    renderAnalysisResults(data);
   } catch (err) {
     clearInterval(msgTimer);
     if (loadingEl) loadingEl.classList.add('hidden');
-    showError(`Network connection error: ${err.message}`);
+    console.error('API analyze request error:', err);
+    showError(`API connection error: ${err.message || 'Unable to reach backend service.'}`);
+    return;
+  }
+
+  try {
+    renderAnalysisResults(data);
+  } catch (renderErr) {
+    console.error('Analysis rendering error:', renderErr);
+    showError(`Interface rendering error: ${renderErr.message}`);
   }
 }
 
@@ -713,14 +731,33 @@ function initHomeTabs() {
 // History View Management
 // ----------------------------------------------------------------------------
 
-let selectedHistoryIds = new Set();
+// ----------------------------------------------------------------------------
+// History View Management & Batch Selection State
+// ----------------------------------------------------------------------------
+
+const SelectionState = {
+  history: new Set(),
+  fieldStudy: new Set(),
+  getHistory() {
+    if (!(this.history instanceof Set)) this.history = new Set();
+    return this.history;
+  },
+  getFieldStudy() {
+    if (!(this.fieldStudy instanceof Set)) this.fieldStudy = new Set();
+    return this.fieldStudy;
+  }
+};
+window.SelectionState = SelectionState;
+
+let cachedHistoryRecords = null;
 
 function updateHistoryBatchToolbar() {
   const toolbar = document.getElementById('history-batch-toolbar');
   const countEl = document.getElementById('history-selected-count');
   if (!toolbar || !countEl) return;
-  countEl.textContent = selectedHistoryIds.size;
-  if (selectedHistoryIds.size > 0) {
+  const set = SelectionState.getHistory();
+  countEl.textContent = set.size;
+  if (set.size > 0) {
     toolbar.classList.remove('hidden');
     toolbar.classList.add('flex');
   } else {
@@ -730,33 +767,36 @@ function updateHistoryBatchToolbar() {
 }
 
 window.toggleSelectAllHistory = function(checked) {
-  selectedHistoryIds.clear();
+  const set = SelectionState.getHistory();
+  set.clear();
   const checkboxes = document.querySelectorAll('.history-row-checkbox');
   checkboxes.forEach(cb => {
     cb.checked = checked;
     const id = parseInt(cb.dataset.id, 10);
-    if (checked && !isNaN(id)) selectedHistoryIds.add(id);
+    if (checked && !isNaN(id)) set.add(id);
   });
   updateHistoryBatchToolbar();
 };
 
 window.toggleHistoryRowSelect = function(id, checked) {
+  const set = SelectionState.getHistory();
   if (checked) {
-    selectedHistoryIds.add(id);
+    set.add(id);
   } else {
-    selectedHistoryIds.delete(id);
+    set.delete(id);
   }
   const allCb = document.getElementById('history-select-all');
   const checkboxes = document.querySelectorAll('.history-row-checkbox');
   if (allCb && checkboxes.length > 0) {
-    allCb.checked = selectedHistoryIds.size === checkboxes.length;
+    allCb.checked = set.size === checkboxes.length;
   }
   updateHistoryBatchToolbar();
 };
 
 window.deleteSelectedHistory = async function() {
-  if (selectedHistoryIds.size === 0) return;
-  const ids = Array.from(selectedHistoryIds);
+  const set = SelectionState.getHistory();
+  if (set.size === 0) return;
+  const ids = Array.from(set);
   if (!confirm(`Are you sure you want to delete ${ids.length} selected history record(s)?`)) return;
 
   try {
@@ -767,7 +807,7 @@ window.deleteSelectedHistory = async function() {
     });
     const data = await res.json();
     if (res.ok && data.success) {
-      selectedHistoryIds.clear();
+      set.clear();
       updateHistoryBatchToolbar();
       const allCb = document.getElementById('history-select-all');
       if (allCb) allCb.checked = false;
@@ -786,38 +826,62 @@ async function loadHistory() {
   const totalCountEl = document.getElementById('history-total-count');
   const searchInput = document.getElementById('history-search-input');
 
-  if (tableBody) {
+  // Only show placeholder if no records cached, avoiding tab-switch UI flash/lag
+  if (tableBody && (!cachedHistoryRecords || cachedHistoryRecords.length === 0)) {
     tableBody.innerHTML = `<tr><td colspan="8" class="py-space-lg text-center text-outline">Loading audit ledger from database...</td></tr>`;
   }
 
+  let data;
   try {
     const res = await fetch(`${API_BASE}/api/history`);
-    const data = await res.json();
-
+    data = await res.json();
     if (!res.ok || !data.success) {
-      if (tableBody) tableBody.innerHTML = `<tr><td colspan="8" class="py-space-lg text-center text-error">Failed to load history: ${data.error}</td></tr>`;
+      if (tableBody && (!cachedHistoryRecords || cachedHistoryRecords.length === 0)) {
+        tableBody.innerHTML = `<tr><td colspan="8" class="py-space-lg text-center text-error">Failed to load history: ${escapeHtml(data?.error || `HTTP ${res.status}`)}</td></tr>`;
+      }
       return;
     }
+  } catch (netErr) {
+    console.error('History network fetch error:', netErr);
+    if (tableBody && (!cachedHistoryRecords || cachedHistoryRecords.length === 0)) {
+      tableBody.innerHTML = `<tr><td colspan="8" class="py-space-lg text-center text-error">API connection error: ${escapeHtml(netErr.message || 'Unable to connect to backend server')}</td></tr>`;
+    }
+    return;
+  }
 
-    const records = data.records || [];
+  try {
+    const records = Array.isArray(data.records) ? data.records : (Array.isArray(data) ? data : []);
+    cachedHistoryRecords = records;
     if (totalCountEl) totalCountEl.textContent = records.length;
 
     renderHistoryTable(records);
 
-    // Bind real-time search filter
+    // Bind debounced real-time search filter for zero-lag responsiveness
     if (searchInput) {
-      searchInput.oninput = () => {
-        const query = searchInput.value.toLowerCase().trim();
-        const filtered = records.filter(r => 
-          (r.domain && r.domain.toLowerCase().includes(query)) ||
-          (r.ip_address && r.ip_address.toLowerCase().includes(query)) ||
-          (r.country && r.country.toLowerCase().includes(query))
-        );
-        renderHistoryTable(filtered);
-      };
+      if (!searchInput._hasDebouncedInput) {
+        searchInput._hasDebouncedInput = true;
+        const debouncedFilter = debounce(() => {
+          const query = searchInput.value.toLowerCase().trim();
+          const currentRecords = cachedHistoryRecords || [];
+          if (!query) {
+            renderHistoryTable(currentRecords);
+            return;
+          }
+          const filtered = currentRecords.filter(r =>
+            (r.domain && r.domain.toLowerCase().includes(query)) ||
+            (r.ip_address && r.ip_address.toLowerCase().includes(query)) ||
+            (r.country && r.country.toLowerCase().includes(query))
+          );
+          renderHistoryTable(filtered);
+        }, 120);
+        searchInput.addEventListener('input', debouncedFilter);
+      }
     }
-  } catch (err) {
-    if (tableBody) tableBody.innerHTML = `<tr><td colspan="8" class="py-space-lg text-center text-error">Connection error: ${err.message}</td></tr>`;
+  } catch (renderErr) {
+    console.error('History table render error:', renderErr);
+    if (tableBody) {
+      tableBody.innerHTML = `<tr><td colspan="8" class="py-space-lg text-center text-error">Interface rendering error: ${escapeHtml(renderErr.message)}</td></tr>`;
+    }
   }
 }
 
@@ -825,20 +889,24 @@ function renderHistoryTable(records) {
   const tableBody = document.getElementById('history-table-body');
   if (!tableBody) return;
 
-  if (records.length === 0) {
+  if (!records || records.length === 0) {
     tableBody.innerHTML = `<tr><td colspan="8" class="py-space-xl text-center text-outline">No stored observations in database.</td></tr>`;
     return;
   }
 
   // Count occurrences for duplicate / repeated scan identification
   const domainCounts = {};
-  records.forEach(r => {
+  for (let i = 0; i < records.length; i++) {
+    const r = records[i];
     const key = (r.domain || r.input_value || '').toLowerCase().trim();
     if (key) domainCounts[key] = (domainCounts[key] || 0) + 1;
-  });
+  }
 
-  tableBody.innerHTML = '';
-  records.forEach(r => {
+  const histSet = SelectionState.getHistory();
+  const fragment = document.createDocumentFragment();
+
+  for (let i = 0; i < records.length; i++) {
+    const r = records[i];
     const tr = document.createElement('tr');
     tr.className = 'data-table-row group hover:bg-surface-container/70 transition-colors border-b border-surface-container/60';
 
@@ -862,7 +930,7 @@ function renderHistoryTable(records) {
       ? `<span class="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-500/15 text-amber-400 border border-amber-500/30 font-medium whitespace-nowrap" title="Target scanned ${occurrenceCount} times">Repeated (${occurrenceCount}x)</span>`
       : '';
 
-    const isChecked = selectedHistoryIds.has(r.id);
+    const isChecked = Boolean(histSet?.has?.(r.id));
 
     tr.innerHTML = `
       <td class="py-space-md px-3 text-center w-10">
@@ -890,8 +958,11 @@ function renderHistoryTable(records) {
         </div>
       </td>
     `;
-    tableBody.appendChild(tr);
-  });
+    fragment.appendChild(tr);
+  }
+
+  tableBody.innerHTML = '';
+  tableBody.appendChild(fragment);
 }
 
 window.inspectFromHistory = function(target) {
@@ -904,7 +975,7 @@ window.deleteHistoryItem = async function(id) {
   try {
     const res = await fetch(`${API_BASE}/api/history/${id}`, { method: 'DELETE' });
     if (res.ok) {
-      selectedHistoryIds.delete(id);
+      SelectionState.getHistory().delete(id);
       updateHistoryBatchToolbar();
       await loadHistory();
       if (typeof loadInvestigationWorkspace === 'function') loadInvestigationWorkspace();
@@ -919,7 +990,7 @@ window.clearAllHistory = async function() {
   try {
     const res = await fetch(`${API_BASE}/api/history`, { method: 'DELETE' });
     if (res.ok) {
-      selectedHistoryIds.clear();
+      SelectionState.getHistory().clear();
       updateHistoryBatchToolbar();
       await loadHistory();
       if (typeof loadInvestigationWorkspace === 'function') loadInvestigationWorkspace();
@@ -1004,14 +1075,20 @@ window.addToFieldStudy = async function() {
 };
 
 async function loadFieldStudy() {
+  let data;
   try {
     const res = await fetch(`${API_BASE}/api/field-study`);
-    const data = await res.json();
-
+    data = await res.json();
     if (!res.ok || !data.success) {
+      console.warn('Field study fetch returned non-success:', data);
       return;
     }
+  } catch (err) {
+    console.error('Field study network fetch error:', err);
+    return;
+  }
 
+  try {
     const avail = data.available_count || 0;
     const target = data.target || 50;
     const rem = data.remaining !== undefined ? data.remaining : Math.max(target - avail, 0);
@@ -1063,8 +1140,8 @@ async function loadFieldStudy() {
     // Cache records and render table
     window.currentFieldStudyRecords = data.records || [];
     renderFieldStudyTable(window.currentFieldStudyRecords);
-  } catch (err) {
-    console.error('Field study fetch error:', err);
+  } catch (renderErr) {
+    console.error('Field study render exception:', renderErr);
   }
 }
 
@@ -1097,14 +1174,13 @@ function renderFieldStudySummary(summary, avail, target) {
   setText('fs-summary-tor', summary.tor_detections || 0);
 }
 
-let selectedFsIds = new Set();
-
 function updateFsBatchToolbar() {
   const toolbar = document.getElementById('fs-batch-toolbar');
   const countEl = document.getElementById('fs-selected-count');
   if (!toolbar || !countEl) return;
-  countEl.textContent = selectedFsIds.size;
-  if (selectedFsIds.size > 0) {
+  const set = SelectionState.getFieldStudy();
+  countEl.textContent = set.size;
+  if (set.size > 0) {
     toolbar.classList.remove('hidden');
     toolbar.classList.add('flex');
   } else {
@@ -1114,26 +1190,28 @@ function updateFsBatchToolbar() {
 }
 
 window.toggleSelectAllFieldStudy = function(checked) {
-  selectedFsIds.clear();
+  const set = SelectionState.getFieldStudy();
+  set.clear();
   const checkboxes = document.querySelectorAll('.fs-row-checkbox');
   checkboxes.forEach(cb => {
     cb.checked = checked;
     const id = parseInt(cb.dataset.id, 10);
-    if (checked && !isNaN(id)) selectedFsIds.add(id);
+    if (checked && !isNaN(id)) set.add(id);
   });
   updateFsBatchToolbar();
 };
 
 window.toggleFsRowSelect = function(id, checked) {
+  const set = SelectionState.getFieldStudy();
   if (checked) {
-    selectedFsIds.add(id);
+    set.add(id);
   } else {
-    selectedFsIds.delete(id);
+    set.delete(id);
   }
   const allCb = document.getElementById('fs-select-all');
   const checkboxes = document.querySelectorAll('.fs-row-checkbox');
   if (allCb && checkboxes.length > 0) {
-    allCb.checked = selectedFsIds.size === checkboxes.length;
+    allCb.checked = set.size === checkboxes.length;
   }
   updateFsBatchToolbar();
 };
@@ -1144,7 +1222,7 @@ window.deleteFieldStudyItem = async function(id) {
     const res = await fetch(`${API_BASE}/api/field-study/${id}`, { method: 'DELETE' });
     const data = await res.json();
     if (res.ok && data.success) {
-      selectedFsIds.delete(id);
+      SelectionState.getFieldStudy().delete(id);
       updateFsBatchToolbar();
       await loadFieldStudy();
       if (typeof loadAnalytics === 'function') loadAnalytics();
@@ -1158,8 +1236,9 @@ window.deleteFieldStudyItem = async function(id) {
 };
 
 window.deleteSelectedFieldStudy = async function() {
-  if (selectedFsIds.size === 0) return;
-  const ids = Array.from(selectedFsIds);
+  const set = SelectionState.getFieldStudy();
+  if (set.size === 0) return;
+  const ids = Array.from(set);
   if (!confirm(`Are you sure you want to delete ${ids.length} selected Field Study observation(s)? This will update research analytics.`)) return;
 
   try {
@@ -1170,7 +1249,7 @@ window.deleteSelectedFieldStudy = async function() {
     });
     const data = await res.json();
     if (res.ok && data.success) {
-      selectedFsIds.clear();
+      set.clear();
       updateFsBatchToolbar();
       const allCb = document.getElementById('fs-select-all');
       if (allCb) allCb.checked = false;
@@ -1206,8 +1285,11 @@ function renderFieldStudyTable(records) {
     return;
   }
 
-  tableBody.innerHTML = '';
-  records.forEach((r, idx) => {
+  const fsSet = SelectionState.getFieldStudy();
+  const fragment = document.createDocumentFragment();
+
+  for (let idx = 0; idx < records.length; idx++) {
+    const r = records[idx];
     const tr = document.createElement('tr');
     tr.className = 'cursor-pointer hover:bg-surface-container/60 transition-colors border-b border-surface-container/50 group';
     tr.onclick = () => openFieldStudyDetail(r.id || r.test_id);
@@ -1248,7 +1330,7 @@ function renderFieldStudyTable(records) {
     }
 
     const recId = r.id || r.test_id;
-    const isChecked = selectedFsIds.has(recId);
+    const isChecked = Boolean(fsSet?.has?.(recId));
 
     tr.innerHTML = `
       <td class="py-3 px-3 text-center w-10" onclick="event.stopPropagation()">
@@ -1277,12 +1359,12 @@ function renderFieldStudyTable(records) {
       </td>
       <td class="py-3 px-3 text-center">
         <span class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold ${trustBadgeClass}">
-          ${trustVal !== null ? trustVal : '—'}
+          ${trustVal === null ? '—' : trustVal}
         </span>
       </td>
       <td class="py-3 px-3 text-center">
         <span class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold ${riskBadgeClass}">
-          ${riskVal !== null ? riskVal : '—'}
+          ${riskVal === null ? '—' : riskVal}
         </span>
       </td>
       <td class="py-3 px-4 text-right font-mono text-[11px] text-outline whitespace-nowrap">
@@ -1299,8 +1381,11 @@ function renderFieldStudyTable(records) {
         </div>
       </td>
     `;
-    tableBody.appendChild(tr);
-  });
+    fragment.appendChild(tr);
+  }
+
+  tableBody.innerHTML = '';
+  tableBody.appendChild(fragment);
 }
 
 window.openFieldStudyDetail = function(obsId) {
@@ -1884,7 +1969,7 @@ async function loadAnalytics() {
 
     const trustClassList = document.getElementById('trust-classifications-list');
     if (trustClassList) {
-      trustClassList.innerHTML = '';
+      const fragment = document.createDocumentFragment();
       (trust.classifications || []).forEach(c => {
         const pill = document.createElement('div');
         pill.className = 'px-2.5 py-1 rounded-md bg-surface-container-low border border-surface-container flex items-center gap-1.5 text-xs';
@@ -1893,8 +1978,10 @@ async function loadAnalytics() {
           <span class="text-primary font-bold">${c.count}</span>
           <span class="text-outline">(${c.pct}%)</span>
         `;
-        trustClassList.appendChild(pill);
+        fragment.appendChild(pill);
       });
+      trustClassList.innerHTML = '';
+      trustClassList.appendChild(fragment);
     }
 
     const risk = data.risk_analysis || {};
@@ -1917,7 +2004,7 @@ async function loadAnalytics() {
 
     const riskClassList = document.getElementById('risk-classifications-list');
     if (riskClassList) {
-      riskClassList.innerHTML = '';
+      const fragment = document.createDocumentFragment();
       (risk.classifications || []).forEach(c => {
         const pill = document.createElement('div');
         pill.className = 'px-2.5 py-1 rounded-md bg-surface-container-low border border-surface-container flex items-center gap-1.5 text-xs';
@@ -1926,8 +2013,10 @@ async function loadAnalytics() {
           <span class="text-secondary font-bold">${c.count}</span>
           <span class="text-outline">(${c.pct}%)</span>
         `;
-        riskClassList.appendChild(pill);
+        fragment.appendChild(pill);
       });
+      riskClassList.innerHTML = '';
+      riskClassList.appendChild(fragment);
     }
 
     // ------------------------------------------------------------------------
@@ -1997,11 +2086,11 @@ async function loadAnalytics() {
     const geoAsn = data.geographic_and_asn_distribution || {};
     const countryList = document.getElementById('analytics-top-countries');
     if (countryList) {
-      countryList.innerHTML = '';
       const countries = geoAsn.top_countries || data.top_countries || [];
       if (countries.length === 0) {
         countryList.innerHTML = '<div class="py-3 text-xs text-outline font-mono">No geographic data recorded.</div>';
       } else {
+        const fragment = document.createDocumentFragment();
         countries.forEach(c => {
           const row = document.createElement('div');
           row.className = 'flex items-center justify-between py-2 border-b border-surface-container/60 text-xs font-mono';
@@ -2012,8 +2101,10 @@ async function loadAnalytics() {
             </div>
             <span class="text-primary font-bold">${c.count} <span class="text-outline font-normal">(${c.pct}%)</span></span>
           `;
-          countryList.appendChild(row);
+          fragment.appendChild(row);
         });
+        countryList.innerHTML = '';
+        countryList.appendChild(fragment);
       }
     }
 
@@ -2025,11 +2116,11 @@ async function loadAnalytics() {
     // ------------------------------------------------------------------------
     const asnList = document.getElementById('analytics-top-asns');
     if (asnList) {
-      asnList.innerHTML = '';
       const asns = geoAsn.top_asns || [];
       if (asns.length === 0) {
         asnList.innerHTML = '<div class="py-3 text-xs text-outline font-mono">No BGP ASN data recorded.</div>';
       } else {
+        const fragment = document.createDocumentFragment();
         asns.forEach(a => {
           const row = document.createElement('div');
           row.className = 'flex items-center justify-between py-2 border-b border-surface-container/60 text-xs font-mono';
@@ -2040,14 +2131,15 @@ async function loadAnalytics() {
             </div>
             <span class="text-secondary font-bold">${a.count} <span class="text-outline font-normal">(${a.pct}%)</span></span>
           `;
-          asnList.appendChild(row);
+          fragment.appendChild(row);
         });
+        asnList.innerHTML = '';
+        asnList.appendChild(fragment);
       }
     }
 
     const insightsContainer = document.getElementById('analytics-insights-container');
     if (insightsContainer) {
-      insightsContainer.innerHTML = '';
       const insights = data.research_insights || [];
       if (insights.length === 0) {
         insightsContainer.innerHTML = '<div class="col-span-full py-3 text-xs text-outline font-mono">Gathering additional observations to establish deterministic patterns.</div>';
@@ -2060,6 +2152,7 @@ async function loadAnalytics() {
           reputation: 'verified_user'
         };
 
+        const fragment = document.createDocumentFragment();
         insights.forEach(ins => {
           const card = document.createElement('div');
           card.className = 'p-4 rounded-xl glass-panel border border-surface-container flex flex-col justify-between gap-3 shadow-lg';
@@ -2078,8 +2171,10 @@ async function loadAnalytics() {
               <span class="text-primary font-bold">${escapeHtml(ins.metric)}</span>
             </div>
           `;
-          insightsContainer.appendChild(card);
+          fragment.appendChild(card);
         });
+        insightsContainer.innerHTML = '';
+        insightsContainer.appendChild(fragment);
       }
     }
 
@@ -2089,11 +2184,11 @@ async function loadAnalytics() {
     const cmp = data.comparison_analytics || {};
     const highestTrustTable = document.getElementById('table-highest-trust');
     if (highestTrustTable) {
-      highestTrustTable.innerHTML = '';
       const highTrust = cmp.highest_trust_sites || [];
       if (highTrust.length === 0) {
         highestTrustTable.innerHTML = '<tr><td colspan="4" class="py-3 text-center text-outline">No observations recorded.</td></tr>';
       } else {
+        const fragment = document.createDocumentFragment();
         highTrust.slice(0, 5).forEach((site, idx) => {
           const tr = document.createElement('tr');
           tr.className = 'hover:bg-surface-container/30 transition-colors';
@@ -2103,18 +2198,20 @@ async function loadAnalytics() {
             <td class="py-2.5 px-2 text-on-surface-variant">${escapeHtml(site.country || 'Unknown')}</td>
             <td class="py-2.5 px-2 text-right text-emerald-400 font-bold">${site.trust_score !== null ? site.trust_score : '—'}</td>
           `;
-          highestTrustTable.appendChild(tr);
+          fragment.appendChild(tr);
         });
+        highestTrustTable.innerHTML = '';
+        highestTrustTable.appendChild(fragment);
       }
     }
 
     const highestRiskTable = document.getElementById('table-highest-risk');
     if (highestRiskTable) {
-      highestRiskTable.innerHTML = '';
       const highRisk = cmp.highest_risk_sites || [];
       if (highRisk.length === 0) {
         highestRiskTable.innerHTML = '<tr><td colspan="4" class="py-3 text-center text-outline">No observations recorded.</td></tr>';
       } else {
+        const fragment = document.createDocumentFragment();
         highRisk.slice(0, 5).forEach((site, idx) => {
           const tr = document.createElement('tr');
           tr.className = 'hover:bg-surface-container/30 transition-colors';
@@ -2124,8 +2221,10 @@ async function loadAnalytics() {
             <td class="py-2.5 px-2 text-on-surface-variant">${escapeHtml(site.infrastructure || 'Unknown')}</td>
             <td class="py-2.5 px-2 text-right text-secondary font-bold">${site.risk_score !== null ? site.risk_score : '—'}</td>
           `;
-          highestRiskTable.appendChild(tr);
+          fragment.appendChild(tr);
         });
+        highestRiskTable.innerHTML = '';
+        highestRiskTable.appendChild(fragment);
       }
     }
 
@@ -2579,25 +2678,24 @@ async function fetchAIProviderStatus() {
 function renderSignalList(containerId, signals, dotClass) {
   const container = document.getElementById(containerId);
   if (!container) return;
-  container.innerHTML = '';
 
   if (!signals || signals.length === 0) {
-    const emptyEl = document.createElement('div');
-    emptyEl.className = 'text-[11px] text-outline italic py-0.5';
-    emptyEl.textContent = 'None identified';
-    container.appendChild(emptyEl);
+    container.innerHTML = '<div class="text-[11px] text-outline italic py-0.5">None identified</div>';
     return;
   }
 
+  const fragment = document.createDocumentFragment();
   signals.forEach(sig => {
     const item = document.createElement('div');
     item.className = 'flex items-start gap-1.5 text-[11px] text-on-surface-variant leading-snug';
     item.innerHTML = `
       <span class="mt-1 w-1 h-1 rounded-full ${dotClass} shrink-0"></span>
-      <span>${sig}</span>
+      <span>${escapeHtml(sig)}</span>
     `;
-    container.appendChild(item);
+    fragment.appendChild(item);
   });
+  container.innerHTML = '';
+  container.appendChild(fragment);
 }
 
 async function triggerAIExplanation() {
@@ -2738,7 +2836,6 @@ function updateComparisonSelectionUI() {
   }
 
   if (chipsContainer) {
-    chipsContainer.innerHTML = '';
     if (count === 0) {
       chipsContainer.innerHTML = `
         <div class="text-xs text-outline font-mono italic py-1">
@@ -2746,6 +2843,7 @@ function updateComparisonSelectionUI() {
         </div>
       `;
     } else {
+      const fragment = document.createDocumentFragment();
       window.selectedComparisonItems.forEach((item, idx) => {
         const chip = document.createElement('div');
         chip.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-container-high border border-surface-container text-xs text-on-surface font-mono shadow-sm';
@@ -2762,13 +2860,15 @@ function updateComparisonSelectionUI() {
 
         chip.innerHTML = `
           <span class="px-1.5 py-0.5 rounded text-[10px] uppercase font-bold border ${sourceClass}">${sourceLabel}</span>
-          <span class="font-medium">${item.domain || item.resolved_ip || 'Unknown'}</span>
+          <span class="font-medium">${escapeHtml(item.domain || item.resolved_ip || 'Unknown')}</span>
           <button type="button" class="text-outline hover:text-error transition-colors cursor-pointer ml-1" onclick="removeComparisonItem(${idx})" title="Remove">
             <span class="material-symbols-outlined text-[15px]">close</span>
           </button>
         `;
-        chipsContainer.appendChild(chip);
+        fragment.appendChild(chip);
       });
+      chipsContainer.innerHTML = '';
+      chipsContainer.appendChild(fragment);
     }
   }
 
@@ -2813,17 +2913,26 @@ async function openCandidateModal(defaultTab = 'all') {
     `;
   }
 
+  let data;
   try {
     const res = await fetch(`${API_BASE}/api/compare/candidates`);
-    if (res.ok) {
-      const data = await res.json();
-      window.availableCandidates = data.candidates || [];
-      renderCandidateList();
-    } else {
-      if (listEl) listEl.innerHTML = `<div class="p-4 text-xs text-error font-mono">Failed to load candidates.</div>`;
+    if (!res.ok) {
+      if (listEl) listEl.innerHTML = `<div class="p-4 text-xs text-error font-mono">Failed to load candidates (HTTP ${res.status}).</div>`;
+      return;
     }
+    data = await res.json();
   } catch (err) {
-    if (listEl) listEl.innerHTML = `<div class="p-4 text-xs text-error font-mono">Network error: ${err.message}</div>`;
+    console.error('Candidate network error:', err);
+    if (listEl) listEl.innerHTML = `<div class="p-4 text-xs text-error font-mono">API connection error: ${escapeHtml(err.message)}</div>`;
+    return;
+  }
+
+  try {
+    window.availableCandidates = data.candidates || [];
+    renderCandidateList();
+  } catch (renderErr) {
+    console.error('Candidate rendering error:', renderErr);
+    if (listEl) listEl.innerHTML = `<div class="p-4 text-xs text-error font-mono">Interface rendering error: ${escapeHtml(renderErr.message)}</div>`;
   }
 }
 
@@ -2851,8 +2960,12 @@ function setCandidateFilter(type) {
   renderCandidateList();
 }
 
-function filterCandidateList() {
+const debouncedCandidateFilter = debounce(() => {
   renderCandidateList();
+}, 100);
+
+function filterCandidateList() {
+  debouncedCandidateFilter();
 }
 
 function renderCandidateList() {
@@ -2870,8 +2983,6 @@ function renderCandidateList() {
     return text.includes(query);
   });
 
-  listEl.innerHTML = '';
-
   if (filtered.length === 0) {
     listEl.innerHTML = `
       <div class="text-center p-6 text-xs text-outline font-mono">
@@ -2881,7 +2992,10 @@ function renderCandidateList() {
     return;
   }
 
-  filtered.forEach(c => {
+  const fragment = document.createDocumentFragment();
+
+  for (let i = 0; i < filtered.length; i++) {
+    const c = filtered[i];
     const isSelected = window.selectedComparisonItems.some(
       it => (it.domain && it.domain.toLowerCase() === (c.domain || '').toLowerCase())
     );
@@ -2908,15 +3022,15 @@ function renderCandidateList() {
         <input type="checkbox" class="rounded bg-surface-container border-surface-container text-primary pointer-events-none" ${isSelected ? 'checked' : ''}>
         <div class="flex flex-col min-w-0">
           <div class="flex items-center gap-2">
-            <span class="font-mono text-xs font-semibold text-on-surface truncate">${c.domain || 'Unknown Target'}</span>
-            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono uppercase bg-surface-container text-outline border border-surface-container">${c.badge || c.source}</span>
+            <span class="font-mono text-xs font-semibold text-on-surface truncate">${escapeHtml(c.domain || 'Unknown Target')}</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono uppercase bg-surface-container text-outline border border-surface-container">${escapeHtml(c.badge || c.source)}</span>
           </div>
           <div class="flex items-center gap-2 text-[11px] font-mono text-outline truncate mt-0.5">
-            <span>${c.ip_address || 'No IP'}</span>
+            <span>${escapeHtml(c.ip_address || 'No IP')}</span>
             <span>•</span>
-            <span>${c.asn || 'No ASN'}</span>
+            <span>${escapeHtml(c.asn || 'No ASN')}</span>
             <span>•</span>
-            <span>${c.city || 'Unknown'}, ${c.country || ''}</span>
+            <span>${escapeHtml(c.city || 'Unknown')}, ${escapeHtml(c.country || '')}</span>
           </div>
         </div>
       </div>
@@ -2928,8 +3042,11 @@ function renderCandidateList() {
       </div>
     `;
 
-    listEl.appendChild(row);
-  });
+    fragment.appendChild(row);
+  }
+
+  listEl.innerHTML = '';
+  listEl.appendChild(fragment);
 }
 
 function toggleCandidateSelection(candidate) {
