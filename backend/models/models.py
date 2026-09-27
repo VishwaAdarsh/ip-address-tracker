@@ -25,6 +25,7 @@ class LookupRecord:
     country_code: str = "N/A"
     region: str = "N/A"
     city: str = "N/A"
+    postal: str = "N/A"
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     timezone: str = "N/A"
@@ -35,6 +36,9 @@ class LookupRecord:
     api_response_time_ms: float = 0.0
     status: str = ""
     error_message: Optional[str] = None
+    provider: str = "Unknown"
+    retrieved_at: str = ""
+    is_anycast: bool = False
 
     # Rich Security, IP Intel & Scoring Attributes
     infrastructure: str = "Unknown"
@@ -64,12 +68,16 @@ class LookupRecord:
             "country_code": self.country_code,
             "region": self.region,
             "city": self.city,
+            "postal": self.postal,
             "latitude": self.latitude,
             "longitude": self.longitude,
             "timezone": self.timezone,
             "organization": self.organization,
             "isp": self.isp,
             "asn": self.asn,
+            "provider": self.provider,
+            "retrieved_at": self.retrieved_at,
+            "is_anycast": self.is_anycast,
             "dns_response_time_ms": self.dns_response_time_ms,
             "api_response_time_ms": self.api_response_time_ms,
             "status": self.status,
@@ -107,9 +115,13 @@ class FieldObservation:
     country: str = "Unknown"
     region: str = "Unknown"
     city: str = "Unknown"
+    postal: str = "N/A"
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     geolocation_confidence: str = "Unknown"
+    provider: str = "Unknown"
+    retrieved_at: str = ""
+    is_anycast: bool = False
 
     # Network
     asn: str = "Unknown"
@@ -182,9 +194,13 @@ class FieldObservation:
             "country_code": self.country_code,
             "region": self.region,
             "city": self.city,
+            "postal": self.postal,
             "latitude": self.latitude,
             "longitude": self.longitude,
             "geolocation_confidence": self.geolocation_confidence,
+            "provider": self.provider,
+            "retrieved_at": self.retrieved_at,
+            "is_anycast": self.is_anycast,
             "asn": self.asn,
             "organization": self.organization,
             "isp": self.isp,
@@ -210,6 +226,7 @@ class FieldObservation:
             "dns_response_time_ms": self.dns_response_time_ms,
             "api_response_time_ms": self.api_response_time_ms,
             "error_message": self.error_message,
+            "timezone": self.timezone,
             "input_value": self.domain,
             "input_type": "DOMAIN",
         }

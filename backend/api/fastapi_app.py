@@ -171,6 +171,10 @@ def create_fastapi_app() -> FastAPI:
                 "risk_classification": r.risk_classification,
                 "confidence": r.confidence,
                 "evidence_coverage": r.evidence_coverage,
+                "postal": getattr(r, "postal", "N/A") or "N/A",
+                "provider": getattr(r, "provider", "Unknown") or "Unknown",
+                "retrieved_at": getattr(r, "retrieved_at", "") or r.timestamp,
+                "is_anycast": getattr(r, "is_anycast", False) or False,
             })
         return {"success": True, "count": len(serialized), "records": serialized}
 
@@ -603,6 +607,11 @@ def create_fastapi_app() -> FastAPI:
                     "overall_status": base.overall_status.value if hasattr(base.overall_status, "value") else str(base.overall_status),
                     "error_message": base.error_message,
                     "timestamp": base.timestamp,
+                    "postal": getattr(base, "postal", "N/A") or "N/A",
+                    "provider": getattr(base, "provider", "Unknown") or "Unknown",
+                    "retrieved_at": getattr(base, "retrieved_at", "") or base.timestamp,
+                    "is_anycast": getattr(base, "is_anycast", False) or False,
+                    "confidence": getattr(base, "confidence", "APPROXIMATE" if getattr(base, "is_anycast", False) else "HIGH"),
                 },
                 "security": {
                     "target_domain": getattr(sec, "target", getattr(sec, "domain", target)),
@@ -666,7 +675,7 @@ def create_fastapi_app() -> FastAPI:
                 "field_study_observation": field_obs_data,
                 "provenance": [
                     {"stage": "DNS Resolution", "source": "Core Resolver", "status": base.dns_status, "details": f"Resolved {base.selected_ip}"},
-                    {"stage": "Geolocation", "source": "Multi-Provider Geo", "status": base.geolocation_status, "details": f"{base.city}, {base.country}"},
+                    {"stage": "Geolocation", "source": getattr(base, "provider", "Multi-Provider Geo"), "status": base.geolocation_status, "details": f"{base.city}, {base.country} ({'Anycast' if getattr(base, 'is_anycast', False) else getattr(base, 'confidence', 'HIGH')})"},
                     {"stage": "Security Probe", "source": "Website Scanner", "status": "AUDITED", "details": f"HTTPS: {getattr(sec, 'https_enabled', False)}"},
                     {"stage": "IP Intelligence", "source": "Infrastructure Engine", "status": "CLASSIFIED", "details": f"Class: {getattr(intel, 'infrastructure_type', 'Unknown')}"},
                 ],

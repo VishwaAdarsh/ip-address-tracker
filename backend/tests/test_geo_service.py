@@ -8,12 +8,18 @@ import unittest
 from unittest.mock import MagicMock, patch
 import urllib.error
 
-from backend.providers.geo_service import get_geolocation
+from backend.providers.geo_service import clear_geo_cache, get_geolocation
 from backend.providers.normalizer import GeoStatus
 
 
 class TestGeoService(unittest.TestCase):
     """Tests for the geolocation service."""
+
+    def setUp(self):
+        clear_geo_cache()
+
+    def tearDown(self):
+        clear_geo_cache()
 
     def test_invalid_ip_handling(self):
         """Test that invalid IP strings are rejected prior to network requests."""

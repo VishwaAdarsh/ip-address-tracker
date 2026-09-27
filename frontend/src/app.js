@@ -419,7 +419,8 @@ function renderAnalysisResults(data) {
 
   // 3. Leaflet Map Update
   if (b.latitude && b.longitude) {
-    updateMapLocation(b.latitude, b.longitude, b.input || data.target, `${b.city || ''}, ${b.country || ''}`);
+    const locTitle = `${b.city || ''}, ${b.country || ''}${b.is_anycast ? ' (Anycast Node)' : ''}`;
+    updateMapLocation(b.latitude, b.longitude, b.input || data.target, locTitle);
   } else {
     updateMapLocation(null, null);
   }
@@ -439,7 +440,7 @@ function renderAnalysisResults(data) {
   setText('net-isp', b.isp || 'N/A');
   setText('net-org', b.organization || 'N/A');
   setText('net-dns-status', b.dns_status || 'N/A');
-  setText('net-geo-status', b.geolocation_status || 'N/A');
+  setText('net-geo-status', b.geolocation_status ? (b.is_anycast ? `${b.geolocation_status} (Anycast / Approx)` : `${b.geolocation_status} (${b.provider || 'Verified'})`) : 'N/A');
 
   // 5. Tab 2: Security Intelligence
   setText('sec-target', sec.target_domain || b.normalized_input || 'N/A');
@@ -1498,10 +1499,20 @@ window.openFieldStudyDetail = function(obsId) {
           <span class="text-outline">Coordinates:</span>
           <span class="text-on-surface font-mono">${escapeHtml(coords)}</span>
         </div>
-        <div class="flex justify-between py-1">
+        <div class="flex justify-between py-1 border-b border-surface-container/50">
           <span class="text-outline">Confidence:</span>
           <span class="text-secondary font-semibold">${escapeHtml(obs.geolocation_confidence || 'HIGH')}</span>
         </div>
+        ${obs.provider && obs.provider !== 'Unknown' ? `
+        <div class="flex justify-between py-1 border-b border-surface-container/50">
+          <span class="text-outline">Source Provider:</span>
+          <span class="text-on-surface font-mono text-xs">${escapeHtml(obs.provider)}</span>
+        </div>` : ''}
+        ${obs.is_anycast ? `
+        <div class="flex justify-between py-1">
+          <span class="text-outline">Routing Type:</span>
+          <span class="text-amber-400 font-semibold text-xs">Anycast CDN (Approximate POP)</span>
+        </div>` : ''}
       </div>
 
       <!-- Section 3: Network & Infrastructure -->
@@ -1788,7 +1799,7 @@ function renderAnalyticsMap(mapPoints, missingCount = 0) {
     marker.bindPopup(`
       <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #dfe2ee; background: #0f131c; padding: 8px; border-radius: 6px; min-width: 170px;">
         <div style="color: #a5e7ff; font-weight: bold; font-size: 12px; margin-bottom: 3px;">${escapeHtml(pt.domain || 'Unknown')}</div>
-        <div style="color: #949aa7; font-size: 10px; margin-bottom: 4px;">${escapeHtml([pt.city, pt.country].filter(Boolean).join(', ') || 'Unknown Location')}</div>
+        <div style="color: #949aa7; font-size: 10px; margin-bottom: 4px;">${escapeHtml([pt.city, pt.country].filter(Boolean).join(', ') || 'Unknown Location')}${pt.is_anycast ? ' <span style="color: #fbbf24; font-weight: bold;">(Anycast)</span>' : ''}</div>
         <div style="margin-bottom: 2px;"><span style="color: #64748b;">IP:</span> <span style="color: #ffffff;">${escapeHtml(pt.resolved_ip || '—')}</span></div>
         <div style="margin-bottom: 2px;"><span style="color: #64748b;">Infra:</span> <span style="color: #e2e8f0;">${escapeHtml(pt.infrastructure || '—')}</span></div>
         <div style="margin-top: 4px; padding-top: 4px; border-top: 1px solid #1e293b; display: flex; justify-content: space-between;">
@@ -3533,7 +3544,7 @@ function renderComparisonMap(mapPoints) {
     marker.bindPopup(`
       <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #dfe2ee; background: #0f131c; padding: 6px; border-radius: 6px;">
         <strong style="color: #a5e7ff; font-size: 12px;">${pt.domain}</strong><br/>
-        <span>${pt.city || ''}, ${pt.country || ''}</span><br/>
+        <span>${pt.city || ''}, ${pt.country || ''}${pt.is_anycast ? ' <strong style="color: #fbbf24;">(Anycast)</strong>' : ''}</span><br/>
         <span>IP: ${pt.resolved_ip}</span><br/>
         <span style="color: #69f6b9;">Trust: ${pt.trust_score !== null ? pt.trust_score : 'N/A'}</span> | 
         <span style="color: #ffb4ab;">Risk: ${pt.risk_score !== null ? pt.risk_score : 'N/A'}</span>

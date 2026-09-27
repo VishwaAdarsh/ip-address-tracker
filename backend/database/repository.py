@@ -55,6 +55,10 @@ def _extract_lookup_fields(result: Any) -> Dict[str, Any]:
         api_response_time_ms = float(base.get("api_response_time_ms", 0.0) or 0.0)
         status = base.get("status", base.get("overall_status", "UNKNOWN"))
         error_message = base.get("error_message")
+        postal = base.get("postal", "N/A")
+        provider = base.get("provider", "Unknown")
+        retrieved_at = base.get("retrieved_at", "")
+        is_anycast = base.get("is_anycast", False)
     elif isinstance(base, LookupRecord):
         timestamp = base.timestamp
         input_value = base.input_value
@@ -76,6 +80,10 @@ def _extract_lookup_fields(result: Any) -> Dict[str, Any]:
         api_response_time_ms = float(base.api_response_time_ms or 0.0)
         status = base.status
         error_message = base.error_message
+        postal = getattr(base, "postal", "N/A") or "N/A"
+        provider = getattr(base, "provider", "Unknown") or "Unknown"
+        retrieved_at = getattr(base, "retrieved_at", "") or ""
+        is_anycast = getattr(base, "is_anycast", False) or False
     else:
         # LookupResult object
         timestamp = getattr(base, "timestamp", "")
@@ -103,6 +111,10 @@ def _extract_lookup_fields(result: Any) -> Dict[str, Any]:
         overall_status = getattr(base, "overall_status", "UNKNOWN")
         status = overall_status.value if hasattr(overall_status, "value") else str(overall_status)
         error_message = getattr(base, "error_message", None)
+        postal = getattr(base, "postal", "N/A") or "N/A"
+        provider = getattr(base, "provider", "Unknown") or "Unknown"
+        retrieved_at = getattr(base, "retrieved_at", "") or ""
+        is_anycast = getattr(base, "is_anycast", False) or False
 
     # Rich attributes
     infrastructure = "Unknown"
@@ -183,6 +195,10 @@ def _extract_lookup_fields(result: Any) -> Dict[str, Any]:
         "risk_classification": risk_classification,
         "confidence": confidence,
         "evidence_coverage": evidence_coverage,
+        "postal": postal or "N/A",
+        "provider": provider or "Unknown",
+        "retrieved_at": retrieved_at or "",
+        "is_anycast": bool(is_anycast),
     }
 
 
@@ -332,7 +348,11 @@ class SQLiteRepository(BaseDatabaseRepository):
             risk_score REAL,
             risk_classification TEXT DEFAULT 'Unknown',
             confidence TEXT DEFAULT 'Unknown',
-            evidence_coverage REAL
+            evidence_coverage REAL,
+            postal TEXT DEFAULT 'N/A',
+            provider TEXT DEFAULT 'Unknown',
+            retrieved_at TEXT,
+            is_anycast INTEGER DEFAULT 0
         );
 
         CREATE TABLE IF NOT EXISTS field_study_observations (
@@ -372,7 +392,11 @@ class SQLiteRepository(BaseDatabaseRepository):
             api_response_time_ms REAL DEFAULT 0.0,
             timezone TEXT DEFAULT 'N/A',
             error_message TEXT,
-            searched_by TEXT DEFAULT 'Anonymous'
+            searched_by TEXT DEFAULT 'Anonymous',
+            postal TEXT DEFAULT 'N/A',
+            provider TEXT DEFAULT 'Unknown',
+            retrieved_at TEXT,
+            is_anycast INTEGER DEFAULT 0
         );
         """
         with self._connection() as conn:
@@ -392,9 +416,17 @@ class SQLiteRepository(BaseDatabaseRepository):
                 ("lookup_history", "risk_classification", "TEXT DEFAULT 'Unknown'"),
                 ("lookup_history", "confidence", "TEXT DEFAULT 'Unknown'"),
                 ("lookup_history", "evidence_coverage", "REAL"),
+                ("lookup_history", "postal", "TEXT DEFAULT 'N/A'"),
+                ("lookup_history", "provider", "TEXT DEFAULT 'Unknown'"),
+                ("lookup_history", "retrieved_at", "TEXT"),
+                ("lookup_history", "is_anycast", "INTEGER DEFAULT 0"),
                 ("field_study_observations", "country_code", "TEXT DEFAULT 'N/A'"),
                 ("field_study_observations", "timezone", "TEXT DEFAULT 'N/A'"),
                 ("field_study_observations", "searched_by", "TEXT DEFAULT 'Anonymous'"),
+                ("field_study_observations", "postal", "TEXT DEFAULT 'N/A'"),
+                ("field_study_observations", "provider", "TEXT DEFAULT 'Unknown'"),
+                ("field_study_observations", "retrieved_at", "TEXT"),
+                ("field_study_observations", "is_anycast", "INTEGER DEFAULT 0"),
             ]
             for tbl, col, col_def in columns_to_add:
                 try:
@@ -414,7 +446,7 @@ class SQLiteRepository(BaseDatabaseRepository):
             status, error_message, infrastructure, vpn_status, proxy_status,
             tor_status, https_status, tls_status, trust_score,
             trust_classification, risk_score, risk_classification,
-            confidence, evidence_coverage
+            confidence, evidence_coverage, postal, provider, retrieved_at, is_anycast
         ) VALUES (
             ?, ?, ?, ?, ?, ?,
             ?, ?, ?, ?, ?, ?, ?,
@@ -422,7 +454,7 @@ class SQLiteRepository(BaseDatabaseRepository):
             ?, ?, ?, ?, ?,
             ?, ?, ?, ?,
             ?, ?, ?,
-            ?, ?
+            ?, ?, ?, ?, ?, ?
         );
         """
         params = (
@@ -432,7 +464,8 @@ class SQLiteRepository(BaseDatabaseRepository):
             f["status"], f["error_message"], f["infrastructure"], f["vpn_status"], f["proxy_status"],
             f["tor_status"], f["https_status"], f["tls_status"], f["trust_score"],
             f["trust_classification"], f["risk_score"], f["risk_classification"],
-            f["confidence"], f["evidence_coverage"]
+            f["confidence"], f["evidence_coverage"],
+            f["postal"], f["provider"], f["retrieved_at"], 1 if f["is_anycast"] else 0
         )
         try:
             with self._connection() as conn:
@@ -496,6 +529,10 @@ class SQLiteRepository(BaseDatabaseRepository):
                         risk_classification=row["risk_classification"] if "risk_classification" in keys and row["risk_classification"] else "Unknown",
                         confidence=row["confidence"] if "confidence" in keys and row["confidence"] else "Unknown",
                         evidence_coverage=row["evidence_coverage"] if "evidence_coverage" in keys else None,
+                        postal=row["postal"] if "postal" in keys and row["postal"] else "N/A",
+                        provider=row["provider"] if "provider" in keys and row["provider"] else "Unknown",
+                        retrieved_at=row["retrieved_at"] if "retrieved_at" in keys else None,
+                        is_anycast=bool(row["is_anycast"]) if "is_anycast" in keys and row["is_anycast"] is not None else False,
                     )
                     records.append(rec)
         except Exception as e:
@@ -564,7 +601,7 @@ class SQLiteRepository(BaseDatabaseRepository):
                             ip_risk_score = ?, ip_risk_classification = ?, score_confidence = ?, evidence_coverage = ?,
                             observation_status = ?, observed_at = ?, raw_history_id = ?,
                             dns_response_time_ms = ?, api_response_time_ms = ?, timezone = ?, error_message = ?,
-                            searched_by = ?
+                            searched_by = ?, postal = ?, provider = ?, retrieved_at = ?, is_anycast = ?
                         WHERE id = ?;
                         """
                         params = (
@@ -582,6 +619,7 @@ class SQLiteRepository(BaseDatabaseRepository):
                             obs.dns_response_time_ms or 0.0, obs.api_response_time_ms or 0.0,
                             obs.timezone or "N/A", obs.error_message,
                             getattr(obs, "searched_by", "Anonymous") or "Anonymous",
+                            obs.postal or "N/A", obs.provider or "Unknown", obs.retrieved_at, 1 if obs.is_anycast else 0,
                             existing["id"]
                         )
                         cursor.execute(update_sql, params)
@@ -599,7 +637,8 @@ class SQLiteRepository(BaseDatabaseRepository):
             website_trust_score, website_trust_classification,
             ip_risk_score, ip_risk_classification, score_confidence, evidence_coverage,
             observation_status, observed_at, raw_history_id,
-            dns_response_time_ms, api_response_time_ms, timezone, error_message, searched_by
+            dns_response_time_ms, api_response_time_ms, timezone, error_message, searched_by,
+            postal, provider, retrieved_at, is_anycast
         ) VALUES (
             ?, ?, ?, ?, ?,
             ?, ?, ?, ?, ?, ?, ?,
@@ -608,7 +647,8 @@ class SQLiteRepository(BaseDatabaseRepository):
             ?, ?,
             ?, ?, ?, ?,
             ?, ?, ?,
-            ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?,
+            ?, ?, ?, ?
         );
         """
         params = (
@@ -625,7 +665,8 @@ class SQLiteRepository(BaseDatabaseRepository):
             obs.observation_status or "RECORDED", obs.observed_at, obs.raw_history_id,
             obs.dns_response_time_ms or 0.0, obs.api_response_time_ms or 0.0,
             obs.timezone or "N/A", obs.error_message,
-            getattr(obs, "searched_by", "Anonymous") or "Anonymous"
+            getattr(obs, "searched_by", "Anonymous") or "Anonymous",
+            obs.postal or "N/A", obs.provider or "Unknown", obs.retrieved_at, 1 if obs.is_anycast else 0
         )
         try:
             with self._connection() as conn:
@@ -680,6 +721,10 @@ class SQLiteRepository(BaseDatabaseRepository):
             api_response_time_ms=row["api_response_time_ms"] or 0.0,
             timezone=row["timezone"] if "timezone" in keys and row["timezone"] else "N/A",
             error_message=row["error_message"],
+            postal=row["postal"] if "postal" in keys and row["postal"] else "N/A",
+            provider=row["provider"] if "provider" in keys and row["provider"] else "Unknown",
+            retrieved_at=row["retrieved_at"] if "retrieved_at" in keys else None,
+            is_anycast=bool(row["is_anycast"]) if "is_anycast" in keys and row["is_anycast"] is not None else False,
         )
 
     def get_field_observations(
@@ -850,7 +895,11 @@ class PostgresRepository(BaseDatabaseRepository):
             risk_score DOUBLE PRECISION,
             risk_classification TEXT DEFAULT 'Unknown',
             confidence TEXT DEFAULT 'Unknown',
-            evidence_coverage DOUBLE PRECISION
+            evidence_coverage DOUBLE PRECISION,
+            postal TEXT DEFAULT 'N/A',
+            provider TEXT DEFAULT 'Unknown',
+            retrieved_at TEXT,
+            is_anycast BOOLEAN DEFAULT FALSE
         );
 
         CREATE TABLE IF NOT EXISTS field_study_observations (
@@ -890,7 +939,11 @@ class PostgresRepository(BaseDatabaseRepository):
             api_response_time_ms DOUBLE PRECISION DEFAULT 0.0,
             timezone TEXT DEFAULT 'N/A',
             error_message TEXT,
-            searched_by TEXT DEFAULT 'Anonymous'
+            searched_by TEXT DEFAULT 'Anonymous',
+            postal TEXT DEFAULT 'N/A',
+            provider TEXT DEFAULT 'Unknown',
+            retrieved_at TEXT,
+            is_anycast BOOLEAN DEFAULT FALSE
         );
         """
         try:
@@ -911,9 +964,17 @@ class PostgresRepository(BaseDatabaseRepository):
                         ("lookup_history", "risk_classification", "TEXT DEFAULT 'Unknown'"),
                         ("lookup_history", "confidence", "TEXT DEFAULT 'Unknown'"),
                         ("lookup_history", "evidence_coverage", "DOUBLE PRECISION"),
+                        ("lookup_history", "postal", "TEXT DEFAULT 'N/A'"),
+                        ("lookup_history", "provider", "TEXT DEFAULT 'Unknown'"),
+                        ("lookup_history", "retrieved_at", "TEXT"),
+                        ("lookup_history", "is_anycast", "BOOLEAN DEFAULT FALSE"),
                         ("field_study_observations", "country_code", "TEXT DEFAULT 'N/A'"),
                         ("field_study_observations", "timezone", "TEXT DEFAULT 'N/A'"),
                         ("field_study_observations", "searched_by", "TEXT DEFAULT 'Anonymous'"),
+                        ("field_study_observations", "postal", "TEXT DEFAULT 'N/A'"),
+                        ("field_study_observations", "provider", "TEXT DEFAULT 'Unknown'"),
+                        ("field_study_observations", "retrieved_at", "TEXT"),
+                        ("field_study_observations", "is_anycast", "BOOLEAN DEFAULT FALSE"),
                     ]
                     for tbl, col, col_def in migrations:
                         cursor.execute(f"ALTER TABLE {tbl} ADD COLUMN IF NOT EXISTS {col} {col_def};")
@@ -933,7 +994,7 @@ class PostgresRepository(BaseDatabaseRepository):
             status, error_message, infrastructure, vpn_status, proxy_status,
             tor_status, https_status, tls_status, trust_score,
             trust_classification, risk_score, risk_classification,
-            confidence, evidence_coverage
+            confidence, evidence_coverage, postal, provider, retrieved_at, is_anycast
         ) VALUES (
             %s, %s, %s, %s, %s, %s,
             %s, %s, %s, %s, %s, %s, %s,
@@ -941,7 +1002,7 @@ class PostgresRepository(BaseDatabaseRepository):
             %s, %s, %s, %s, %s,
             %s, %s, %s, %s,
             %s, %s, %s,
-            %s, %s
+            %s, %s, %s, %s, %s, %s
         ) RETURNING id;
         """
         params = (
@@ -951,7 +1012,8 @@ class PostgresRepository(BaseDatabaseRepository):
             f["status"], f["error_message"], f["infrastructure"], f["vpn_status"], f["proxy_status"],
             f["tor_status"], f["https_status"], f["tls_status"], f["trust_score"],
             f["trust_classification"], f["risk_score"], f["risk_classification"],
-            f["confidence"], f["evidence_coverage"]
+            f["confidence"], f["evidence_coverage"],
+            f["postal"], f["provider"], f["retrieved_at"], bool(f["is_anycast"])
         )
         try:
             with self._connection() as conn:
@@ -1015,6 +1077,10 @@ class PostgresRepository(BaseDatabaseRepository):
                             risk_classification=r.get("risk_classification") or "Unknown",
                             confidence=r.get("confidence") or "Unknown",
                             evidence_coverage=r.get("evidence_coverage"),
+                            postal=r.get("postal") or "N/A",
+                            provider=r.get("provider") or "Unknown",
+                            retrieved_at=r.get("retrieved_at"),
+                            is_anycast=bool(r.get("is_anycast", False)),
                         )
                         records.append(rec)
         except Exception as e:
@@ -1075,7 +1141,8 @@ class PostgresRepository(BaseDatabaseRepository):
                 website_trust_score, website_trust_classification,
                 ip_risk_score, ip_risk_classification, score_confidence, evidence_coverage,
                 observation_status, observed_at, raw_history_id,
-                dns_response_time_ms, api_response_time_ms, timezone, error_message, searched_by
+                dns_response_time_ms, api_response_time_ms, timezone, error_message, searched_by,
+                postal, provider, retrieved_at, is_anycast
             ) VALUES (
                 %s, %s, %s, %s, %s,
                 %s, %s, %s, %s, %s, %s, %s,
@@ -1084,7 +1151,8 @@ class PostgresRepository(BaseDatabaseRepository):
                 %s, %s,
                 %s, %s, %s, %s,
                 %s, %s, %s,
-                %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s,
+                %s, %s, %s, %s
             )
             ON CONFLICT (domain) DO UPDATE SET
                 category = EXCLUDED.category,
@@ -1120,7 +1188,11 @@ class PostgresRepository(BaseDatabaseRepository):
                 api_response_time_ms = EXCLUDED.api_response_time_ms,
                 timezone = EXCLUDED.timezone,
                 error_message = EXCLUDED.error_message,
-                searched_by = EXCLUDED.searched_by
+                searched_by = EXCLUDED.searched_by,
+                postal = EXCLUDED.postal,
+                provider = EXCLUDED.provider,
+                retrieved_at = EXCLUDED.retrieved_at,
+                is_anycast = EXCLUDED.is_anycast
             RETURNING id;
             """
         else:
@@ -1133,7 +1205,8 @@ class PostgresRepository(BaseDatabaseRepository):
                 website_trust_score, website_trust_classification,
                 ip_risk_score, ip_risk_classification, score_confidence, evidence_coverage,
                 observation_status, observed_at, raw_history_id,
-                dns_response_time_ms, api_response_time_ms, timezone, error_message, searched_by
+                dns_response_time_ms, api_response_time_ms, timezone, error_message, searched_by,
+                postal, provider, retrieved_at, is_anycast
             ) VALUES (
                 %s, %s, %s, %s, %s,
                 %s, %s, %s, %s, %s, %s, %s,
@@ -1142,7 +1215,8 @@ class PostgresRepository(BaseDatabaseRepository):
                 %s, %s,
                 %s, %s, %s, %s,
                 %s, %s, %s,
-                %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s,
+                %s, %s, %s, %s
             ) RETURNING id;
             """
 
@@ -1160,7 +1234,8 @@ class PostgresRepository(BaseDatabaseRepository):
             obs.observation_status or "RECORDED", obs.observed_at, obs.raw_history_id,
             obs.dns_response_time_ms or 0.0, obs.api_response_time_ms or 0.0,
             obs.timezone or "N/A", obs.error_message,
-            getattr(obs, "searched_by", "Anonymous") or "Anonymous"
+            getattr(obs, "searched_by", "Anonymous") or "Anonymous",
+            obs.postal or "N/A", obs.provider or "Unknown", obs.retrieved_at, bool(obs.is_anycast)
         )
         try:
             with self._connection() as conn:
@@ -1215,6 +1290,10 @@ class PostgresRepository(BaseDatabaseRepository):
             api_response_time_ms=r["api_response_time_ms"] or 0.0,
             timezone=r.get("timezone") or "N/A",
             error_message=r["error_message"],
+            postal=r.get("postal") or "N/A",
+            provider=r.get("provider") or "Unknown",
+            retrieved_at=r.get("retrieved_at"),
+            is_anycast=bool(r.get("is_anycast", False)),
         )
 
     def get_field_observations(

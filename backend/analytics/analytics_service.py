@@ -110,6 +110,10 @@ def extract_map_coordinates_for_analytics(records: List[Any]) -> Tuple[List[Dict
                         "trust_classification": _get_field(r, "website_trust_classification", "trust_class", "trust_classification", default="Unknown"),
                         "risk_classification": _get_field(r, "ip_risk_classification", "risk_class", "risk_classification", default="Unknown"),
                         "https_status": _get_field(r, "https_status", default="Unknown"),
+                        "postal": _get_field(r, "postal", default="N/A"),
+                        "provider": _get_field(r, "provider", default="Unknown"),
+                        "confidence": _get_field(r, "geolocation_confidence", "confidence", default="Unknown"),
+                        "is_anycast": bool(_get_field(r, "is_anycast", default=False)),
                     })
                 else:
                     missing_count += 1

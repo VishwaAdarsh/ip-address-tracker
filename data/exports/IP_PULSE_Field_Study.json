@@ -5,7 +5,7 @@
   "observations_collected": 2,
   "remaining_to_target": 48,
   "dataset_status": "INCOMPLETE",
-  "generated_at": "2026-09-27T07:35:31.592141+00:00",
+  "generated_at": "2026-09-27T15:28:08.914641+00:00",
   "validation_summary": {
     "is_valid": true,
     "total_records": 2,
@@ -21,7 +21,7 @@
       "invalid_timestamp_count": 0,
       "classification_mismatch_count": 0
     },
-    "audited_at": "2026-09-27T07:35:31.587061+00:00"
+    "audited_at": "2026-09-27T15:28:08.908598+00:00"
   },
   "analytics": {
     "success": true,
@@ -90,7 +90,11 @@
         "risk_score": 15.0,
         "trust_classification": "LIKELY SAFE",
         "risk_classification": "LOW RISK",
-        "https_status": "Enabled"
+        "https_status": "Enabled",
+        "postal": "N/A",
+        "provider": "Unknown",
+        "confidence": "HIGH",
+        "is_anycast": false
       },
       {
         "id": 27,
@@ -108,7 +112,11 @@
         "risk_score": 10.0,
         "trust_classification": "HIGH RISK",
         "risk_classification": "LOW RISK",
-        "https_status": "Disabled"
+        "https_status": "Disabled",
+        "postal": "4101",
+        "provider": "ip-api.com",
+        "confidence": "APPROXIMATE",
+        "is_anycast": true
       }
     ],
     "mapped_points_count": 2,
@@ -417,7 +425,7 @@
         }
       ],
       "mean_dns_latency_ms": 23.6,
-      "mean_api_latency_ms": 390.3,
+      "mean_api_latency_ms": 323.8,
       "ip_versions": {
         "ipv4": 2,
         "ipv6": 0,
@@ -440,7 +448,7 @@
       },
       "query_latency": {
         "mean_dns_ms": 23.6,
-        "mean_api_ms": 390.3
+        "mean_api_ms": 323.8
       }
     },
     "comparison_analytics": {
@@ -785,7 +793,7 @@
       "target_quota": 50,
       "status": "INCOMPLETE",
       "completeness_pct": 4.0,
-      "timestamp": "2026-09-27T07:35:31.291554+00:00"
+      "timestamp": "2026-09-27T15:28:08.635894+00:00"
     }
   },
   "observations": [
@@ -863,7 +871,7 @@
         "city": "South Brisbane",
         "latitude": -27.4766,
         "longitude": 153.0166,
-        "confidence": "HIGH"
+        "confidence": "APPROXIMATE"
       },
       "network": {
         "asn": "AS13335 Cloudflare, Inc.",
@@ -899,12 +907,12 @@
       },
       "telemetry": {
         "dns_response_time_ms": 0.0,
-        "api_response_time_ms": 405.06,
-        "total_latency_ms": 405.06
+        "api_response_time_ms": 272.1,
+        "total_latency_ms": 272.1
       },
       "metadata": {
         "observation_status": "RECORDED",
-        "observed_at": "2026-09-27T07:35:31.291554+00:00",
+        "observed_at": "2026-09-27T15:28:08.635894+00:00",
         "raw_history_id": null,
         "error_message": null
       }

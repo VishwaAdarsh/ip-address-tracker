@@ -49,6 +49,10 @@ FIELD_TEST_HEADERS = [
     "latitude",
     "longitude",
     "geolocation_confidence",
+    "postal",
+    "provider",
+    "retrieved_at",
+    "is_anycast",
     "organization",
     "isp",
     "asn",
@@ -315,7 +319,13 @@ def add_field_observation(
     country = base.country if base.country and base.country != "N/A" else "Unknown"
     region = base.region if base.region and base.region != "N/A" else "Unknown"
     city = base.city if base.city and base.city != "N/A" else "Unknown"
-    geo_conf = "HIGH" if (base.country and base.city and base.country != "N/A" and base.city != "N/A") else ("MEDIUM" if country != "Unknown" else "UNKNOWN")
+    is_anycast = getattr(base, "is_anycast", False) or False
+    if is_anycast:
+        geo_conf = "APPROXIMATE"
+    elif getattr(base, "confidence", None) and getattr(base, "confidence") not in ("UNKNOWN", "Unknown", None):
+        geo_conf = getattr(base, "confidence")
+    else:
+        geo_conf = "HIGH" if (base.country and base.city and base.country != "N/A" and base.city != "N/A") else ("MEDIUM" if country != "Unknown" else "UNKNOWN")
 
     asn_val = base.asn if base.asn and base.asn != "N/A" else "Unknown"
     org_val = base.organization if base.organization and base.organization != "N/A" else "Unknown"
@@ -394,6 +404,10 @@ def add_field_observation(
         country_code=base.country_code or "N/A",
         timezone=base.timezone or "N/A",
         error_message=base.error_message,
+        postal=getattr(base, "postal", "N/A") or "N/A",
+        provider=getattr(base, "provider", "Unknown") or "Unknown",
+        retrieved_at=getattr(base, "retrieved_at", None) or base.timestamp,
+        is_anycast=is_anycast,
     )
 
     saved_id = save_field_observation(obs, db_path=db_path, update_if_exists=update_if_exists)
@@ -551,6 +565,10 @@ def export_field_dataset_from_history(
                 "latitude": rec.latitude if rec.latitude is not None else "",
                 "longitude": rec.longitude if rec.longitude is not None else "",
                 "geolocation_confidence": rec.geolocation_confidence or "Unknown",
+                "postal": getattr(rec, "postal", "N/A") or "N/A",
+                "provider": getattr(rec, "provider", "Unknown") or "Unknown",
+                "retrieved_at": getattr(rec, "retrieved_at", "") or rec.observed_at,
+                "is_anycast": getattr(rec, "is_anycast", False) or False,
                 "organization": rec.organization or "Unknown",
                 "isp": rec.isp or "Unknown",
                 "asn": rec.asn or "Unknown",
