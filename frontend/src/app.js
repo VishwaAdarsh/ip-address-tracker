@@ -13,6 +13,49 @@ const API_BASE = (
   ''
 ).replace(/\/+$/, '');
 
+// ----------------------------------------------------------------------------
+// Resilient Global Selection State (Guaranteed initialization before view execution)
+// ----------------------------------------------------------------------------
+if (typeof window !== 'undefined') {
+  if (!window.__ipPulseSelections) {
+    window.__ipPulseSelections = {
+      history: new Set(),
+      fieldStudy: new Set()
+    };
+  }
+}
+
+export function getHistorySelection() {
+  if (typeof window === 'undefined') return new Set();
+  if (!window.__ipPulseSelections || !(window.__ipPulseSelections.history instanceof Set)) {
+    window.__ipPulseSelections = window.__ipPulseSelections || {};
+    window.__ipPulseSelections.history = new Set();
+  }
+  return window.__ipPulseSelections.history;
+}
+
+export function getFieldStudySelection() {
+  if (typeof window === 'undefined') return new Set();
+  if (!window.__ipPulseSelections || !(window.__ipPulseSelections.fieldStudy instanceof Set)) {
+    window.__ipPulseSelections = window.__ipPulseSelections || {};
+    window.__ipPulseSelections.fieldStudy = new Set();
+  }
+  return window.__ipPulseSelections.fieldStudy;
+}
+
+const SelectionState = {
+  get history() { return getHistorySelection(); },
+  get fieldStudy() { return getFieldStudySelection(); },
+  getHistory: getHistorySelection,
+  getFieldStudy: getFieldStudySelection
+};
+
+if (typeof window !== 'undefined') {
+  window.getHistorySelection = getHistorySelection;
+  window.getFieldStudySelection = getFieldStudySelection;
+  window.SelectionState = SelectionState;
+}
+
 let currentTarget = null;
 let fieldStudyPollingInterval = null;
 
@@ -735,27 +778,13 @@ function initHomeTabs() {
 // History View Management & Batch Selection State
 // ----------------------------------------------------------------------------
 
-const SelectionState = {
-  history: new Set(),
-  fieldStudy: new Set(),
-  getHistory() {
-    if (!(this.history instanceof Set)) this.history = new Set();
-    return this.history;
-  },
-  getFieldStudy() {
-    if (!(this.fieldStudy instanceof Set)) this.fieldStudy = new Set();
-    return this.fieldStudy;
-  }
-};
-window.SelectionState = SelectionState;
-
 let cachedHistoryRecords = null;
 
 function updateHistoryBatchToolbar() {
   const toolbar = document.getElementById('history-batch-toolbar');
   const countEl = document.getElementById('history-selected-count');
   if (!toolbar || !countEl) return;
-  const set = SelectionState.getHistory();
+  const set = getHistorySelection();
   countEl.textContent = set.size;
   if (set.size > 0) {
     toolbar.classList.remove('hidden');
@@ -767,7 +796,7 @@ function updateHistoryBatchToolbar() {
 }
 
 window.toggleSelectAllHistory = function(checked) {
-  const set = SelectionState.getHistory();
+  const set = getHistorySelection();
   set.clear();
   const checkboxes = document.querySelectorAll('.history-row-checkbox');
   checkboxes.forEach(cb => {
@@ -779,7 +808,7 @@ window.toggleSelectAllHistory = function(checked) {
 };
 
 window.toggleHistoryRowSelect = function(id, checked) {
-  const set = SelectionState.getHistory();
+  const set = getHistorySelection();
   if (checked) {
     set.add(id);
   } else {
@@ -794,7 +823,7 @@ window.toggleHistoryRowSelect = function(id, checked) {
 };
 
 window.deleteSelectedHistory = async function() {
-  const set = SelectionState.getHistory();
+  const set = getHistorySelection();
   if (set.size === 0) return;
   const ids = Array.from(set);
   if (!confirm(`Are you sure you want to delete ${ids.length} selected history record(s)?`)) return;
@@ -902,7 +931,7 @@ function renderHistoryTable(records) {
     if (key) domainCounts[key] = (domainCounts[key] || 0) + 1;
   }
 
-  const histSet = SelectionState.getHistory();
+  const histSet = getHistorySelection();
   const fragment = document.createDocumentFragment();
 
   for (let i = 0; i < records.length; i++) {
@@ -930,7 +959,7 @@ function renderHistoryTable(records) {
       ? `<span class="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-500/15 text-amber-400 border border-amber-500/30 font-medium whitespace-nowrap" title="Target scanned ${occurrenceCount} times">Repeated (${occurrenceCount}x)</span>`
       : '';
 
-    const isChecked = Boolean(histSet?.has?.(r.id));
+    const isChecked = Boolean(histSet && typeof histSet.has === 'function' && histSet.has(r.id));
 
     tr.innerHTML = `
       <td class="py-space-md px-3 text-center w-10">
@@ -975,7 +1004,7 @@ window.deleteHistoryItem = async function(id) {
   try {
     const res = await fetch(`${API_BASE}/api/history/${id}`, { method: 'DELETE' });
     if (res.ok) {
-      SelectionState.getHistory().delete(id);
+      getHistorySelection().delete(id);
       updateHistoryBatchToolbar();
       await loadHistory();
       if (typeof loadInvestigationWorkspace === 'function') loadInvestigationWorkspace();
@@ -990,7 +1019,7 @@ window.clearAllHistory = async function() {
   try {
     const res = await fetch(`${API_BASE}/api/history`, { method: 'DELETE' });
     if (res.ok) {
-      SelectionState.getHistory().clear();
+      getHistorySelection().clear();
       updateHistoryBatchToolbar();
       await loadHistory();
       if (typeof loadInvestigationWorkspace === 'function') loadInvestigationWorkspace();
@@ -1178,7 +1207,7 @@ function updateFsBatchToolbar() {
   const toolbar = document.getElementById('fs-batch-toolbar');
   const countEl = document.getElementById('fs-selected-count');
   if (!toolbar || !countEl) return;
-  const set = SelectionState.getFieldStudy();
+  const set = getFieldStudySelection();
   countEl.textContent = set.size;
   if (set.size > 0) {
     toolbar.classList.remove('hidden');
@@ -1190,7 +1219,7 @@ function updateFsBatchToolbar() {
 }
 
 window.toggleSelectAllFieldStudy = function(checked) {
-  const set = SelectionState.getFieldStudy();
+  const set = getFieldStudySelection();
   set.clear();
   const checkboxes = document.querySelectorAll('.fs-row-checkbox');
   checkboxes.forEach(cb => {
@@ -1202,7 +1231,7 @@ window.toggleSelectAllFieldStudy = function(checked) {
 };
 
 window.toggleFsRowSelect = function(id, checked) {
-  const set = SelectionState.getFieldStudy();
+  const set = getFieldStudySelection();
   if (checked) {
     set.add(id);
   } else {
@@ -1222,7 +1251,7 @@ window.deleteFieldStudyItem = async function(id) {
     const res = await fetch(`${API_BASE}/api/field-study/${id}`, { method: 'DELETE' });
     const data = await res.json();
     if (res.ok && data.success) {
-      SelectionState.getFieldStudy().delete(id);
+      getFieldStudySelection().delete(id);
       updateFsBatchToolbar();
       await loadFieldStudy();
       if (typeof loadAnalytics === 'function') loadAnalytics();
@@ -1236,7 +1265,7 @@ window.deleteFieldStudyItem = async function(id) {
 };
 
 window.deleteSelectedFieldStudy = async function() {
-  const set = SelectionState.getFieldStudy();
+  const set = getFieldStudySelection();
   if (set.size === 0) return;
   const ids = Array.from(set);
   if (!confirm(`Are you sure you want to delete ${ids.length} selected Field Study observation(s)? This will update research analytics.`)) return;
@@ -1285,7 +1314,7 @@ function renderFieldStudyTable(records) {
     return;
   }
 
-  const fsSet = SelectionState.getFieldStudy();
+  const fsSet = getFieldStudySelection();
   const fragment = document.createDocumentFragment();
 
   for (let idx = 0; idx < records.length; idx++) {
@@ -1330,7 +1359,7 @@ function renderFieldStudyTable(records) {
     }
 
     const recId = r.id || r.test_id;
-    const isChecked = Boolean(fsSet?.has?.(recId));
+    const isChecked = Boolean(fsSet && typeof fsSet.has === 'function' && fsSet.has(recId));
 
     tr.innerHTML = `
       <td class="py-3 px-3 text-center w-10" onclick="event.stopPropagation()">
